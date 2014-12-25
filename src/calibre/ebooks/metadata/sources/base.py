@@ -359,8 +359,6 @@ class Source(Plugin):
                 (r'(\d+),(\d+)', r'\1\2'),
                 # Remove hyphens only if they have whitespace before them
                 (r'(\s-)', ' '),
-                # Remove single quotes not followed by 's'
-                (r"'(?!s)", ''),
                 # Replace other special chars with a space
                 (r'''[:,;!@$%^&*(){}.`~"\s\[\]/]''', ' '),
             ]]
@@ -370,7 +368,7 @@ class Source(Plugin):
 
             tokens = title.split()
             for token in tokens:
-                token = token.strip()
+                token = token.strip().strip('"').strip("'")
                 if token and (not strip_joiners or token.lower() not in ('a',
                     'and', 'the', '&')):
                     yield token
