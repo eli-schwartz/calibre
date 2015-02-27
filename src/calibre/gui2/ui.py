@@ -425,6 +425,8 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
         QTimer.singleShot(1, self.start_smartdevice)
         QTimer.singleShot(100, self.update_toggle_to_tray_action)
 
+        QTimer.singleShot(1, self.my_set_geometry)
+
     def esc(self, *args):
         self.clear_button.click()
 
@@ -816,10 +818,15 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
                     det_msg=job.details)
 
     def read_settings(self):
+        #geometry = config['main_window_geometry']
+        #if geometry is not None:
+        #    self.restoreGeometry(geometry)
+        self.read_layout_settings()
+
+    def my_set_geometry(self):
         geometry = config['main_window_geometry']
         if geometry is not None:
             self.restoreGeometry(geometry)
-        self.read_layout_settings()
 
     def write_settings(self):
         with gprefs:  # Only write to gprefs once
