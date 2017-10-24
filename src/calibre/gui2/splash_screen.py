@@ -1,16 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-from PyQt5.Qt import (
-    QApplication, QBrush, QColor, QFont, QFontMetrics, QPen, QPixmap, QSplashScreen,
-    Qt
-)
+from time import monotonic
 
 from calibre.constants import __appname__, numeric_version
-from time import monotonic
+from PyQt5.Qt import (
+	QApplication, QBrush, QColor, QFont, QFontMetrics, QPen, QPixmap, QSplashScreen, Qt
+)
 
 
 class SplashScreen(QSplashScreen):

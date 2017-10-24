@@ -8,7 +8,9 @@ __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re, string, traceback
+import re
+import string
+import traceback
 
 from calibre import prints
 from calibre.constants import DEBUG
@@ -213,7 +215,7 @@ class TemplateFormatter(string.Formatter):
             except:
                 raise ValueError(
                     _('format: type {0} requires a decimal (float) value, got {1}').format(typ, val))
-        return unicode(('{0:'+fmt+'}').format(val))
+        return str(('{0:'+fmt+'}').format(val))
 
     def _explode_format_string(self, fmt):
         try:
@@ -272,7 +274,7 @@ class TemplateFormatter(string.Formatter):
         # ensure we are dealing with a string.
         if isinstance(val, (int, float)):
             if val:
-                val = unicode(val)
+                val = str(val)
             else:
                 val = ''
         # Handle conditional text

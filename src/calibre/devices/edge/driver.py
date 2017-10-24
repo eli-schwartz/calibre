@@ -36,5 +36,3 @@ class EDGE(USBMS):
 
     EBOOK_DIR_MAIN = 'download'
     SUPPORTS_SUB_DIRS = True
-
-

@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
@@ -11,22 +10,22 @@ import traceback
 from functools import partial
 
 import apsw
-from PyQt5.Qt import QCoreApplication, QIcon, QObject, QTimer
-
 from calibre import force_unicode, plugins, prints
 from calibre.constants import (
-    DEBUG, MAIN_APP_UID, __appname__, filesystem_encoding, get_portable_base,
-    islinux, isosx, iswindows
+	DEBUG, MAIN_APP_UID, __appname__, filesystem_encoding,
+	get_portable_base, islinux, isosx, iswindows
 )
 from calibre.gui2 import (
-    Application, choose_dir, error_dialog, gprefs, initialize_file_icon_provider,
-    question_dialog, set_app_uid, setup_gui_option_parser
+	Application, choose_dir, error_dialog, gprefs, initialize_file_icon_provider,
+	question_dialog, set_app_uid, setup_gui_option_parser
 )
 from calibre.gui2.main_window import option_parser as _option_parser
 from calibre.gui2.splash_screen import SplashScreen
 from calibre.utils.config import dynamic, prefs
 from calibre.utils.ipc import RC, gui_socket_address
 from calibre.utils.lock import singleinstance
+from PyQt5.Qt import QCoreApplication, QIcon, QObject, QTimer
+
 
 if iswindows:
     winutil = plugins['winutil'][0]
@@ -69,9 +68,9 @@ def find_portable_library():
         return
     import glob
     candidates = [os.path.basename(os.path.dirname(x)) for x in glob.glob(
-        os.path.join(base, u'*%smetadata.db'%os.sep))]
+        os.path.join(base, '*%smetadata.db'%os.sep))]
     if not candidates:
-        candidates = [u'Calibre Library']
+        candidates = ['Calibre Library']
     lp = prefs['library_path']
     if not lp:
         lib = os.path.join(base, candidates[0])
@@ -128,7 +127,7 @@ def get_default_library_path():
     fname = _('Calibre Library')
     if iswindows:
         fname = 'Calibre Library'
-    if isinstance(fname, unicode):
+    if isinstance(fname, str):
         try:
             fname = fname.encode(filesystem_encoding)
         except:
@@ -153,7 +152,7 @@ def get_library_path(gui_runner):
                 base = None
             if not base or not os.path.exists(base):
                 from PyQt5.Qt import QDir
-                base = unicode(QDir.homePath()).replace('/', os.sep)
+                base = str(QDir.homePath()).replace('/', os.sep)
         candidate = gui_runner.choose_dir(base)
         if not candidate:
             candidate = os.path.join(base, 'Calibre Library')
@@ -177,9 +176,9 @@ def repair_library(library_path):
 
 def windows_repair(library_path=None):
     from binascii import hexlify, unhexlify
-    import cPickle, subprocess
+    import pickle, subprocess
     if library_path:
-        library_path = hexlify(cPickle.dumps(library_path, -1))
+        library_path = hexlify(pickle.dumps(library_path, -1))
         winutil.prepare_for_restart()
         os.environ['CALIBRE_REPAIR_CORRUPTED_DB'] = library_path
         subprocess.Popen([sys.executable])
@@ -187,7 +186,7 @@ def windows_repair(library_path=None):
         try:
             app = Application([])
             from calibre.gui2.dialogs.restore_library import repair_library_at
-            library_path = cPickle.loads(unhexlify(os.environ.pop('CALIBRE_REPAIR_CORRUPTED_DB')))
+            library_path = pickle.loads(unhexlify(os.environ.pop('CALIBRE_REPAIR_CORRUPTED_DB')))
             done = repair_library_at(library_path, wait_time=4)
         except Exception:
             done = False
@@ -263,7 +262,7 @@ class GuiRunner(QObject):
             error_dialog(self.splash_screen, title, msg, det_msg=det_msg, show=True)
 
     def initialization_failed(self):
-        print 'Catastrophic failure initializing GUI, bailing out...'
+        print('Catastrophic failure initializing GUI, bailing out...')
         QCoreApplication.exit(1)
         raise SystemExit(1)
 
@@ -478,7 +477,7 @@ def shutdown_other(rc=None):
             return  # No running instance found
     rc.conn.send('shutdown:')
     prints(_('Shutdown command sent, waiting for shutdown...'))
-    for i in xrange(50):
+    for i in range(50):
         if singleinstance(singleinstance_name):
             return
         time.sleep(0.1)
@@ -584,6 +583,6 @@ if __name__ == '__main__':
             log = open(logfile).read().decode('utf-8', 'ignore')
             d = QErrorMessage()
             d.showMessage(('<b>Error:</b>%s<br><b>Traceback:</b><br>'
-                '%s<b>Log:</b><br>%s')%(unicode(err),
-                    unicode(tb).replace('\n', '<br>'),
+                '%s<b>Log:</b><br>%s')%(str(err),
+                    str(tb).replace('\n', '<br>'),
                     log.replace('\n', '<br>')))

@@ -7,29 +7,29 @@ __docformat__ = 'restructuredtext en'
 Job management.
 '''
 
-import re, time
-from Queue import Empty, Queue
+import re
+import time
+from queue import Empty, Queue
 
-from PyQt5.Qt import (QAbstractTableModel, QModelIndex, Qt, QPainter,
-    QTimer, pyqtSignal, QIcon, QDialog, QAbstractItemDelegate, QApplication,
-    QSize, QStyleOptionProgressBar, QStyle, QToolTip, QWidget, QStyleOption,
-    QHBoxLayout, QVBoxLayout, QSizePolicy, QLabel, QCoreApplication, QAction,
-    QByteArray, QSortFilterProxyModel, QTextBrowser, QPlainTextEdit)
-
-from calibre import strftime
-from calibre.constants import islinux, isbsd
-from calibre.utils.ipc.server import Server
-from calibre.utils.ipc.job import ParallelJob
-from calibre.gui2 import (Dispatcher, error_dialog, question_dialog,
-        config, gprefs)
+from calibre import __appname__, as_unicode, strftime
+from calibre.constants import isbsd, islinux
+from calibre.gui2 import Dispatcher, config, error_dialog, gprefs, question_dialog
 from calibre.gui2.device import DeviceJob
 from calibre.gui2.dialogs.jobs_ui import Ui_JobsDialog
-from calibre import __appname__, as_unicode
 from calibre.gui2.progress_indicator import ProgressIndicator
-from calibre.gui2.threaded_jobs import ThreadedJobServer, ThreadedJob
+from calibre.gui2.threaded_jobs import ThreadedJob, ThreadedJobServer
 from calibre.gui2.widgets2 import Dialog
-from calibre.utils.search_query_parser import SearchQueryParser, ParseException
 from calibre.utils.icu import lower
+from calibre.utils.ipc.job import ParallelJob
+from calibre.utils.ipc.server import Server
+from calibre.utils.search_query_parser import ParseException, SearchQueryParser
+from PyQt5.Qt import (
+	QAbstractItemDelegate, QAbstractTableModel, QAction, QApplication,
+	QByteArray, QCoreApplication, QDialog, QHBoxLayout, QIcon, QLabel,
+	QModelIndex, QPainter, QPlainTextEdit, QSize, QSizePolicy,
+	QSortFilterProxyModel, QStyle, QStyleOption, QStyleOptionProgressBar,
+	Qt, QTextBrowser, QTimer, QToolTip, QVBoxLayout, QWidget, pyqtSignal
+)
 
 
 class AdaptSQP(SearchQueryParser):
@@ -148,7 +148,7 @@ class JobManager(QAbstractTableModel, AdaptSQP):  # {{{
                         return None
                     return human_readable_interval(rtime)
                 if col == 4 and job.start_time is not None:
-                    return (strftime(u'%H:%M -- %d %b', time.localtime(job.start_time)))
+                    return (strftime('%H:%M -- %d %b', time.localtime(job.start_time)))
             if role == Qt.DecorationRole and col == 0:
                 state = job.run_state
                 if state == job.WAITING:
@@ -300,7 +300,7 @@ class JobManager(QAbstractTableModel, AdaptSQP):  # {{{
     def show_hidden_jobs(self):
         for j in self.jobs:
             j.hidden_in_gui = False
-        for r in xrange(len(self.jobs)):
+        for r in range(len(self.jobs)):
             self.dataChanged.emit(self.index(r, 0), self.index(r, 0))
 
     def kill_job(self, job, view):
@@ -324,7 +324,7 @@ class JobManager(QAbstractTableModel, AdaptSQP):  # {{{
         jobs = [j for j in jobs if j.duration is None]
         unkillable = [j for j in jobs if not getattr(j, 'killable', True)]
         if unkillable:
-            names = u'\n'.join(as_unicode(j.description) for j in unkillable)
+            names = '\n'.join(as_unicode(j.description) for j in unkillable)
             error_dialog(view, _('Cannot kill job'),
                     _('Some of the jobs cannot be stopped. Click Show details'
                         ' to see the list of unstoppable jobs.'), det_msg=names,
@@ -500,7 +500,7 @@ class JobsButton(QWidget):  # {{{
         self._jobs.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.setCursor(Qt.PointingHandCursor)
         b = _('Click to see list of jobs')
-        self.setToolTip(b + u' [%s]'%self.shortcut)
+        self.setToolTip(b + ' [%s]'%self.shortcut)
         self.action_toggle = QAction(b, parent)
         parent.addAction(self.action_toggle)
         self.action_toggle.triggered.connect(self.toggle)
@@ -545,7 +545,7 @@ class JobsButton(QWidget):  # {{{
         self.pi.stopAnimation()
 
     def jobs(self):
-        src = unicode(self._jobs.text())
+        src = str(self._jobs.text())
         return int(re.search(r'\d+', src).group())
 
     def tray_tooltip(self, num=0):
@@ -561,7 +561,7 @@ class JobsButton(QWidget):  # {{{
 
     def job_added(self, nnum):
         jobs = self._jobs
-        src = unicode(jobs.text())
+        src = str(jobs.text())
         num = self.jobs()
         text = src.replace(str(num), str(nnum))
         jobs.setText(text)
@@ -570,7 +570,7 @@ class JobsButton(QWidget):  # {{{
 
     def job_done(self, nnum):
         jobs = self._jobs
-        src = unicode(jobs.text())
+        src = str(jobs.text())
         num = self.jobs()
         text = src.replace(str(num), str(nnum))
         jobs.setText(text)
@@ -698,7 +698,7 @@ class JobsDialog(QDialog, Ui_JobsDialog):
         self.proxy_model.beginResetModel(), self.proxy_model.endResetModel()
 
     def hide_all(self, *args):
-        self.model.hide_jobs(list(xrange(0,
+        self.model.hide_jobs(list(range(0,
             self.model.rowCount(QModelIndex()))))
         self.proxy_model.beginResetModel(), self.proxy_model.endResetModel()
 

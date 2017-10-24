@@ -1,21 +1,24 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import pickle
+import importlib
+import os
+import time
+import traceback
+from binascii import hexlify, unhexlify
+from contextlib import closing
+from multiprocessing.connection import Client
+from threading import Thread
+
+from calibre.constants import iswindows
+from calibre.utils.ipc import eintr_retry_call
+from calibre.utils.ipc.launch import Worker
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, cPickle, traceback, time, importlib
-from binascii import hexlify, unhexlify
-from multiprocessing.connection import Client
-from threading import Thread
-from contextlib import closing
 
-from calibre.constants import iswindows
-from calibre.utils.ipc import eintr_retry_call
-from calibre.utils.ipc.launch import Worker
 
 
 class WorkerError(Exception):
@@ -128,7 +131,7 @@ def create_worker(env, priority='normal', cwd=None, func='main'):
 
     env = dict(env)
     env.update({
-        'CALIBRE_WORKER_ADDRESS': hexlify(cPickle.dumps(listener.address, -1)),
+        'CALIBRE_WORKER_ADDRESS': hexlify(pickle.dumps(listener.address, -1)),
         'CALIBRE_WORKER_KEY': hexlify(auth_key),
         'CALIBRE_SIMPLE_WORKER': 'calibre.utils.ipc.simple_worker:%s' % func,
     })
@@ -162,7 +165,7 @@ def start_pipe_worker(command, env=None, priority='normal', **process_args):
         args['close_fds'] = True
 
     exe = w.executable
-    cmd = [exe] if isinstance(exe, basestring) else exe
+    cmd = [exe] if isinstance(exe, str) else exe
     p = subprocess.Popen(cmd + ['--pipe-worker', command], **args)
     return p
 
@@ -246,7 +249,7 @@ def offload_worker(env={}, priority='normal', cwd=None):
 
 def compile_code(src):
     import re, io
-    if not isinstance(src, unicode):
+    if not isinstance(src, str):
         match = re.search(r'coding[:=]\s*([-\w.]+)', src[:200])
         enc = match.group(1) if match else 'utf-8'
         src = src.decode(enc)
@@ -258,13 +261,13 @@ def compile_code(src):
     namespace = {
             'time':time, 're':re, 'os':os, 'io':io,
     }
-    exec src in namespace
+    exec(src, namespace)
     return namespace
 
 
 def main():
     # The entry point for the simple worker process
-    address = cPickle.loads(unhexlify(os.environ['CALIBRE_WORKER_ADDRESS']))
+    address = pickle.loads(unhexlify(os.environ['CALIBRE_WORKER_ADDRESS']))
     key     = unhexlify(os.environ['CALIBRE_WORKER_KEY'])
     with closing(Client(address, authkey=key)) as conn:
         args = eintr_retry_call(conn.recv)
@@ -294,7 +297,7 @@ def main():
 
 def offload():
     # The entry point for the offload worker process
-    address = cPickle.loads(unhexlify(os.environ['CALIBRE_WORKER_ADDRESS']))
+    address = pickle.loads(unhexlify(os.environ['CALIBRE_WORKER_ADDRESS']))
     key     = unhexlify(os.environ['CALIBRE_WORKER_KEY'])
     func_cache = {}
     with closing(Client(address, authkey=key)) as conn:

@@ -1,14 +1,18 @@
-from __future__ import with_statement
+import atexit
+import socket
+import time
+from collections import defaultdict
+from threading import Thread
+
+from calibre import force_unicode
+from calibre.utils.filenames import ascii_text
+
+
 __license__ = 'GPL 3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import socket, time, atexit
-from collections import defaultdict
-from threading import Thread
 
-from calibre.utils.filenames import ascii_text
-from calibre import force_unicode
 
 _server = None
 

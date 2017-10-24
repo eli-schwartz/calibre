@@ -1,30 +1,27 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import OrderedDict
+from io import BytesIO
+from struct import calcsize, pack
+
+from calibre.utils.fonts.sfnt import UnknownTable, align_block, max_power_of_two
+from calibre.utils.fonts.sfnt.cff.table import CFFTable
+from calibre.utils.fonts.sfnt.cmap import CmapTable
+from calibre.utils.fonts.sfnt.errors import UnsupportedFont
+from calibre.utils.fonts.sfnt.glyf import GlyfTable
+from calibre.utils.fonts.sfnt.gsub import GSUBTable
+from calibre.utils.fonts.sfnt.head import HeadTable, HorizontalHeader, OS2Table, PostTable
+from calibre.utils.fonts.sfnt.kern import KernTable
+from calibre.utils.fonts.sfnt.loca import LocaTable
+from calibre.utils.fonts.sfnt.maxp import MaxpTable
+from calibre.utils.fonts.utils import checksum_of_block, get_tables, verify_checksums
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from struct import pack, calcsize
-from io import BytesIO
-from collections import OrderedDict
 
-from calibre.utils.fonts.utils import (get_tables, checksum_of_block,
-        verify_checksums)
-from calibre.utils.fonts.sfnt import align_block, UnknownTable, max_power_of_two
-from calibre.utils.fonts.sfnt.errors import UnsupportedFont
 
-from calibre.utils.fonts.sfnt.head import (HeadTable, HorizontalHeader,
-                                           OS2Table, PostTable)
-from calibre.utils.fonts.sfnt.maxp import MaxpTable
-from calibre.utils.fonts.sfnt.loca import LocaTable
-from calibre.utils.fonts.sfnt.glyf import GlyfTable
-from calibre.utils.fonts.sfnt.cmap import CmapTable
-from calibre.utils.fonts.sfnt.kern import KernTable
-from calibre.utils.fonts.sfnt.gsub import GSUBTable
-from calibre.utils.fonts.sfnt.cff.table import CFFTable
 
 # OpenType spec: http://www.microsoft.com/typography/otspec/otff.htm
 
@@ -83,7 +80,7 @@ class Sfnt(object):
 
     def __iter__(self):
         '''Iterate over the table tags in order.'''
-        for x in sorted(self.tables.iterkeys()):
+        for x in sorted(self.tables.keys()):
             yield x
         # Although the optimal order is not alphabetical, the OTF spec says
         # they should be alphabetical, so we stick with that. See
@@ -169,4 +166,3 @@ def test_roundtrip(ff=None):
 if __name__ == '__main__':
     import sys
     test_roundtrip(sys.argv[-1])
-

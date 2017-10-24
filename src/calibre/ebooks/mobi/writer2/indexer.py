@@ -1,19 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-from future_builtins import filter, map
+from collections import OrderedDict, defaultdict
+from io import StringIO
+from struct import pack
+
+from calibre.ebooks.mobi.utils import (
+	CNCX as CNCX_, RECORD_SIZE, align_block, encint, encode_number_as_hex, encode_tbs
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from struct import pack
-from cStringIO import StringIO
-from collections import OrderedDict, defaultdict
 
-from calibre.ebooks.mobi.utils import (encint, encode_number_as_hex,
-        encode_tbs, align_block, RECORD_SIZE, CNCX as CNCX_)
 
 
 class CNCX(CNCX_):  # {{{
@@ -107,7 +106,7 @@ class IndexEntry(object):
             'author_offset': 71,
 
     }
-    RTAG_MAP = {v:k for k, v in TAG_VALUES.iteritems()}  # noqa
+    RTAG_MAP = {v:k for k, v in TAG_VALUES.items()}  # noqa
 
     def __init__(self, offset, label_offset):
         self.offset, self.label_offset = offset, label_offset
@@ -225,7 +224,7 @@ class SecondaryIndexEntry(IndexEntry):
         # The values for this index entry
         # I dont know what the 5 means, it is not the number of entries
         self.secondary = [5 if tag == min(
-            self.INDEX_MAP.itervalues()) else 0, 0, tag]
+            self.INDEX_MAP.values()) else 0, 0, tag]
 
     @property
     def tag_nums(self):
@@ -237,7 +236,7 @@ class SecondaryIndexEntry(IndexEntry):
 
     @classmethod
     def entries(cls):
-        rmap = {v:k for k,v in cls.INDEX_MAP.iteritems()}
+        rmap = {v:k for k,v in cls.INDEX_MAP.items()}
         for tag in sorted(rmap, reverse=True):
             yield cls(rmap[tag])
 
@@ -282,7 +281,7 @@ class TBS(object):  # {{{
                 for x in ('starts', 'ends', 'completes'):
                     for idx in data[x]:
                         depth_map[idx.depth].append(idx)
-                for l in depth_map.itervalues():
+                for l in depth_map.values():
                     l.sort(key=lambda x:x.offset)
                 self.periodical_tbs(data, first, depth_map)
         else:
@@ -316,7 +315,7 @@ class TBS(object):  # {{{
             if first_node is not None and first_node.depth > 0:
                 parent_section_index = (first_node.index if first_node.depth == 1 else first_node.parent_index)
             else:
-                parent_section_index = max(self.section_map.iterkeys())
+                parent_section_index = max(self.section_map.keys())
 
         else:
             # Non terminal record
@@ -453,7 +452,7 @@ class Indexer(object):  # {{{
             self.is_periodical else 'book'))
         self.is_flat_periodical = False
         if self.is_periodical:
-            periodical_node = iter(oeb.toc).next()
+            periodical_node = next(iter(oeb.toc))
             sections = tuple(periodical_node)
             self.is_flat_periodical = len(sections) == 1
 
@@ -679,7 +678,7 @@ class Indexer(object):  # {{{
     # }}}
 
     def create_periodical_index(self):  # {{{
-        periodical_node = iter(self.oeb.toc).next()
+        periodical_node = next(iter(self.oeb.toc))
         periodical_node_offset = self.serializer.body_start_offset
         periodical_node_size = (self.serializer.body_end_offset -
                 periodical_node_offset)
@@ -757,12 +756,10 @@ class Indexer(object):  # {{{
         # Filter
         for i, x in list(enumerate(normalized_sections)):
             sec, normalized_articles = x
-            normalized_articles = list(filter(lambda x: x.length > 0,
-                normalized_articles))
+            normalized_articles = list([x for x in normalized_articles if x.length > 0])
             normalized_sections[i] = (sec, normalized_articles)
 
-        normalized_sections = list(filter(lambda x: x[0].length > 0 and x[1],
-            normalized_sections))
+        normalized_sections = list([x for x in normalized_sections if x[0].length > 0 and x[1]])
 
         # Set indices
         i = 0
@@ -844,7 +841,7 @@ class Indexer(object):  # {{{
 
         deepest = max(i.depth for i in self.indices)
 
-        for i in xrange(self.number_of_text_records):
+        for i in range(self.number_of_text_records):
             offset = i * RECORD_SIZE
             next_offset = offset + RECORD_SIZE
             data = {'ends':[], 'completes':[], 'starts':[],
@@ -890,5 +887,3 @@ class Indexer(object):  # {{{
     # }}}
 
 # }}}
-
-

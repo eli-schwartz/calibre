@@ -1,24 +1,27 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import shutil
+import tempfile
+import time
+from threading import Event, Thread
+
+from calibre import prints
+from calibre.db.adding import compile_rule, filter_filename
+from calibre.ebooks import BOOK_EXTENSIONS
+from calibre.gui2 import gprefs
+from calibre.gui2.dialogs.duplicates import DuplicatesQuestion
+from calibre.ptempfile import PersistentTemporaryDirectory
+from PyQt5.Qt import (
+	QApplication, QCursor, QFileSystemWatcher, QObject, Qt, QTimer, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, tempfile, shutil, time
-from threading import Thread, Event
-from future_builtins import map
 
-from PyQt5.Qt import (QFileSystemWatcher, QObject, Qt, pyqtSignal, QTimer, QApplication, QCursor)
 
-from calibre import prints
-from calibre.ptempfile import PersistentTemporaryDirectory
-from calibre.db.adding import filter_filename, compile_rule
-from calibre.ebooks import BOOK_EXTENSIONS
-from calibre.gui2 import gprefs
-from calibre.gui2.dialogs.duplicates import DuplicatesQuestion
 
 AUTO_ADDED = frozenset(BOOK_EXTENSIONS) - {'pdr', 'mbp', 'tan'}
 

@@ -23,6 +23,6 @@ class AZW4Input(InputFormatPlugin):
 
         header = PdbHeaderReader(stream)
         reader = Reader(header, stream, log, options)
-        opf = reader.extract_content(os.getcwdu())
+        opf = reader.extract_content(os.getcwd())
 
         return opf

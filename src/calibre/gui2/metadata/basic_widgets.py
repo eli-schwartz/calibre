@@ -1,45 +1,52 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import re
+import shutil
+import textwrap
+import weakref
+from datetime import date, datetime
+
+from calibre import strftime
+from calibre.customize.ui import run_plugins_on_import
+from calibre.db import SPOOL_SIZE
+from calibre.ebooks import BOOK_EXTENSIONS
+from calibre.ebooks.metadata import (
+	authors_to_sort_string, check_isbn, string_to_authors, title_sort
+)
+from calibre.ebooks.metadata.meta import get_metadata
+from calibre.gui2 import (
+	UNDEFINED_QDATETIME, choose_files, choose_images, error_dialog, file_icon_provider, gprefs
+)
+from calibre.gui2.comments_editor import Editor
+from calibre.gui2.complete2 import EditWithComplete
+from calibre.gui2.dialogs.tag_editor import TagEditor
+from calibre.gui2.languages import LanguagesEdit as LE
+from calibre.gui2.widgets import EnLineEdit, FormatList as _FormatList, ImageView
+from calibre.gui2.widgets2 import (
+	Dialog, RatingEditor, RightClickButton, access_key, populate_standard_spinbox_context_menu
+)
+from calibre.library.comments import comments_to_html
+from calibre.ptempfile import PersistentTemporaryFile, SpooledTemporaryFile
+from calibre.utils.config import prefs, tweaks
+from calibre.utils.date import (
+	UNDEFINED_DATE, as_local_time, is_date_undefined,
+	local_tz, parse_only_date, qt_to_dt, utcfromtimestamp
+)
+from calibre.utils.icu import sort_key, strcmp
+from PyQt5.Qt import (
+	QAction, QApplication, QCalendarWidget, QDate, QDateTime, QDateTimeEdit, QDialog,
+	QDialogButtonBox, QDoubleSpinBox, QGridLayout, QIcon, QKeySequence, QLabel, QLineEdit,
+	QListWidgetItem, QMenu, QMessageBox, QPixmap, QPlainTextEdit, QSize, QSizePolicy, Qt,
+	QToolButton, QUndoCommand, QUndoStack, QVBoxLayout, QWidget, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import textwrap, re, os, shutil, weakref
-from datetime import date, datetime
 
-from PyQt5.Qt import (
-    Qt, QDateTimeEdit, pyqtSignal, QMessageBox, QIcon, QToolButton, QWidget,
-    QLabel, QGridLayout, QApplication, QDoubleSpinBox, QListWidgetItem, QSize,
-    QPixmap, QDialog, QMenu, QLineEdit, QSizePolicy, QKeySequence,
-    QDialogButtonBox, QAction, QCalendarWidget, QDate, QDateTime, QUndoCommand,
-    QUndoStack, QVBoxLayout, QPlainTextEdit)
 
-from calibre.gui2.widgets import EnLineEdit, FormatList as _FormatList, ImageView
-from calibre.gui2.widgets2 import access_key, populate_standard_spinbox_context_menu, RightClickButton, Dialog, RatingEditor
-from calibre.utils.icu import sort_key
-from calibre.utils.config import tweaks, prefs
-from calibre.ebooks.metadata import (
-    title_sort, string_to_authors, check_isbn, authors_to_sort_string)
-from calibre.ebooks.metadata.meta import get_metadata
-from calibre.gui2 import (file_icon_provider, UNDEFINED_QDATETIME,
-        choose_files, error_dialog, choose_images, gprefs)
-from calibre.gui2.complete2 import EditWithComplete
-from calibre.utils.date import (
-    local_tz, qt_to_dt, as_local_time, UNDEFINED_DATE, is_date_undefined,
-    utcfromtimestamp, parse_only_date)
-from calibre import strftime
-from calibre.ebooks import BOOK_EXTENSIONS
-from calibre.customize.ui import run_plugins_on_import
-from calibre.gui2.comments_editor import Editor
-from calibre.library.comments import comments_to_html
-from calibre.gui2.dialogs.tag_editor import TagEditor
-from calibre.utils.icu import strcmp
-from calibre.ptempfile import PersistentTemporaryFile, SpooledTemporaryFile
-from calibre.gui2.languages import LanguagesEdit as LE
-from calibre.db import SPOOL_SIZE
 
 OK_COLOR = 'rgba(0, 255, 0, 12%)'
 ERR_COLOR = 'rgba(255, 0, 0, 12%)'
@@ -223,7 +230,7 @@ class TitleEdit(EnLineEdit, ToMetadataMixin):
     def current_val(self):
 
         def fget(self):
-            title = clean_text(unicode(self.text()))
+            title = clean_text(str(self.text()))
             if not title:
                 title = self.get_default()
             return title.strip()
@@ -412,7 +419,7 @@ class AuthorsEdit(EditWithComplete, ToMetadataMixin):
     def current_val(self):
 
         def fget(self):
-            au = clean_text(unicode(self.text()))
+            au = clean_text(str(self.text()))
             if not au:
                 au = self.get_default()
             return string_to_authors(au)
@@ -479,7 +486,7 @@ class AuthorSortEdit(EnLineEdit, ToMetadataMixin):
     def current_val(self):
 
         def fget(self):
-            return clean_text(unicode(self.text()))
+            return clean_text(str(self.text()))
 
         def fset(self, val):
             if not val:
@@ -501,7 +508,7 @@ class AuthorSortEdit(EnLineEdit, ToMetadataMixin):
         return self.db.new_api.author_sort_from_authors(authors, key_func=lambda x: x)
 
     def update_state(self, *args):
-        au = unicode(self.authors_edit.text())
+        au = str(self.authors_edit.text())
         au = re.sub(r'\s+et al\.$', '', au)
         au = self.author_sort_from_authors(string_to_authors(au))
 
@@ -528,13 +535,13 @@ class AuthorSortEdit(EnLineEdit, ToMetadataMixin):
             self.authors_edit.current_val = ans
 
     def auto_generate(self, *args):
-        au = unicode(self.authors_edit.text())
+        au = str(self.authors_edit.text())
         au = re.sub(r'\s+et al\.$', '', au).strip()
         authors = string_to_authors(au)
         self.current_val = self.author_sort_from_authors(authors)
 
     def author_to_sort(self, *args):
-        au = unicode(self.authors_edit.text())
+        au = str(self.authors_edit.text())
         au = re.sub(r'\s+et al\.$', '', au).strip()
         if au:
             self.current_val = au
@@ -605,7 +612,7 @@ class SeriesEdit(EditWithComplete, ToMetadataMixin):
     def current_val(self):
 
         def fget(self):
-            return clean_text(unicode(self.currentText()))
+            return clean_text(str(self.currentText()))
 
         def fset(self, val):
             if not val:
@@ -974,7 +981,7 @@ class FormatsManager(QWidget):
         return fmt.ext.lower()
 
     def get_format_path(self, db, id_, fmt):
-        for i in xrange(self.formats.count()):
+        for i in range(self.formats.count()):
             f = self.formats.item(i)
             ext = f.ext.lower()
             if ext == fmt:
@@ -1308,7 +1315,7 @@ class TagsEdit(EditWithComplete, ToMetadataMixin):  # {{{
     @dynamic_property
     def current_val(self):
         def fget(self):
-            return [clean_text(x) for x in unicode(self.text()).split(',')]
+            return [clean_text(x) for x in str(self.text()).split(',')]
 
         def fset(self, val):
             if not val:
@@ -1476,7 +1483,7 @@ class IdentifiersEdit(QLineEdit, ToMetadataMixin):
     @dynamic_property
     def current_val(self):
         def fget(self):
-            raw = unicode(self.text()).strip()
+            raw = str(self.text()).strip()
             parts = [clean_text(x) for x in raw.split(',')]
             ans = {}
             for x in parts:
@@ -1505,7 +1512,7 @@ class IdentifiersEdit(QLineEdit, ToMetadataMixin):
                     v = check_isbn(k)
                     if v is not None:
                         val[k] = v
-            ids = sorted(val.iteritems(), key=keygen)
+            ids = sorted(iter(val.items()), key=keygen)
             txt = ', '.join(['%s:%s'%(k.lower(), vl) for k, vl in ids])
             # Use selectAll + insert instead of setText so that undo works
             self.selectAll(), self.insert(txt.strip())
@@ -1547,14 +1554,14 @@ class IdentifiersEdit(QLineEdit, ToMetadataMixin):
         if prefix == 'isbn':
             self.paste_isbn()
         else:
-            text = unicode(QApplication.clipboard().text()).strip()
+            text = str(QApplication.clipboard().text()).strip()
             if text:
                 vals = self.current_val
                 vals[prefix] = text
                 self.current_val = vals
 
     def paste_isbn(self):
-        text = unicode(QApplication.clipboard().text()).strip()
+        text = str(QApplication.clipboard().text()).strip()
         if not text or not check_isbn(text):
             d = ISBNDialog(self, text)
             if not d.exec_():
@@ -1597,7 +1604,7 @@ class ISBNDialog(QDialog):  # {{{
         self.resize(sz)
 
     def accept(self):
-        isbn = unicode(self.line_edit.text())
+        isbn = str(self.line_edit.text())
         if not check_isbn(isbn):
             return error_dialog(self, _('Invalid ISBN'),
                     _('The ISBN you entered is not valid. Try again.'),
@@ -1605,7 +1612,7 @@ class ISBNDialog(QDialog):  # {{{
         QDialog.accept(self)
 
     def checkText(self, txt):
-        isbn = unicode(txt)
+        isbn = str(txt)
         if not isbn:
             col = 'none'
             extra = ''
@@ -1619,7 +1626,7 @@ class ISBNDialog(QDialog):  # {{{
         self.line_edit.setStyleSheet(INDICATOR_SHEET % col)
 
     def text(self):
-        return check_isbn(unicode(self.line_edit.text()))
+        return check_isbn(str(self.line_edit.text()))
 
 # }}}
 
@@ -1643,7 +1650,7 @@ class PublisherEdit(EditWithComplete, ToMetadataMixin):  # {{{
     def current_val(self):
 
         def fget(self):
-            return clean_text(unicode(self.currentText()))
+            return clean_text(str(self.currentText()))
 
         def fset(self, val):
             if not val:

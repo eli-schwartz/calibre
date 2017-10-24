@@ -1,7 +1,10 @@
-import gc, usbobserver
+import gc
+
+import usbobserver
+
 
 a = None
-print len(gc.get_objects())
+print(len(gc.get_objects()))
 usbobserver.get_devices()
 gc.collect()
-print len(gc.get_objects())
+print(len(gc.get_objects()))

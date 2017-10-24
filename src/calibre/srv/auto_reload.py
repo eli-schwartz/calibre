@@ -1,23 +1,29 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import errno
+import os
+import signal
+import socket
+import ssl
+import subprocess
+import sys
+import time
+from queue import Empty, Queue
+from threading import Lock, Thread
+from time import monotonic
 
-__license__ = 'GPL v3'
-__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import os, sys, subprocess, signal, time, errno, socket, ssl
-from threading import Thread, Lock
-from Queue import Queue, Empty
-
-from calibre.constants import islinux, iswindows, isosx
+from calibre.constants import islinux, isosx, iswindows
 from calibre.srv.http_response import create_http_handler
 from calibre.srv.loop import ServerLoop
 from calibre.srv.opts import Options
 from calibre.srv.standalone import create_option_parser
 from calibre.srv.utils import create_sock_pair
 from calibre.srv.web_socket import DummyHandler
-from time import monotonic
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
 
 MAX_RETRIES = 10
 
@@ -75,7 +81,7 @@ if islinux:
 
         def loop(self):
             while True:
-                r = select.select([self.srv_sock] + list(self.fd_map.iterkeys()), [], [])[0]
+                r = select.select([self.srv_sock] + list(self.fd_map.keys()), [], [])[0]
                 modified = set()
                 for fd in r:
                     if fd is self.srv_sock:
@@ -345,14 +351,14 @@ class ReloadHandler(DummyHandler):
 
     def notify_reload(self):
         with self.conn_lock:
-            for connref in self.connections.itervalues():
+            for connref in self.connections.values():
                 conn = connref()
                 if conn is not None and conn.ready:
                     conn.send_websocket_message('reload')
 
     def ping(self):
         with self.conn_lock:
-            for connref in self.connections.itervalues():
+            for connref in self.connections.values():
                 conn = connref()
                 if conn is not None and conn.ready:
                     conn.send_websocket_message('ping')

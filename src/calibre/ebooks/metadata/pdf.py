@@ -1,17 +1,24 @@
-from __future__ import with_statement
-__license__   = 'GPL v3'
-__copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
-'''Read meta information from PDF files'''
-
-import os, subprocess, shutil, re
+import os
+import re
+import shutil
+import subprocess
 from functools import partial
 
 from calibre import prints
 from calibre.constants import iswindows
-from calibre.ptempfile import TemporaryDirectory
 from calibre.ebooks.metadata import (
-    MetaInformation, string_to_authors, check_isbn, check_doi)
-from calibre.utils.ipc.simple_worker import fork_job, WorkerError
+	MetaInformation, check_doi, check_isbn, string_to_authors
+)
+from calibre.ptempfile import TemporaryDirectory
+from calibre.utils.ipc.simple_worker import WorkerError, fork_job
+from calibre.utils.podofo import set_metadata as podofo_set_metadata
+
+
+__license__   = 'GPL v3'
+__copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
+'''Read meta information from PDF files'''
+
+
 
 
 def get_tools():
@@ -46,9 +53,9 @@ def read_info(outputdir, get_cover):
         return None
 
     for line in info_raw.splitlines():
-        if u':' not in line:
+        if ':' not in line:
             continue
-        field, val = line.partition(u':')[::2]
+        field, val = line.partition(':')[::2]
         val = val.strip()
         if field and val:
             ans[field] = val.strip()
@@ -88,8 +95,8 @@ def page_images(pdfpath, outputdir, first=1, last=1):
         import win32process as w
         args['creationflags'] = w.HIGH_PRIORITY_CLASS | w.CREATE_NO_WINDOW
     try:
-        subprocess.check_call([pdftoppm, '-cropbox', '-jpeg', '-f', unicode(first),
-                               '-l', unicode(last), pdfpath,
+        subprocess.check_call([pdftoppm, '-cropbox', '-jpeg', '-f', str(first),
+                               '-l', str(last), pdfpath,
                                os.path.join(outputdir, 'page-images')], **args)
     except subprocess.CalledProcessError as e:
         raise ValueError('Failed to render PDF, pdftoppm errorcode: %s'%e.returncode)
@@ -152,9 +159,9 @@ def get_metadata(stream, cover=True):
 
     # Look for recognizable identifiers in the info dict, if they were not
     # found in the XMP metadata
-    for scheme, check_func in {'doi':check_doi, 'isbn':check_isbn}.iteritems():
+    for scheme, check_func in {'doi':check_doi, 'isbn':check_isbn}.items():
         if scheme not in mi.get_identifiers():
-            for k, v in info.iteritems():
+            for k, v in info.items():
                 if k != 'xmp_metadata':
                     val = check_func(v)
                     if val:
@@ -168,7 +175,6 @@ def get_metadata(stream, cover=True):
 
 get_quick_metadata = partial(get_metadata, cover=False)
 
-from calibre.utils.podofo import set_metadata as podofo_set_metadata
 
 
 def set_metadata(stream, mi):

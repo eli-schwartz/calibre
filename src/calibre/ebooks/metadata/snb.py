@@ -1,15 +1,16 @@
 '''Read meta information from SNB files'''
 
-from __future__ import with_statement
+import os
+from io import StringIO
+
+from calibre.ebooks.metadata import MetaInformation
+from calibre.ebooks.snb.snbfile import SNBFile
+from lxml import etree
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Li Fanxi <lifanxi@freemindworld.com>'
 
-import os
-from StringIO import StringIO
-from calibre.ebooks.metadata import MetaInformation
-from calibre.ebooks.snb.snbfile import SNBFile
-from lxml import etree
 
 
 def get_metadata(stream, extract_cover=True):

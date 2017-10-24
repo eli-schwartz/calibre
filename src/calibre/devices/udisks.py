@@ -1,11 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, re
+import os
+import re
 
 
 def node_mountpoint(node):
@@ -47,7 +47,7 @@ class UDisks(object):
     def mount(self, device_node_path):
         d = self.device(device_node_path)
         try:
-            return unicode(d.FilesystemMount('',
+            return str(d.FilesystemMount('',
                 ['auth_no_user_interaction', 'rw', 'noexec', 'nosuid',
                  'nodev', 'uid=%d'%os.geteuid(), 'gid=%d'%os.getegid()]))
         except:
@@ -111,7 +111,7 @@ class UDisks2(object):
         devs = self.bus.get_object('org.freedesktop.UDisks2',
                         '/org/freedesktop/UDisks2/block_devices')
         xml = devs.Introspect(dbus_interface='org.freedesktop.DBus.Introspectable')
-        for dev in re.finditer(r'name=[\'"](.+?)[\'"]', type(u'')(xml)):
+        for dev in re.finditer(r'name=[\'"](.+?)[\'"]', type('')(xml)):
             bd = self.bus.get_object('org.freedesktop.UDisks2',
                 '/org/freedesktop/UDisks2/block_devices/%s2'%dev.group(1))
             try:
@@ -130,7 +130,7 @@ class UDisks2(object):
         mount_options = ['rw', 'noexec', 'nosuid',
                 'nodev', 'uid=%d'%os.geteuid(), 'gid=%d'%os.getegid()]
         try:
-            return unicode(d.Mount(
+            return str(d.Mount(
                 {
                     'auth.no_user_interaction':True,
                     'options':','.join(mount_options)
@@ -201,16 +201,14 @@ def umount(node_path):
 def test_udisks(ver=None):
     import sys
     dev = sys.argv[1]
-    print 'Testing with node', dev
+    print('Testing with node', dev)
     u = get_udisks(ver=ver)
-    print 'Using Udisks:', u.__class__.__name__
-    print 'Mounted at:', u.mount(dev)
-    print 'Unmounting'
+    print('Using Udisks:', u.__class__.__name__)
+    print('Mounted at:', u.mount(dev))
+    print('Unmounting')
     u.unmount(dev)
-    print 'Ejecting:'
+    print('Ejecting:')
     u.eject(dev)
 
 if __name__ == '__main__':
     test_udisks()
-
-

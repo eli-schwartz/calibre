@@ -1,30 +1,32 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+import urllib.request, urllib.parse, urllib.error
+from base64 import b64encode
+
+from calibre import browser, url_slash_cleaner
+from calibre.gui2 import open_url
+from calibre.gui2.store import StorePlugin
+from calibre.gui2.store.basic_config import BasicStoreConfig
+from calibre.gui2.store.search_result import SearchResult
+from calibre.gui2.store.web_store_dialog import WebStoreDialog
+from lxml import html
+from mechanize import Request
+from PyQt5.Qt import QUrl
+
+
 store_version = 13  # Needed for dynamic plugin loading
 
 __license__ = 'GPL 3'
 __copyright__ = '2011-2016, Tomasz Długosz <tomek3d@gmail.com>'
 __docformat__ = 'restructuredtext en'
 
-import urllib
-from base64 import b64encode
 
-from lxml import html
-from mechanize import Request
 
-from PyQt5.Qt import QUrl
 
-from calibre import url_slash_cleaner, browser
-from calibre.gui2 import open_url
-from calibre.gui2.store import StorePlugin
-from calibre.gui2.store.basic_config import BasicStoreConfig
-from calibre.gui2.store.search_result import SearchResult
-from calibre.gui2.store.web_store_dialog import WebStoreDialog
 
 
 def search(query, max_results=10, timeout=60):
-    url = 'http://woblink.com/publication/ajax?mode=none&query=' + urllib.quote_plus(query.encode('utf-8'))
+    url = 'http://woblink.com/publication/ajax?mode=none&query=' + urllib.parse.quote_plus(query.encode('utf-8'))
     if max_results > 10:
         if max_results > 20:
             url += '&limit=30'
@@ -37,7 +39,7 @@ def search(query, max_results=10, timeout=60):
         'X-Requested-With': 'XMLHttpRequest',
         'Referrer':'http://woblink.com/ebooki-kategorie',
         'Cache-Control':'max-age=0',
-    }, data=urllib.urlencode({
+    }, data=urllib.parse.urlencode({
         'nw_filtry_filtr_zakrescen_formularz[min]':'0',
         'nw_filtry_filtr_zakrescen_formularz[max]':'350',
     }))

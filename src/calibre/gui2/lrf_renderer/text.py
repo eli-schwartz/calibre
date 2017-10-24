@@ -1,14 +1,19 @@
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
-import sys, collections, operator, copy, re
+import collections
+import copy
+import operator
+import re
+import sys
 
-from PyQt5.Qt import (
-    Qt, QRectF, QFont, QColor, QPixmap, QGraphicsPixmapItem, QGraphicsItem,
-    QFontMetrics, QPen, QBrush, QGraphicsRectItem)
-
-from calibre.ebooks.lrf.fonts import LIBERATION_FONT_MAP
 from calibre.ebooks.BeautifulSoup import Tag
 from calibre.ebooks.hyphenate import hyphenate_word
+from calibre.ebooks.lrf.fonts import LIBERATION_FONT_MAP
+from PyQt5.Qt import (
+	QBrush, QColor, QFont, QFontMetrics, QGraphicsItem,
+	QGraphicsPixmapItem, QGraphicsRectItem, QPen, QPixmap, QRectF, Qt
+)
+
 
 WEIGHT_MAP = lambda wt : int((wt/10.)-1)
 NULL       = lambda a, b: a
@@ -162,7 +167,7 @@ class TextBlock(object):
         pass
 
     has_content = property(fget=lambda self: self.peek_index < len(self.lines)-1)
-    XML_ENTITIES = dict(zip(Tag.XML_SPECIAL_CHARS_TO_ENTITIES.values(), Tag.XML_SPECIAL_CHARS_TO_ENTITIES.keys()))
+    XML_ENTITIES = dict(list(zip(list(Tag.XML_SPECIAL_CHARS_TO_ENTITIES.values()), list(Tag.XML_SPECIAL_CHARS_TO_ENTITIES.keys()))))
     XML_ENTITIES["quot"] = '"'
 
     def __init__(self, tb, font_loader, respect_max_y, text_width, logger,
@@ -182,7 +187,7 @@ class TextBlock(object):
         self.font_loader, self.logger, self.opts = font_loader, logger, opts
         self.in_link = False
         self.link_activated = link_activated
-        self.max_y = self.bs.blockheight if (respect_max_y or self.bs.blockrule.lower() in ('vert-fixed', 'block-fixed')) else sys.maxint
+        self.max_y = self.bs.blockheight if (respect_max_y or self.bs.blockrule.lower() in ('vert-fixed', 'block-fixed')) else sys.maxsize
         self.height = 0
         self.peek_index = -1
 
@@ -221,7 +226,7 @@ class TextBlock(object):
         open_containers = collections.deque()
         self.in_para = False
         for i in tb.content:
-            if isinstance(i, basestring):
+            if isinstance(i, str):
                 self.process_text(i)
             elif i is None:
                 if len(open_containers) > 0:
@@ -300,8 +305,8 @@ class TextBlock(object):
         self.first_line = False
 
     def process_text(self, raw):
-        for ent, rep in TextBlock.XML_ENTITIES.items():
-            raw = raw.replace(u'&%s;'%ent, rep)
+        for ent, rep in list(TextBlock.XML_ENTITIES.items()):
+            raw = raw.replace('&%s;'%ent, rep)
         while len(raw) > 0:
             if self.current_line is None:
                 self.create_line()
@@ -367,7 +372,7 @@ class Line(QGraphicsItem):
             self.children = self.childItems
 
     def start_link(self, refobj, slot):
-        self.current_link = [self.current_width, sys.maxint, refobj, slot]
+        self.current_link = [self.current_width, sys.maxsize, refobj, slot]
 
     def end_link(self):
         if self.current_link is not None:
@@ -530,14 +535,14 @@ class Line(QGraphicsItem):
         matches = []
         try:
             while True:
-                word = words.next()
+                word = next(words)
                 word.highlight = False
-                if tokens[0] in unicode(word.string).lower():
+                if tokens[0] in str(word.string).lower():
                     matches.append(word)
                     for c in range(1, len(tokens)):
-                        word = words.next()
-                        print tokens[c], word.string
-                        if tokens[c] not in unicode(word.string):
+                        word = next(words)
+                        print(tokens[c], word.string)
+                        if tokens[c] not in str(word.string):
                             return None
                         matches.append(word)
                     for w in matches:
@@ -555,16 +560,16 @@ class Line(QGraphicsItem):
             return (textwidth-self.width)/2.
 
     def __unicode__(self):
-        s = u''
+        s = ''
         for tok in self.tokens:
             if isinstance(tok, (int, float)):
                 s += ' '
             elif isinstance(tok, Word):
-                s += unicode(tok.string)
+                s += str(tok.string)
         return s
 
     def __str__(self):
-        return unicode(self).encode('utf-8')
+        return str(self).encode('utf-8')
 
 
 class Word(object):

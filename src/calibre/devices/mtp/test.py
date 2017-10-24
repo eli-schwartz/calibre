@@ -1,18 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import gc
+import io
+import unittest
+
+from calibre.constants import islinux, iswindows
+from calibre.devices.mtp.driver import MTP_DEVICE
+from calibre.devices.scanner import DeviceScanner
+from calibre.utils.icu import lower
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import unittest, gc, io
 
-from calibre.constants import iswindows, islinux
-from calibre.utils.icu import lower
-from calibre.devices.mtp.driver import MTP_DEVICE
-from calibre.devices.scanner import DeviceScanner
 
 
 class ProgressCallback(object):
@@ -172,9 +173,9 @@ class TestDeviceInteraction(unittest.TestCase):
         gc.disable()
         try:
             start_mem = memory()
-            for i in xrange(repetitions):
+            for i in range(repetitions):
                 func(*args, **kwargs)
-            for i in xrange(3):
+            for i in range(3):
                 gc.collect()
             end_mem = memory()
         finally:
@@ -264,4 +265,3 @@ def run():
 
 if __name__ == '__main__':
     run()
-

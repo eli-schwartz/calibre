@@ -1,18 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import os
+import re
+import shutil
+
+from calibre import CurrentDir
+from calibre.constants import filesystem_encoding
+from calibre.customize.conversion import OptionRecommendation, OutputFormatPlugin
+from calibre.ptempfile import TemporaryDirectory
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, shutil, re
 
-from calibre.customize.conversion import (OutputFormatPlugin,
-        OptionRecommendation)
-from calibre.ptempfile import TemporaryDirectory
-from calibre import CurrentDir
-from calibre.constants import filesystem_encoding
 
 block_level_tags = (
       'address',
@@ -209,15 +210,15 @@ class EPUBOutput(OutputFormatPlugin):
         if self.oeb.toc.count() == 0:
             self.log.warn('This EPUB file has no Table of Contents. '
                     'Creating a default TOC')
-            first = iter(self.oeb.spine).next()
+            first = next(iter(self.oeb.spine))
             self.oeb.toc.add(_('Start'), first.href)
 
         from calibre.ebooks.oeb.base import OPF
         identifiers = oeb.metadata['identifier']
         uuid = None
         for x in identifiers:
-            if x.get(OPF('scheme'), None).lower() == 'uuid' or unicode(x).startswith('urn:uuid:'):
-                uuid = unicode(x).split(':')[-1]
+            if x.get(OPF('scheme'), None).lower() == 'uuid' or str(x).startswith('urn:uuid:'):
+                uuid = str(x).split(':')[-1]
                 break
         encrypted_fonts = getattr(input_plugin, 'encrypted_fonts', [])
 
@@ -232,10 +233,10 @@ class EPUBOutput(OutputFormatPlugin):
             # for some absurd reason, or it will throw a hissy fit and refuse
             # to use the obfuscated fonts.
             for x in identifiers:
-                if unicode(x) == uuid:
+                if str(x) == uuid:
                     x.content = 'urn:uuid:'+uuid
 
-        with TemporaryDirectory(u'_epub_output') as tdir:
+        with TemporaryDirectory('_epub_output') as tdir:
             from calibre.customize.ui import plugin_for_output_format
             metadata_xml = None
             extra_entries = []
@@ -243,7 +244,7 @@ class EPUBOutput(OutputFormatPlugin):
                 if self.opts.output_profile.epub_periodical_format == 'sony':
                     from calibre.ebooks.epub.periodical import sony_metadata
                     metadata_xml, atom_xml = sony_metadata(oeb)
-                    extra_entries = [(u'atom.xml', 'application/atom+xml', atom_xml)]
+                    extra_entries = [('atom.xml', 'application/atom+xml', atom_xml)]
             oeb_output = plugin_for_output_format('oeb')
             oeb_output.convert(oeb, tdir, input_plugin, opts, log)
             opf = [x for x in os.listdir(tdir) if x.endswith('.opf')][0]
@@ -285,11 +286,11 @@ class EPUBOutput(OutputFormatPlugin):
         paths = []
         with CurrentDir(tdir):
             paths = [os.path.join(*x.split('/')) for x in uris]
-            uris = dict(zip(uris, paths))
+            uris = dict(list(zip(uris, paths)))
             fonts = []
             for uri in list(uris.keys()):
                 path = uris[uri]
-                if isinstance(path, unicode):
+                if isinstance(path, str):
                     path = path.encode(filesystem_encoding)
                 if not os.path.exists(path):
                     uris.pop(uri)
@@ -303,9 +304,9 @@ class EPUBOutput(OutputFormatPlugin):
                             f.write(chr(ord(data[i]) ^ key[i%16]))
                     else:
                         self.log.warn('Font', path, 'is invalid, ignoring')
-                if not isinstance(uri, unicode):
+                if not isinstance(uri, str):
                     uri = uri.decode('utf-8')
-                fonts.append(u'''
+                fonts.append('''
                 <enc:EncryptedData>
                     <enc:EncryptionMethod Algorithm="http://ns.adobe.com/pdf/enc#RC"/>
                     <enc:CipherData>
@@ -319,7 +320,7 @@ class EPUBOutput(OutputFormatPlugin):
                     xmlns:enc="http://www.w3.org/2001/04/xmlenc#"
                     xmlns:deenc="http://ns.adobe.com/digitaleditions/enc">
                     '''
-                ans += (u'\n'.join(fonts)).encode('utf-8')
+                ans += ('\n'.join(fonts)).encode('utf-8')
                 ans += '\n</encryption>'
                 return ans
     # }}}
@@ -387,7 +388,7 @@ class EPUBOutput(OutputFormatPlugin):
                     if br.getparent() is None:
                         continue
                     try:
-                        prior = br.itersiblings(preceding=True).next()
+                        prior = next(br.itersiblings(preceding=True))
                         priortag = barename(prior.tag)
                         priortext = prior.tail
                     except:
@@ -396,9 +397,9 @@ class EPUBOutput(OutputFormatPlugin):
                     if priortext:
                         priortext = priortext.strip()
                     br.tag = XHTML('p')
-                    br.text = u'\u00a0'
+                    br.text = '\\u00a0'
                     style = br.get('style', '').split(';')
-                    style = filter(None, map(lambda x: x.strip(), style))
+                    style = [_f for _f in [x.strip() for x in style] if _f]
                     style.append('margin:0pt; border:0pt')
                     # If the prior tag is a block (including a <br> we replaced)
                     # then this <br> replacement should have a 1-line height.
@@ -450,14 +451,14 @@ class EPUBOutput(OutputFormatPlugin):
                     tag.tag = XHTML('div')
 
             # ADE fails to render non breaking hyphens/soft hyphens/zero width spaces
-            special_chars = re.compile(u'[\u200b\u00ad]')
+            special_chars = re.compile('[\\u200b\\u00ad]')
             for elem in root.iterdescendants('*'):
                 if elem.text:
                     elem.text = special_chars.sub('', elem.text)
-                    elem.text = elem.text.replace(u'\u2011', '-')
+                    elem.text = elem.text.replace('\\u2011', '-')
                 if elem.tail:
                     elem.tail = special_chars.sub('', elem.tail)
-                    elem.tail = elem.tail.replace(u'\u2011', '-')
+                    elem.tail = elem.tail.replace('\\u2011', '-')
 
             if stylesheet is not None:
                 # ADE doesn't render lists correctly if they have left margins

@@ -1,7 +1,35 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+# Imports {{{
+import os
+import time
+from io import BytesIO
+from operator import attrgetter
+from queue import Empty, Queue
+from threading import Event, Thread
+
+from calibre import force_unicode
+from calibre.customize.ui import metadata_plugins
+from calibre.ebooks.metadata import authors_to_string, rating_to_stars
+from calibre.ebooks.metadata.book.base import Metadata
+from calibre.ebooks.metadata.opf2 import OPF
+from calibre.ebooks.metadata.sources.identify import urls_from_identifiers
+from calibre.gui2 import error_dialog, gprefs, rating_font
+from calibre.gui2.progress_indicator import draw_snake_spinner
+from calibre.library.comments import comments_to_html
+from calibre.ptempfile import TemporaryDirectory
+from calibre.utils.config import tweaks
+from calibre.utils.date import UNDEFINED_DATE, as_utc, format_date, fromordinal, utcnow
+from calibre.utils.ipc.simple_worker import WorkerError, fork_job
+from calibre.utils.logging import GUILog as Log
+from PyQt5.Qt import (
+	QAbstractListModel, QAbstractTableModel, QApplication, QCursor, QDialog,
+	QDialogButtonBox, QFontInfo, QGridLayout, QHBoxLayout, QIcon, QLabel, QListView,
+	QMenu, QModelIndex, QPalette, QPixmap, QPushButton, QRect, QRectF, QSize,
+	QSizePolicy, QStackedWidget, QStringListModel, QStyle, QStyledItemDelegate, Qt,
+	QTableView, QTextBrowser, QTextDocument, QTimer, QVBoxLayout, QWidget, pyqtSignal
+)
+from PyQt5.QtWebKitWidgets import QWebView
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
@@ -9,37 +37,8 @@ __docformat__ = 'restructuredtext en'
 
 DEBUG_DIALOG = False
 
-# Imports {{{
-import os, time
-from threading import Thread, Event
-from operator import attrgetter
-from Queue import Queue, Empty
-from io import BytesIO
 
-from PyQt5.Qt import (
-    QStyledItemDelegate, QTextDocument, QRectF, QIcon, Qt, QApplication,
-    QDialog, QVBoxLayout, QLabel, QDialogButtonBox, QStyle, QStackedWidget,
-    QWidget, QTableView, QGridLayout, QFontInfo, QPalette, QTimer, pyqtSignal,
-    QAbstractTableModel, QSize, QListView, QPixmap, QModelIndex,
-    QAbstractListModel, QRect, QTextBrowser, QStringListModel, QMenu,
-    QCursor, QHBoxLayout, QPushButton, QSizePolicy)
-from PyQt5.QtWebKitWidgets import QWebView
 
-from calibre.customize.ui import metadata_plugins
-from calibre.ebooks.metadata import authors_to_string, rating_to_stars
-from calibre.utils.logging import GUILog as Log
-from calibre.ebooks.metadata.sources.identify import urls_from_identifiers
-from calibre.ebooks.metadata.book.base import Metadata
-from calibre.ebooks.metadata.opf2 import OPF
-from calibre.gui2 import error_dialog, rating_font, gprefs
-from calibre.gui2.progress_indicator import draw_snake_spinner
-from calibre.utils.date import (utcnow, fromordinal, format_date,
-        UNDEFINED_DATE, as_utc)
-from calibre.library.comments import comments_to_html
-from calibre import force_unicode
-from calibre.utils.config import tweaks
-from calibre.utils.ipc.simple_worker import fork_job, WorkerError
-from calibre.ptempfile import TemporaryDirectory
 # }}}
 
 
@@ -153,7 +152,7 @@ class ResultsModel(QAbstractTableModel):  # {{{
 
     def data_as_text(self, book, col):
         if col == 0:
-            return unicode(book.gui_rank+1)
+            return str(book.gui_rank+1)
         if col == 1:
             t = book.title if book.title else _('Unknown')
             a = authors_to_string(book.authors) if book.authors else ''
@@ -281,7 +280,7 @@ class ResultsView(QTableView):  # {{{
             if ids:
                 parts.append('<div><b>%s:</b> %s</div><br>'%(_('See at'), ', '.join(ids)))
         if book.tags:
-            parts.append('<div>%s</div><div>\u00a0</div>'%', '.join(book.tags))
+            parts.append('<div>%s</div><div>\\u00a0</div>'%', '.join(book.tags))
         if book.comments:
             parts.append(comments_to_html(book.comments))
 
@@ -343,12 +342,12 @@ class Comments(QWebView):  # {{{
             if col.isValid():
                 col = col.toRgb()
                 if col.isValid():
-                    ans = unicode(col.name())
+                    ans = str(col.name())
             return ans
 
         fi = QFontInfo(QApplication.font(self.parent()))
         f = fi.pixelSize()+1+int(tweaks['change_book_details_font_size_by'])
-        fam = unicode(fi.family()).strip().replace('"', '')
+        fam = str(fi.family()).strip().replace('"', '')
         if not fam:
             fam = 'sans-serif'
 
@@ -423,7 +422,7 @@ class IdentifyWorker(Thread):  # {{{
                         'single_identify', (self.title, self.authors,
                             self.identifiers), no_output=True, abort=self.abort)
                 self.results, covers, caches, log_dump = res['result']
-                self.results = [OPF(BytesIO(r), basedir=os.getcwdu(),
+                self.results = [OPF(BytesIO(r), basedir=os.getcwd(),
                     populate_spine=False).to_book_metadata() for r in self.results]
                 for r, cov in zip(self.results, covers):
                     r.has_cached_cover_url = cov
@@ -508,12 +507,12 @@ class IdentifyWidget(QWidget):  # {{{
             parts.append('authors:'+authors_to_string(authors))
             simple_desc += _('Authors: %s ') % authors_to_string(authors)
         if identifiers:
-            x = ', '.join('%s:%s'%(k, v) for k, v in identifiers.iteritems())
+            x = ', '.join('%s:%s'%(k, v) for k, v in identifiers.items())
             parts.append(x)
             if 'isbn' in identifiers:
                 simple_desc += 'ISBN: %s' % identifiers['isbn']
         self.query.setText(simple_desc)
-        self.log(unicode(self.query.text()))
+        self.log(str(self.query.text()))
 
         self.worker = IdentifyWorker(self.log, self.abort, title,
                 authors, identifiers, self.caches)
@@ -688,7 +687,7 @@ class CoversModel(QAbstractListModel):  # {{{
 
     def plugin_for_index(self, index):
         row = index.row() if hasattr(index, 'row') else index
-        for k, v in self.plugin_map.iteritems():
+        for k, v in self.plugin_map.items():
             if row in v:
                 return k
 
@@ -703,7 +702,7 @@ class CoversModel(QAbstractListModel):  # {{{
                 return 1
             return pmap.width()*pmap.height()
         dcovers = sorted(self.covers[1:], key=keygen, reverse=True)
-        cmap = {i:self.plugin_for_index(i) for i in xrange(len(self.covers))}
+        cmap = {i:self.plugin_for_index(i) for i in range(len(self.covers))}
         for i, x in enumerate(self.covers[0:1] + dcovers):
             if not x[-1]:
                 good.append(x)
@@ -749,8 +748,8 @@ class CoversModel(QAbstractListModel):  # {{{
             if pmap.isNull():
                 return
             self.beginInsertRows(QModelIndex(), last_row, last_row)
-            for rows in self.plugin_map.itervalues():
-                for i in xrange(len(rows)):
+            for rows in self.plugin_map.values():
+                for i in range(len(rows)):
                     if rows[i] >= last_row:
                         rows[i] += 1
             self.plugin_map[plugin].insert(-1, last_row)
@@ -759,7 +758,7 @@ class CoversModel(QAbstractListModel):  # {{{
         else:
             # single cover plugin
             idx = None
-            for plugin, rows in self.plugin_map.iteritems():
+            for plugin, rows in self.plugin_map.items():
                 if plugin.name == plugin_name:
                     idx = rows[0]
                     break
@@ -842,7 +841,7 @@ class CoversView(QListView):  # {{{
             pmap = self.model().cc
         if pmap is not None:
             from calibre.gui2.viewer.image_popup import ImageView
-            d = ImageView(self, pmap, unicode(idx.data(Qt.DisplayRole) or ''), geom_name='metadata_download_cover_popup_geom')
+            d = ImageView(self, pmap, str(idx.data(Qt.DisplayRole) or ''), geom_name='metadata_download_cover_popup_geom')
             d(use_exec=True)
 
     def copy_cover(self):

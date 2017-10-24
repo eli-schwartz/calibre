@@ -1,20 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import traceback
+from collections import OrderedDict
+from functools import partial
+from operator import itemgetter
+
+from calibre.utils.fonts.sfnt.container import Sfnt
+from calibre.utils.fonts.sfnt.errors import NoGlyphs, UnsupportedFont
+from calibre.utils.icu import safe_chr
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import traceback
-from collections import OrderedDict
-from operator import itemgetter
-from functools import partial
 
-from calibre.utils.icu import safe_chr
-from calibre.utils.fonts.sfnt.container import Sfnt
-from calibre.utils.fonts.sfnt.errors import UnsupportedFont, NoGlyphs
 
 # TrueType outlines {{{
 
@@ -370,5 +369,3 @@ def all():
 
 
 # }}}
-
-

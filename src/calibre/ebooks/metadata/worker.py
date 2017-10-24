@@ -1,18 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__   = 'GPL v3'
-__copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
-__docformat__ = 'restructuredtext en'
-
-import os, shutil, errno
+import errno
+import os
+import shutil
 
 from calibre.customize.ui import run_plugins_on_import
 from calibre.ebooks.metadata.meta import metadata_from_formats
 from calibre.ebooks.metadata.opf2 import metadata_to_opf
 from calibre.utils.filenames import samefile
+
+
+__license__   = 'GPL v3'
+__copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
+__docformat__ = 'restructuredtext en'
+
+
 
 
 def serialize_metadata_for(paths, tdir, group_id):

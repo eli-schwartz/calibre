@@ -1,5 +1,30 @@
-#!/usr/bin/env python2
-from __future__ import with_statement
+import os
+import re
+import socket
+import sys
+import threading
+import time
+import traceback
+import urllib.request, urllib.error, urllib.parse
+import urllib.parse
+from base64 import b64decode
+from http.client import responses
+from urllib.parse import quote
+from urllib.request import url2pathname
+
+from calibre import browser, relpath, unicode_path
+from calibre.constants import filesystem_encoding, iswindows
+from calibre.ebooks.BeautifulSoup import BeautifulSoup, Tag
+from calibre.ebooks.chardet import xml_to_unicode
+from calibre.utils.config import OptionParser
+from calibre.utils.filenames import ascii_filename
+from calibre.utils.img import image_from_data, image_to_data
+from calibre.utils.imghdr import what
+from calibre.utils.logging import Log
+from calibre.web.fetch.utils import rescale_image
+from html5_parser.soup import parse, set_soup_module
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
@@ -7,23 +32,8 @@ __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 Fetch a webpage and its links recursively. The webpages are saved to disk in
 UTF-8 encoding with any charset declarations removed.
 '''
-import sys, socket, os, urlparse, re, time, urllib2, threading, traceback
-from urllib import url2pathname, quote
-from httplib import responses
-from base64 import b64decode
 
-from html5_parser.soup import set_soup_module, parse
 
-from calibre import browser, relpath, unicode_path
-from calibre.constants import filesystem_encoding, iswindows
-from calibre.utils.filenames import ascii_filename
-from calibre.ebooks.BeautifulSoup import BeautifulSoup, Tag
-from calibre.ebooks.chardet import xml_to_unicode
-from calibre.utils.config import OptionParser
-from calibre.utils.logging import Log
-from calibre.utils.img import image_from_data, image_to_data
-from calibre.utils.imghdr import what
-from calibre.web.fetch.utils import rescale_image
 
 
 class AbortArticle(Exception):
@@ -56,7 +66,7 @@ bad_url_counter = 0
 
 def basename(url):
     try:
-        parts = urlparse.urlsplit(url)
+        parts = urllib.parse.urlsplit(url)
         path = url2pathname(parts.path)
         res = os.path.basename(path)
     except:
@@ -90,7 +100,7 @@ def save_soup(soup, target):
             if path and os.path.isfile(path) and os.path.exists(path) and os.path.isabs(path):
                 tag[key] = unicode_path(relpath(path, selfdir).replace(os.sep, '/'))
 
-    html = unicode(soup)
+    html = str(soup)
     with open(target, 'wb') as f:
         f.write(html.encode('utf-8'))
 
@@ -120,7 +130,7 @@ class RecursiveFetcher(object):
 
     def __init__(self, options, log, image_map={}, css_map={}, job_info=None):
         bd = options.dir
-        if not isinstance(bd, unicode):
+        if not isinstance(bd, str):
             bd = bd.decode(filesystem_encoding)
 
         self.base_dir = os.path.abspath(os.path.expanduser(bd))
@@ -254,22 +264,22 @@ class RecursiveFetcher(object):
         delta = time.time() - self.last_fetch_at
         if delta < self.delay:
             time.sleep(self.delay - delta)
-        if isinstance(url, unicode):
+        if isinstance(url, str):
             url = url.encode('utf-8')
         # Not sure is this is really needed as I think mechanize
         # handles quoting automatically, but leaving it
         # in case it breaks something
         if re.search(r'\s+', url) is not None:
-            purl = list(urlparse.urlparse(url))
+            purl = list(urllib.parse.urlparse(url))
             for i in range(2, 6):
                 purl[i] = quote(purl[i])
-            url = urlparse.urlunparse(purl)
+            url = urllib.parse.urlunparse(purl)
         open_func = getattr(self.browser, 'open_novisit', self.browser.open)
         try:
             with closing(open_func(url, timeout=self.timeout)) as f:
                 data = response(f.read()+f.read())
                 data.newurl = f.geturl()
-        except urllib2.URLError as err:
+        except urllib.error.URLError as err:
             if hasattr(err, 'code') and err.code in responses:
                 raise FetchError(responses[err.code])
             if getattr(err, 'reason', [0])[0] == 104 or \
@@ -288,7 +298,7 @@ class RecursiveFetcher(object):
         return data
 
     def start_fetch(self, url):
-        soup = BeautifulSoup(u'<a href="'+url+'" />')
+        soup = BeautifulSoup('<a href="'+url+'" />')
         res = self.process_links(soup, url, 0, into_dir='')
         self.log.debug(url, 'saved to', res)
         return res
@@ -321,13 +331,13 @@ class RecursiveFetcher(object):
         diskpath = unicode_path(os.path.join(self.current_dir, 'stylesheets'))
         if not os.path.exists(diskpath):
             os.mkdir(diskpath)
-        for c, tag in enumerate(soup.findAll(lambda tag: tag.name.lower()in ['link', 'style'] and tag.has_key('type') and tag['type'].lower() == 'text/css')):  # noqa
-            if tag.has_key('href'):  # noqa
+        for c, tag in enumerate(soup.findAll(lambda tag: tag.name.lower()in ['link', 'style'] and 'type' in tag and tag['type'].lower() == 'text/css')):  # noqa
+            if 'href' in tag:  # noqa
                 iurl = tag['href']
-                if not urlparse.urlsplit(iurl).scheme:
-                    iurl = urlparse.urljoin(baseurl, iurl, False)
+                if not urllib.parse.urlsplit(iurl).scheme:
+                    iurl = urllib.parse.urljoin(baseurl, iurl, False)
                 with self.stylemap_lock:
-                    if self.stylemap.has_key(iurl):  # noqa
+                    if iurl in self.stylemap:  # noqa
                         tag['href'] = self.stylemap[iurl]
                         continue
                 try:
@@ -347,10 +357,10 @@ class RecursiveFetcher(object):
                     m = self.__class__.CSS_IMPORT_PATTERN.search(src)
                     if m:
                         iurl = m.group(1)
-                        if not urlparse.urlsplit(iurl).scheme:
-                            iurl = urlparse.urljoin(baseurl, iurl, False)
+                        if not urllib.parse.urlsplit(iurl).scheme:
+                            iurl = urllib.parse.urljoin(baseurl, iurl, False)
                         with self.stylemap_lock:
-                            if self.stylemap.has_key(iurl):  # noqa
+                            if iurl in self.stylemap:  # noqa
                                 ns.replaceWith(src.replace(m.group(1), self.stylemap[iurl]))
                                 continue
                         try:
@@ -374,7 +384,7 @@ class RecursiveFetcher(object):
         if not os.path.exists(diskpath):
             os.mkdir(diskpath)
         c = 0
-        for tag in soup.findAll(lambda tag: tag.name.lower()=='img' and tag.has_key('src')):  # noqa
+        for tag in soup.findAll(lambda tag: tag.name.lower()=='img' and 'src' in tag):  # noqa
             iurl = tag['src']
             if iurl.startswith('data:image/'):
                 try:
@@ -385,10 +395,10 @@ class RecursiveFetcher(object):
             else:
                 if callable(self.image_url_processor):
                     iurl = self.image_url_processor(baseurl, iurl)
-                if not urlparse.urlsplit(iurl).scheme:
-                    iurl = urlparse.urljoin(baseurl, iurl, False)
+                if not urllib.parse.urlsplit(iurl).scheme:
+                    iurl = urllib.parse.urljoin(baseurl, iurl, False)
                 with self.imagemap_lock:
-                    if self.imagemap.has_key(iurl):  # noqa
+                    if iurl in self.imagemap:  # noqa
                         tag['src'] = self.imagemap[iurl]
                         continue
                 try:
@@ -401,7 +411,7 @@ class RecursiveFetcher(object):
                     continue
             c += 1
             fname = ascii_filename('img'+str(c))
-            if isinstance(fname, unicode):
+            if isinstance(fname, str):
                 fname = fname.encode('ascii', 'replace')
             data = self.preprocess_image_ext(data, iurl) if self.preprocess_image_ext is not None else data
             if data is None:
@@ -442,11 +452,11 @@ class RecursiveFetcher(object):
 
     def absurl(self, baseurl, tag, key, filter=True):
         iurl = tag[key]
-        parts = urlparse.urlsplit(iurl)
+        parts = urllib.parse.urlsplit(iurl)
         if not parts.netloc and not parts.path and not parts.query:
             return None
         if not parts.scheme:
-            iurl = urlparse.urljoin(baseurl, iurl, False)
+            iurl = urllib.parse.urljoin(baseurl, iurl, False)
         if not self.is_link_ok(iurl):
             self.log.debug('Skipping invalid link:', iurl)
             return None
@@ -456,22 +466,22 @@ class RecursiveFetcher(object):
         return iurl
 
     def normurl(self, url):
-        parts = list(urlparse.urlsplit(url))
+        parts = list(urllib.parse.urlsplit(url))
         parts[4] = ''
-        return urlparse.urlunsplit(parts)
+        return urllib.parse.urlunsplit(parts)
 
     def localize_link(self, tag, key, path):
-        parts = urlparse.urlsplit(tag[key])
+        parts = urllib.parse.urlsplit(tag[key])
         suffix = ('#'+parts.fragment) if parts.fragment else ''
         tag[key] = path+suffix
 
     def process_return_links(self, soup, baseurl):
-        for tag in soup.findAll(lambda tag: tag.name.lower()=='a' and tag.has_key('href')):  # noqa
+        for tag in soup.findAll(lambda tag: tag.name.lower()=='a' and 'href' in tag):  # noqa
             iurl = self.absurl(baseurl, tag, 'href')
             if not iurl:
                 continue
             nurl = self.normurl(iurl)
-            if self.filemap.has_key(nurl):  # noqa
+            if nurl in self.filemap:  # noqa
                 self.localize_link(tag, 'href', self.filemap[nurl])
 
     def process_links(self, soup, baseurl, recursion_level, into_dir='links'):
@@ -486,14 +496,14 @@ class RecursiveFetcher(object):
 
             for c, tag in enumerate(tags):
                 if self.show_progress:
-                    print '.',
+                    print('.', end=' ')
                     sys.stdout.flush()
                 sys.stdout.flush()
                 iurl = self.absurl(baseurl, tag, 'href', filter=recursion_level != 0)
                 if not iurl:
                     continue
                 nurl = self.normurl(iurl)
-                if self.filemap.has_key(nurl):  # noqa
+                if nurl in self.filemap:  # noqa
                     self.localize_link(tag, 'href', self.filemap[nurl])
                     continue
                 if self.files > self.max_files:
@@ -529,7 +539,7 @@ class RecursiveFetcher(object):
                         self.process_stylesheets(soup, newbaseurl)
 
                     _fname = basename(iurl)
-                    if not isinstance(_fname, unicode):
+                    if not isinstance(_fname, str):
                         _fname.decode('latin1', 'replace')
                     _fname = _fname.encode('ascii', 'replace').replace('%', '').replace(os.sep, '')
                     _fname = ascii_filename(_fname)
@@ -546,7 +556,7 @@ class RecursiveFetcher(object):
 
                     if newbaseurl and not newbaseurl.startswith('/'):
                         for atag in soup.findAll('a', href=lambda x: x and x.startswith('/')):
-                            atag['href'] = urlparse.urljoin(newbaseurl, atag['href'], True)
+                            atag['href'] = urllib.parse.urljoin(newbaseurl, atag['href'], True)
                     if callable(self.postprocess_html_ext):
                         soup = self.postprocess_html_ext(soup,
                                 c==0 and recursion_level==0 and not getattr(self, 'called_first', False),
@@ -568,7 +578,7 @@ class RecursiveFetcher(object):
         finally:
             self.current_dir = prev_dir
         if self.show_progress:
-            print
+            print()
         return res
 
 
@@ -583,7 +593,7 @@ def option_parser(usage=_('%prog URL\n\nWhere URL is for example https://google.
     parser.add_option('-r', '--max-recursions', default=1,
                       help=_('Maximum number of levels to recurse i.e. depth of links to follow. Default %default'),
                       type='int', dest='max_recursions')
-    parser.add_option('-n', '--max-files', default=sys.maxint, type='int', dest='max_files',
+    parser.add_option('-n', '--max-files', default=sys.maxsize, type='int', dest='max_files',
                       help=_('The maximum number of files to download. This only applies to files from <a href> tags. Default is %default'))
     parser.add_option('--delay', default=0, dest='delay', type='float',
                       help=_('Minimum interval in seconds between consecutive fetches. Default is %default s'))

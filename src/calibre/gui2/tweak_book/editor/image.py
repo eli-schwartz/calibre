@@ -1,21 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import sys
+from functools import partial
+
+from calibre.gui2 import error_dialog
+from calibre.gui2.tweak_book import actions, editors, tprefs
+from calibre.gui2.tweak_book.editor.canvas import Canvas
+from PyQt5.Qt import (
+	QApplication, QCheckBox, QDialog, QDialogButtonBox, QFormLayout, QIcon, QInputDialog,
+	QLabel, QMainWindow, QMenu, QSize, QSpinBox, Qt, QToolButton, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import sys
-from functools import partial
 
-from PyQt5.Qt import (
-    QMainWindow, Qt, QApplication, pyqtSignal, QLabel, QIcon, QFormLayout, QSize,
-    QDialog, QSpinBox, QCheckBox, QDialogButtonBox, QToolButton, QMenu, QInputDialog)
 
-from calibre.gui2 import error_dialog
-from calibre.gui2.tweak_book import actions, tprefs, editors
-from calibre.gui2.tweak_book.editor.canvas import Canvas
 
 
 class ResizeDialog(QDialog):  # {{{
@@ -301,7 +301,7 @@ class Editor(QMainWindow):
     def toolbar_floated(self, floating):
         if not floating:
             self.save_state()
-            for ed in editors.itervalues():
+            for ed in editors.values():
                 if ed is not self:
                     ed.restore_state()
 

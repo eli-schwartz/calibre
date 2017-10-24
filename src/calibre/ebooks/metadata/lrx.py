@@ -9,9 +9,9 @@ Read metadata from LRX files
 
 import struct
 from zlib import decompress
-from lxml import etree
 
 from calibre.ebooks.metadata import MetaInformation, string_to_authors
+from lxml import etree
 
 
 def _read(f, at, amount):
@@ -84,4 +84,3 @@ def get_metadata(f):
         raise ValueError('Librie LRX format not supported')
     else:
         raise ValueError('Not a LRX file')
-

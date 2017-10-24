@@ -1,21 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, time
+import os
+import time
 from base64 import b64decode
 from datetime import date
 
-from calibre import prints, guess_type, isbytestring, fsync
+from calibre import fsync, guess_type, isbytestring, prints
+from calibre.constants import DEBUG, preferred_encoding
 from calibre.devices.errors import DeviceError
 from calibre.devices.usbms.driver import debug_print
-from calibre.constants import DEBUG, preferred_encoding
 from calibre.ebooks.chardet import xml_to_unicode
-from calibre.ebooks.metadata import authors_to_string, title_sort, \
-                                    authors_to_sort_string
+from calibre.ebooks.metadata import authors_to_sort_string, authors_to_string, title_sort
+
 
 '''
 cahceExt.xml
@@ -57,8 +57,8 @@ MIME_MAP   = {
 
 DAY_MAP   = dict(Sun=0, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6)
 MONTH_MAP = dict(Jan=1, Feb=2, Mar=3, Apr=4, May=5, Jun=6, Jul=7, Aug=8, Sep=9, Oct=10, Nov=11, Dec=12)
-INVERSE_DAY_MAP = dict(zip(DAY_MAP.values(), DAY_MAP.keys()))
-INVERSE_MONTH_MAP = dict(zip(MONTH_MAP.values(), MONTH_MAP.keys()))
+INVERSE_DAY_MAP = dict(list(zip(list(DAY_MAP.values()), list(DAY_MAP.keys()))))
+INVERSE_MONTH_MAP = dict(list(zip(list(MONTH_MAP.values()), list(MONTH_MAP.keys()))))
 
 
 def strptime(src):
@@ -101,7 +101,7 @@ class XMLCache(object):
         # Parse XML files {{{
         parser = etree.XMLParser(recover=True)
         self.roots = {}
-        for source_id, path in paths.items():
+        for source_id, path in list(paths.items()):
             if source_id == 0:
                 if not os.path.exists(path):
                     raise DeviceError(('The SONY XML cache %r does not exist. Try'
@@ -123,7 +123,7 @@ class XMLCache(object):
                         ' disconnecting and reconnecting your reader.')%path)
 
         self.ext_paths, self.ext_roots = {}, {}
-        for source_id, path in ext_paths.items():
+        for source_id, path in list(ext_paths.items()):
             if not os.path.exists(path):
                 try:
                     with lopen(path, 'wb') as f:
@@ -179,7 +179,7 @@ class XMLCache(object):
                 seen.add(id_)
 
     def prune_empty_playlists(self):
-        for i, root in self.record_roots.items():
+        for i, root in list(self.record_roots.items()):
             self.purge_broken_playlist_items(root)
             for playlist in root.xpath('//*[local-name()="playlist"]'):
                 if len(playlist) == 0 or not playlist.get('title', None):
@@ -189,7 +189,7 @@ class XMLCache(object):
                     playlist.getparent().remove(playlist)
 
     def ensure_unique_playlist_titles(self):
-        for i, root in self.record_roots.items():
+        for i, root in list(self.record_roots.items()):
             seen = set([])
             for playlist in root.xpath('//*[local-name()="playlist"]'):
                 title = playlist.get('title', None)
@@ -395,7 +395,7 @@ class XMLCache(object):
     def update(self, booklists, collections_attributes, plugboard):
         debug_print('Starting update', collections_attributes)
         use_tz_var = False
-        for i, booklist in booklists.items():
+        for i, booklist in list(booklists.items()):
             playlist_map = self.build_id_playlist_map(i)
             debug_print('Updating XML Cache:', i)
             root = self.record_roots[i]
@@ -443,7 +443,7 @@ class XMLCache(object):
         # Update the device collections because update playlist could have added
         # some new ones.
         debug_print('In update/ Starting refresh of device_collections')
-        for i, booklist in booklists.items():
+        for i, booklist in list(booklists.items()):
             playlist_map = self.build_id_playlist_map(i)
             for book in booklist:
                 book.device_collections = playlist_map.get(book.lpath, [])
@@ -503,7 +503,7 @@ class XMLCache(object):
         collections = booklist.get_collections(collections_attributes)
         lpath_map = self.build_lpath_map(root)
         debug_print('update_playlists: finished building maps')
-        for category, books in collections.items():
+        for category, books in list(collections.items()):
             records = [lpath_map.get(b.lpath, None) for b in books]
             # Remove any books that were not found, although this
             # *should* never happen
@@ -628,7 +628,7 @@ class XMLCache(object):
         def clean(x):
             if isbytestring(x):
                 x = x.decode(preferred_encoding, 'replace')
-            x.replace(u'\0', '')
+            x.replace('\0', '')
             return x
 
         def record_set(k, v):
@@ -709,7 +709,7 @@ class XMLCache(object):
             root.iterchildren(reversed=True).next().tail = '\n'+'\t'*(level-1)
 
     def move_playlists_to_bottom(self):
-        for root in self.record_roots.values():
+        for root in list(self.record_roots.values()):
             seen = []
             for pl in root.xpath('//*[local-name()="playlist"]'):
                 pl.getparent().remove(pl)
@@ -720,7 +720,7 @@ class XMLCache(object):
     def write(self):
         from lxml import etree
 
-        for i, path in self.paths.items():
+        for i, path in list(self.paths.items()):
             self.move_playlists_to_bottom()
             self.cleanup_whitespace(i)
             raw = etree.tostring(self.roots[i], encoding='UTF-8',
@@ -731,7 +731,7 @@ class XMLCache(object):
                 f.write(raw)
                 fsync(f)
 
-        for i, path in self.ext_paths.items():
+        for i, path in list(self.ext_paths.items()):
             try:
                 raw = etree.tostring(self.ext_roots[i], encoding='UTF-8',
                     xml_declaration=True)
@@ -760,7 +760,7 @@ class XMLCache(object):
         return m
 
     def book_by_lpath(self, lpath, root):
-        matches = root.xpath(u'//*[local-name()="text" and @path="%s"]'%lpath)
+        matches = root.xpath('//*[local-name()="text" and @path="%s"]'%lpath)
         if matches:
             return matches[0]
 
@@ -778,7 +778,7 @@ class XMLCache(object):
 
     def detect_namespaces(self):
         self.nsmaps = {}
-        for i, root in self.roots.items():
+        for i, root in list(self.roots.items()):
             self.nsmaps[i] = root.nsmap
 
         self.namespaces = {}
@@ -799,4 +799,3 @@ class XMLCache(object):
                 self.namespaces[i] = ns
 
     # }}}
-

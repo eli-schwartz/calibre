@@ -15,11 +15,9 @@ License: [BSD](http://www.opensource.org/licenses/bsd-license.php)
 
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from . import Extension
 from ..blockprocessors import BlockProcessor
-from ..inlinepatterns import BacktickPattern, BACKTICK_RE
+from ..inlinepatterns import BACKTICK_RE, BacktickPattern
 from ..util import etree
 
 
@@ -73,7 +71,7 @@ class TableProcessor(BlockProcessor):
         for i, a in enumerate(align):
             c = etree.SubElement(tr, tag)
             try:
-                if isinstance(cells[i], str) or isinstance(cells[i], unicode):
+                if isinstance(cells[i], str) or isinstance(cells[i], str):
                     c.text = cells[i].strip()
                 else:
                     # we've already inserted a code element

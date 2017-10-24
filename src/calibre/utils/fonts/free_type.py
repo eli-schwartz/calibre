@@ -1,17 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import threading
+from functools import wraps
+
+from calibre.constants import plugins
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import threading
-from functools import wraps
-from future_builtins import map
 
-from calibre.constants import plugins
 
 
 class ThreadingViolation(Exception):
@@ -51,17 +49,17 @@ class Face(object):
         '''
         Returns True if all the characters in text have glyphs in this font.
         '''
-        if not isinstance(text, unicode):
+        if not isinstance(text, str):
             raise TypeError('%r is not a unicode object'%text)
         if has_non_printable_chars:
             from calibre.utils.fonts.utils import get_printable_characters
             text = get_printable_characters(text)
-        chars = tuple(frozenset(map(ord, text)))
+        chars = tuple(frozenset(list(map(ord, text))))
         return self.face.supports_text(chars)
 
     @same_thread
     def glyph_ids(self, text):
-        if not isinstance(text, unicode):
+        if not isinstance(text, str):
             raise TypeError('%r is not a unicode object'%text)
         for char in text:
             yield self.face.glyph_id(ord(char))
@@ -80,5 +78,3 @@ class FreeType(object):
     @same_thread
     def load_font(self, data):
         return Face(self.ft.load_font(data))
-
-

@@ -1,35 +1,38 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import errno
+import os
+from datetime import datetime
+from functools import partial
+
+from calibre.constants import isosx
+from calibre.ebooks.metadata import authors_to_string, string_to_authors
+from calibre.ebooks.metadata.book.base import Metadata
+from calibre.gui2 import error_dialog, gprefs, pixmap_to_data
+from calibre.gui2.custom_column_widgets import Comments, populate_metadata_page
+from calibre.gui2.metadata.basic_widgets import (
+	AuthorsEdit, AuthorSortEdit, BuddyLabel, CommentsEdit, Cover, DateEdit, FormatsManager,
+	IdentifiersEdit, LanguagesEdit, PubdateEdit, PublisherEdit, RatingEdit,
+	RightClickButton, SeriesEdit, SeriesIndexEdit, TagsEdit, TitleEdit, TitleSortEdit
+)
+from calibre.gui2.metadata.single_download import FullFetch
+from calibre.library.comments import merge_comments as merge_two_comments
+from calibre.utils.config import tweaks
+from calibre.utils.date import local_tz
+from calibre.utils.localization import canonicalize_lang
+from PyQt5.Qt import (
+	QCoreApplication, QDialog, QDialogButtonBox, QFont, QFrame, QGridLayout,
+	QGroupBox, QHBoxLayout, QIcon, QInputDialog, QKeySequence, QMenu,
+	QPushButton, QScrollArea, QShortcut, QSize, QSizePolicy, QSpacerItem,
+	QSplitter, Qt, QTabWidget, QToolButton, QVBoxLayout, QWidget, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, errno
-from datetime import datetime
-from functools import partial
 
-from PyQt5.Qt import (Qt, QVBoxLayout, QHBoxLayout, QWidget, QPushButton,
-        QGridLayout, pyqtSignal, QDialogButtonBox, QScrollArea, QFont, QCoreApplication,
-        QTabWidget, QIcon, QToolButton, QSplitter, QGroupBox, QSpacerItem, QInputDialog,
-        QSizePolicy, QFrame, QSize, QKeySequence, QMenu, QShortcut, QDialog)
 
-from calibre.constants import isosx
-from calibre.ebooks.metadata import authors_to_string, string_to_authors
-from calibre.gui2 import error_dialog, gprefs, pixmap_to_data
-from calibre.gui2.metadata.basic_widgets import (TitleEdit, AuthorsEdit,
-    AuthorSortEdit, TitleSortEdit, SeriesEdit, SeriesIndexEdit, IdentifiersEdit,
-    RatingEdit, PublisherEdit, TagsEdit, FormatsManager, Cover, CommentsEdit,
-    BuddyLabel, DateEdit, PubdateEdit, LanguagesEdit, RightClickButton)
-from calibre.gui2.metadata.single_download import FullFetch
-from calibre.gui2.custom_column_widgets import populate_metadata_page, Comments
-from calibre.utils.config import tweaks
-from calibre.ebooks.metadata.book.base import Metadata
-from calibre.utils.localization import canonicalize_lang
-from calibre.utils.date import local_tz
-from calibre.library.comments import merge_comments as merge_two_comments
 
 BASE_TITLE = _('Edit Metadata')
 fetched_fields = ('title', 'title_sort', 'authors', 'author_sort', 'series',
@@ -71,7 +74,7 @@ class MetadataSingleDialogBase(QDialog):
             QKeySequence.PortableText))
         p = self.parent()
         if hasattr(p, 'keyboard'):
-            kname = u'Interface Action: Edit Metadata (Edit Metadata) : menu action : download'
+            kname = 'Interface Action: Edit Metadata (Edit Metadata) : menu action : download'
             sc = p.keyboard.keys_map.get(kname, None)
             if sc:
                 self.download_shortcut.setKey(sc[0])
@@ -306,9 +309,9 @@ class MetadataSingleDialogBase(QDialog):
     def edit_prefix_list(self):
         prefixes, ok = QInputDialog.getMultiLineText(
             self, _('Edit prefixes'), _('Enter prefixes, one on a line. The first prefix becomes the default.'),
-            '\n'.join(list(map(type(u''), gprefs['paste_isbn_prefixes']))))
+            '\n'.join(list(map(type(''), gprefs['paste_isbn_prefixes']))))
         if ok:
-            gprefs['paste_isbn_prefixes'] = list(filter(None, (x.strip() for x in prefixes.splitlines()))) or gprefs.defaults['paste_isbn_prefixes']
+            gprefs['paste_isbn_prefixes'] = list([_f for _f in (x.strip() for x in prefixes.splitlines()) if _f]) or gprefs.defaults['paste_isbn_prefixes']
             self.update_paste_identifiers_menu()
 
     def create_custom_metadata_widgets(self):  # {{{
@@ -370,7 +373,7 @@ class MetadataSingleDialogBase(QDialog):
     def update_window_title(self, *args):
         title = self.title.current_val
         if len(title) > 50:
-            title = title[:50] + u'\u2026'
+            title = title[:50] + '\\u2026'
         self.setWindowTitle(BASE_TITLE + ' - ' +
                 title + ' - ' +
                 _(' [%(num)d of %(tot)d]')%dict(num=self.current_row+1,
@@ -528,7 +531,7 @@ class MetadataSingleDialogBase(QDialog):
         if self.metadata_before_fetch is None:
             return error_dialog(self, _('No downloaded metadata'), _(
                 'There is no downloaded metadata to undo'), show=True)
-        for field, val in self.metadata_before_fetch.iteritems():
+        for field, val in self.metadata_before_fetch.items():
             getattr(self, field).current_val = val
         self.metadata_before_fetch = None
 
@@ -677,7 +680,7 @@ class MetadataSingleDialogBase(QDialog):
         self.button_box.button(self.button_box.Ok).setDefault(True)
         self.button_box.button(self.button_box.Ok).setFocus(Qt.OtherFocusReason)
         self(self.db.id(self.row_list[self.current_row]))
-        for w, state in self.comments_edit_state_at_apply.iteritems():
+        for w, state in self.comments_edit_state_at_apply.items():
             if state == 'code':
                 w.tab = 'code'
 

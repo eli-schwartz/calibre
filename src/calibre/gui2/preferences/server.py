@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 # License: GPLv3 Copyright: 2010, Kovid Goyal <kovid at kovidgoyal.net>
 
@@ -9,17 +8,10 @@ import textwrap
 import time
 
 import sip
-from PyQt5.Qt import (
-    QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox, QFormLayout,
-    QFrame, QHBoxLayout, QIcon, QLabel, QLineEdit, QListWidget, QPlainTextEdit,
-    QPushButton, QScrollArea, QSize, QSizePolicy, QSpinBox, Qt, QTabWidget, QTimer,
-    QUrl, QVBoxLayout, QWidget, pyqtSignal
-)
-
 from calibre import as_unicode
 from calibre.gui2 import (
-    choose_files, choose_save_file, config, error_dialog, gprefs, info_dialog,
-    open_url, warning_dialog
+	choose_files, choose_save_file, config, error_dialog,
+	gprefs, info_dialog, open_url, warning_dialog
 )
 from calibre.gui2.preferences import AbortCommit, ConfigWidgetBase, test_widget
 from calibre.srv.code import custom_list_template as default_custom_list_template
@@ -27,9 +19,15 @@ from calibre.srv.embedded import custom_list_template
 from calibre.srv.library_broker import load_gui_libraries
 from calibre.srv.opts import change_settings, options, server_config
 from calibre.srv.users import (
-    UserManager, create_user_data, validate_password, validate_username
+	UserManager, create_user_data, validate_password, validate_username
 )
 from calibre.utils.icu import primary_sort_key
+from PyQt5.Qt import (
+	QCheckBox, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox,
+	QFormLayout, QFrame, QHBoxLayout, QIcon, QLabel, QLineEdit, QListWidget,
+	QPlainTextEdit, QPushButton, QScrollArea, QSize, QSizePolicy, QSpinBox,
+	Qt, QTabWidget, QTimer, QUrl, QVBoxLayout, QWidget, pyqtSignal
+)
 
 
 # Advanced {{{
@@ -112,7 +110,7 @@ class Text(QLineEdit):
         return self.text().strip() or None
 
     def set(self, val):
-        self.setText(type(u'')(val or ''))
+        self.setText(type('')(val or ''))
 
 
 class Choices(QComboBox):
@@ -156,7 +154,7 @@ class AdvancedTab(QWidget):
                 w = Choices
             elif isinstance(opt.default, bool):
                 w = Bool
-            elif isinstance(opt.default, (int, long)):
+            elif isinstance(opt.default, int):
                 w = Int
             elif isinstance(opt.default, float):
                 w = Float

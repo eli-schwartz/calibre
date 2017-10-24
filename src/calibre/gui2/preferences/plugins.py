@@ -1,27 +1,25 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import textwrap, os
+import os
+import textwrap
 from collections import OrderedDict
 
-from PyQt5.Qt import (Qt, QModelIndex, QAbstractItemModel, QIcon,
-        QBrush)
-
+from calibre.constants import iswindows
+from calibre.customize.ui import (
+	NameConflict, add_plugin, disable_plugin, enable_plugin,
+	initialized_plugins, is_disabled, plugin_customization, remove_plugin
+)
+from calibre.gui2 import choose_files, error_dialog, gprefs, info_dialog, question_dialog
+from calibre.gui2.dialogs.confirm_delete import confirm
 from calibre.gui2.preferences import ConfigWidgetBase, test_widget
 from calibre.gui2.preferences.plugins_ui import Ui_Form
-from calibre.customize.ui import (initialized_plugins, is_disabled, enable_plugin,
-                                 disable_plugin, plugin_customization, add_plugin,
-                                 remove_plugin, NameConflict)
-from calibre.gui2 import (error_dialog, info_dialog, choose_files,
-        question_dialog, gprefs)
-from calibre.gui2.dialogs.confirm_delete import confirm
-from calibre.utils.search_query_parser import SearchQueryParser
 from calibre.utils.icu import lower
-from calibre.constants import iswindows
+from calibre.utils.search_query_parser import SearchQueryParser
+from PyQt5.Qt import QAbstractItemModel, QBrush, QIcon, QModelIndex, Qt
 
 
 class AdaptSQP(SearchQueryParser):
@@ -59,7 +57,7 @@ class PluginModel(QAbstractItemModel, AdaptSQP):  # {{{
                 self._data[plugin.type].append(plugin)
         self.categories = sorted(self._data.keys())
 
-        for plugins in self._data.values():
+        for plugins in list(self._data.values()):
             plugins.sort(cmp=lambda x, y: cmp(x.name.lower(), y.name.lower()))
 
     def universal_set(self):
@@ -271,7 +269,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         if not idx.isValid():
             idx = self._plugin_model.index(0, 0)
         idx = self._plugin_model.find_next(idx,
-                unicode(self.search.currentText()))
+                str(self.search.currentText()))
         self.highlight_index(idx)
 
     def find_previous(self, *args):
@@ -279,7 +277,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         if not idx.isValid():
             idx = self._plugin_model.index(0, 0)
         idx = self._plugin_model.find_next(idx,
-            unicode(self.search.currentText()), backwards=True)
+            str(self.search.currentText()), backwards=True)
         self.highlight_index(idx)
 
     def toggle_plugin(self, *args):
@@ -317,7 +315,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
                 plugin = add_plugin(path)
             except NameConflict as e:
                 return error_dialog(self, _('Already exists'),
-                        unicode(e), show=True)
+                        str(e), show=True)
             self._plugin_model.beginResetModel()
             self._plugin_model.populate()
             self._plugin_model.endResetModel()
@@ -339,7 +337,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         index = self.plugin_view.currentIndex()
         if index.isValid():
             if not index.parent().isValid():
-                name = unicode(index.data() or '')
+                name = str(index.data() or '')
                 return error_dialog(self, _('Error'), '<p>'+
                         _('Select an actual plugin under <b>%s</b> to customize')%name,
                         show=True, show_copy_button=False)
@@ -434,12 +432,12 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
             for key in all_locations])
 
         # If already installed in a GUI container, do nothing
-        for action_names in installed_actions.itervalues():
+        for action_names in installed_actions.values():
             if plugin_action.name in action_names:
                 return
 
         allowed_locations = [(key, text) for key, text in
-                all_locations.iteritems() if key
+                all_locations.items() if key
                 not in plugin_action.dont_add_to]
         if not allowed_locations:
             return  # This plugin doesn't want to live in the GUI

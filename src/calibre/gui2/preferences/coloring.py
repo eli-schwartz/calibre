@@ -1,32 +1,36 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import json
+import os
+import textwrap
+from functools import partial
+
+from calibre import as_unicode, prepare_string_for_xml, sanitize_file_name_unicode
+from calibre.constants import config_dir
+from calibre.gui2 import (
+	choose_files, choose_save_file, error_dialog, gprefs, pixmap_to_data
+)
+from calibre.gui2.dialogs.template_dialog import TemplateDialog
+from calibre.gui2.metadata.single_download import RichTextDelegate
+from calibre.gui2.widgets2 import ColorButton
+from calibre.library.coloring import (
+	Rule, color_row_key, conditionable_columns, displayable_columns, rule_from_template
+)
+from calibre.utils.icu import lower, sort_key
+from calibre.utils.localization import lang_map
+from PyQt5.Qt import (
+	QAbstractListModel, QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+	QDoubleValidator, QFrame, QGridLayout, QHBoxLayout, QIcon, QIntValidator, QLabel,
+	QLineEdit, QListView, QMenu, QPushButton, QScrollArea, QSize, QSizePolicy, QSpacerItem,
+	QStandardItem, QStandardItemModel, Qt, QToolButton, QVBoxLayout, QWidget, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, textwrap, json
-from functools import partial
 
-from PyQt5.Qt import (QWidget, QDialog, QLabel, QGridLayout, QComboBox, QSize,
-        QLineEdit, QIntValidator, QDoubleValidator, QFrame, Qt, QIcon, QHBoxLayout,
-        QScrollArea, QPushButton, QVBoxLayout, QDialogButtonBox, QToolButton,
-        QListView, QAbstractListModel, pyqtSignal, QSizePolicy, QSpacerItem,
-        QApplication, QStandardItem, QStandardItemModel, QCheckBox, QMenu)
 
-from calibre import prepare_string_for_xml, sanitize_file_name_unicode, as_unicode
-from calibre.constants import config_dir
-from calibre.utils.icu import sort_key
-from calibre.gui2 import error_dialog, choose_files, pixmap_to_data, gprefs, choose_save_file
-from calibre.gui2.dialogs.template_dialog import TemplateDialog
-from calibre.gui2.metadata.single_download import RichTextDelegate
-from calibre.gui2.widgets2 import ColorButton
-from calibre.library.coloring import (Rule, conditionable_columns,
-    displayable_columns, rule_from_template, color_row_key)
-from calibre.utils.localization import lang_map
-from calibre.utils.icu import lower
 
 all_columns_string = _('All columns')
 
@@ -125,7 +129,7 @@ class ConditionEditor(QWidget):  # {{{
         self.column_box.addItem('', '')
         for key in sorted(
                 conditionable_columns(fm),
-                key=lambda(key): sort_key(fm[key]['name'])):
+                key=lambda key: sort_key(fm[key]['name'])):
             self.column_box.addItem(fm[key]['name'], key)
         self.column_box.setCurrentIndex(0)
 
@@ -140,11 +144,11 @@ class ConditionEditor(QWidget):  # {{{
     def current_col(self):
         def fget(self):
             idx = self.column_box.currentIndex()
-            return unicode(self.column_box.itemData(idx) or '')
+            return str(self.column_box.itemData(idx) or '')
 
         def fset(self, val):
             for idx in range(self.column_box.count()):
-                c = unicode(self.column_box.itemData(idx) or '')
+                c = str(self.column_box.itemData(idx) or '')
                 if c == val:
                     self.column_box.setCurrentIndex(idx)
                     return
@@ -155,11 +159,11 @@ class ConditionEditor(QWidget):  # {{{
     def current_action(self):
         def fget(self):
             idx = self.action_box.currentIndex()
-            return unicode(self.action_box.itemData(idx) or '')
+            return str(self.action_box.itemData(idx) or '')
 
         def fset(self, val):
             for idx in range(self.action_box.count()):
-                c = unicode(self.action_box.itemData(idx) or '')
+                c = str(self.action_box.itemData(idx) or '')
                 if c == val:
                     self.action_box.setCurrentIndex(idx)
                     return
@@ -168,9 +172,9 @@ class ConditionEditor(QWidget):  # {{{
 
     @property
     def current_val(self):
-        ans = unicode(self.value_box.text()).strip()
+        ans = str(self.value_box.text()).strip()
         if self.current_col == 'languages':
-            rmap = {lower(v):k for k, v in lang_map().iteritems()}
+            rmap = {lower(v):k for k, v in lang_map().items()}
             ans = rmap.get(lower(ans), ans)
         return ans
 
@@ -427,7 +431,7 @@ class RuleEditor(QDialog):  # {{{
                 b.setMinimumContentsLength(15)
 
         for key in sorted(displayable_columns(fm),
-                          key=lambda(k): sort_key(fm[k]['name']) if k != color_row_key else 0):
+                          key=lambda k: sort_key(fm[k]['name']) if k != color_row_key else 0):
             if key == color_row_key and self.rule_kind != 'color':
                 continue
             name = all_columns_string if key == color_row_key else fm[key]['name']
@@ -490,8 +494,8 @@ class RuleEditor(QDialog):  # {{{
 
     def update_color_label(self):
         pal = QApplication.palette()
-        bg1 = unicode(pal.color(pal.Base).name())
-        bg2 = unicode(pal.color(pal.AlternateBase).name())
+        bg1 = str(pal.color(pal.Base).name())
+        bg2 = str(pal.color(pal.AlternateBase).name())
         c = self.color_box.color
         self.color_label.setText('''
             <span style="color: {c}; background-color: {bg1}">&nbsp;{st}&nbsp;</span>
@@ -547,10 +551,10 @@ class RuleEditor(QDialog):  # {{{
             for i in range(1, model.rowCount()):
                 item = model.item(i, 0)
                 if item.checkState() == Qt.Checked:
-                    fnames.append(lower(unicode(item.text())))
+                    fnames.append(lower(str(item.text())))
             fname = ' : '.join(fnames)
         else:
-            fname = lower(unicode(self.filename_box.currentText()))
+            fname = lower(str(self.filename_box.currentText()))
         return fname
 
     def update_icon_filenames_in_box(self):
@@ -609,7 +613,7 @@ class RuleEditor(QDialog):  # {{{
             self.update_icon_filenames_in_box()
 
         for i in range(self.column_box.count()):
-            c = unicode(self.column_box.itemData(i) or '')
+            c = str(self.column_box.itemData(i) or '')
             if col == c:
                 self.column_box.setCurrentIndex(i)
                 break
@@ -663,13 +667,13 @@ class RuleEditor(QDialog):  # {{{
         else:
             r.color = self.color_box.color
         idx = self.column_box.currentIndex()
-        col = unicode(self.column_box.itemData(idx) or '')
+        col = str(self.column_box.itemData(idx) or '')
         for c in self.conditions:
             condition = c.condition
             if condition is not None:
                 r.add_condition(*condition)
         if self.rule_kind == 'icon':
-            kind = unicode(self.kind_box.itemData(
+            kind = str(self.kind_box.itemData(
                                     self.kind_box.currentIndex()) or '')
         else:
             kind = self.rule_kind
@@ -1127,9 +1131,9 @@ if __name__ == '__main__':
 
         kind, col, r = d.rule
 
-        print ('Column to be colored:', col)
+        print(('Column to be colored:', col))
         print ('Template:')
-        print (r.template)
+        print((r.template))
     else:
         d = EditRules()
         d.resize(QSize(800, 600))

@@ -5,14 +5,17 @@ __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 Device drivers.
 '''
 
-import sys, time, pprint
+import pprint
+import sys
+import time
 from functools import partial
-from StringIO import StringIO
+from io import StringIO
+
 
 DAY_MAP   = dict(Sun=0, Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6)
 MONTH_MAP = dict(Jan=1, Feb=2, Mar=3, Apr=4, May=5, Jun=6, Jul=7, Aug=8, Sep=9, Oct=10, Nov=11, Dec=12)
-INVERSE_DAY_MAP = dict(zip(DAY_MAP.values(), DAY_MAP.keys()))
-INVERSE_MONTH_MAP = dict(zip(MONTH_MAP.values(), MONTH_MAP.keys()))
+INVERSE_DAY_MAP = dict(list(zip(list(DAY_MAP.values()), list(DAY_MAP.keys()))))
+INVERSE_MONTH_MAP = dict(list(zip(list(MONTH_MAP.values()), list(MONTH_MAP.keys()))))
 
 
 def strptime(src):
@@ -45,7 +48,7 @@ def get_connected_device():
             connected_devices.append((det, dev))
 
     if dev is None:
-        print >>sys.stderr, 'Unable to find a connected ebook reader.'
+        print('Unable to find a connected ebook reader.', file=sys.stderr)
         return
 
     for det, d in connected_devices:
@@ -170,7 +173,7 @@ def debug(ioreg_to_tmp=False, buf=None, plugins=None,
                 break
             if not success and errors:
                 out('Opening of the following devices failed')
-                for dev,msg in errors.items():
+                for dev,msg in list(errors.items()):
                     out(dev)
                     out(msg)
                     out(' ')

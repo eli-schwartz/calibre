@@ -1,17 +1,18 @@
-#!/usr/bin/env python2
 # This is a patched version of sheel.py to fix
 # https://code.google.com/p/apsw/issues/detail?id=142
 
-import sys
-import apsw
-import shlex
-import os
+import base64
+import codecs
 import csv
+import os
 import re
+import shlex
+import sys
 import textwrap
 import time
-import codecs
-import base64
+
+import apsw
+
 
 if sys.platform=="win32":
     _win_colour=False
@@ -561,7 +562,7 @@ OPTIONS include:
 
         if header:
             if sys.version_info<(3,0):
-                import StringIO as io
+                import io as io
             else:
                 import io
             s=io.StringIO()
@@ -722,7 +723,7 @@ Enter SQL statements terminated with a ";"
             intro=intro.lstrip()
         if self.interactive and intro:
             if sys.version_info<(3,0):
-                intro=unicode(intro)
+                intro=str(intro)
             c=self.colour
             self.write(self.stdout, c.intro+intro+c.intro_)
 
@@ -1638,8 +1639,8 @@ Enter SQL statements terminated with a ";"
             thefile.seek(0,0)
 
         # Ensure all values are utf8 not unicode
-        for k,v in dialect.items():
-            if isinstance(v, unicode):
+        for k,v in list(dialect.items()):
+            if isinstance(v, str):
                 dialect[k]=v.encode("utf8")
         for line in csv.reader(thefile, **dialect):
             # back to unicode again
@@ -2080,7 +2081,7 @@ Enter SQL statements terminated with a ";"
             g={}
             g.update({'apsw': apsw, 'shell': self})
             if sys.version_info<(3,0):
-                execfile(cmd[0], g, g)
+                exec(compile(open(cmd[0]).read(), cmd[0], 'exec'), g, g)
             else:
                 # compile step is needed to associate name with code
                 exec(compile(open(cmd[0]).read(), cmd[0], 'exec'), g, g)
@@ -2368,7 +2369,7 @@ Enter SQL statements terminated with a ";"
             o=self._output_stack[0]
         else:
             o=self._output_stack.pop()
-        for k,v in o.items():
+        for k,v in list(o.items()):
             setattr(self,k,v)
 
     def _append_input_description(self):
@@ -2419,8 +2420,8 @@ Enter SQL statements terminated with a ";"
         def write(self, dest, text):
             """Writes text to dest.  dest will typically be one of self.stdout or self.stderr."""
             # ensure text is unicode to catch codeset issues here
-            if type(text)!=unicode:
-                text=unicode(text)
+            if type(text)!=str:
+                text=str(text)
             try:
                 dest.write(text)
             except UnicodeEncodeError:
@@ -2465,7 +2466,7 @@ Enter SQL statements terminated with a ";"
                 line=self.stdin.readline()  # includes newline unless last line of file doesn't have one
             self.input_line_number+=1
             if sys.version_info<(3,0):
-                if type(line)!=unicode:
+                if type(line)!=str:
                     enc=getattr(self.stdin, "encoding", self.encoding[0])
                     if not enc:
                         enc=self.encoding[0]
@@ -2545,7 +2546,7 @@ Enter SQL statements terminated with a ";"
         """
         assert(len(self._input_stack))>1
         d=self._input_stack.pop()
-        for k,v in d.items():
+        for k,v in list(d.items()):
             setattr(self, k, v)
 
     def complete(self, token, state):
@@ -2729,7 +2730,7 @@ Enter SQL statements terminated with a ";"
                         return vals
             # pragma foo
             if len(t)>1 and t[-2]=="pragma":
-                res=[x for x in self._pragmas.keys() if x.startswith(token)]
+                res=[x for x in list(self._pragmas.keys()) if x.startswith(token)]
                 res.sort()
                 return res
 
@@ -2872,10 +2873,10 @@ Enter SQL statements terminated with a ";"
     class _colourscheme:
 
         def __init__(self, **kwargs):
-            for k,v in kwargs.items():
+            for k,v in list(kwargs.items()):
                 setattr(self, k, v)
 
-        def __nonzero__(self):
+        def __bool__(self):
             return True
 
         def __str__(self):
@@ -2898,10 +2899,10 @@ Enter SQL statements terminated with a ";"
     # The colour definitions - the convention is the name to turn
     # something on and the name with an underscore suffix to turn it
     # off
-    d=_colourscheme(**dict([(v, "\x1b["+str(n)+"m") for n,v in {0: "reset", 1: "bold", 4: "underline", 22: "bold_", 24: "underline_",
+    d=_colourscheme(**dict([(v, "\x1b["+str(n)+"m") for n,v in list({0: "reset", 1: "bold", 4: "underline", 22: "bold_", 24: "underline_",
      7: "inverse", 27: "inverse_",
      30: "fg_black", 31: "fg_red", 32: "fg_green", 33: "fg_yellow", 34: "fg_blue", 35: "fg_magenta", 36: "fg_cyan", 37: "fg_white", 39: "fg_",
-     40: "bg_black", 41: "bg_red", 42: "bg_green", 43: "bg_yellow", 44: "bg_blue", 45: "bg_magenta", 46: "bg_cyan", 47: "bg_white", 49: "bg_"}.items()]))
+     40: "bg_black", 41: "bg_red", 42: "bg_green", 43: "bg_yellow", 44: "bg_blue", 45: "bg_magenta", 46: "bg_cyan", 47: "bg_white", 49: "bg_"}.items())]))
 
     _colours={"off": _colourscheme(colour_value=lambda x,y: y)}
 

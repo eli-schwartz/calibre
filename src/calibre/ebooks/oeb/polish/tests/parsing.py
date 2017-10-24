@@ -1,21 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from functools import partial
+from time import monotonic
+
+from calibre.ebooks.oeb.base import SVG_NS, XHTML_NS, XLINK_NS, XPath
+from calibre.ebooks.oeb.parse_utils import html5_parse
+from calibre.ebooks.oeb.polish.parsing import parse_html5 as parse
+from calibre.ebooks.oeb.polish.tests.base import BaseTest
+from html5lib.constants import cdataElements, rcdataElements
+from lxml import etree
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from functools import partial
 
-from lxml import etree
-from html5lib.constants import cdataElements, rcdataElements
-from time import monotonic
 
-from calibre.ebooks.oeb.polish.tests.base import BaseTest
-from calibre.ebooks.oeb.polish.parsing import parse_html5 as parse
-from calibre.ebooks.oeb.base import XPath, XHTML_NS, SVG_NS, XLINK_NS
-from calibre.ebooks.oeb.parse_utils import html5_parse
 
 
 def nonvoid_cdata_elements(test, parse_function):
@@ -113,14 +112,14 @@ def namespaces(test, parse_function):
 
 
 def space_characters(test, parse_function):
-    markup = '<html><p>\u000cX</p>'
+    markup = '<html><p>\\u000cX</p>'
     root = parse_function(markup)
     err = 'form feed character not converted, parsed markup:\n' + etree.tostring(root)
-    test.assertNotIn('\u000c', root.xpath('//*[local-name()="p"]')[0].text, err)
-    markup = '<html><p>a\u000b\u000c</p>'
+    test.assertNotIn('\\u000c', root.xpath('//*[local-name()="p"]')[0].text, err)
+    markup = '<html><p>a\\u000b\\u000c</p>'
     root = parse_function(markup)  # Should strip non XML safe control code \u000b
-    test.assertNotIn('\u000b', root.xpath('//*[local-name()="p"]')[0].text, err)
-    test.assertNotIn('\u000c', root.xpath('//*[local-name()="p"]')[0].text, err)
+    test.assertNotIn('\\u000b', root.xpath('//*[local-name()="p"]')[0].text, err)
+    test.assertNotIn('\\u000c', root.xpath('//*[local-name()="p"]')[0].text, err)
 
 
 def case_insensitive_element_names(test, parse_function):
@@ -185,7 +184,7 @@ class ParsingTests(BaseTest):
         for ds in (False, True):
             src = '\n<html>\n<p>\n<svg><image />\n<b></svg>&nbsp'
             root = parse(src, discard_namespaces=ds)
-            for tag, lnum in {'html':2, 'head':3, 'body':3, 'p':3, 'svg':4, 'image':4, 'b':5}.iteritems():
+            for tag, lnum in {'html':2, 'head':3, 'body':3, 'p':3, 'svg':4, 'image':4, 'b':5}.items():
                 elem = root.xpath('//*[local-name()="%s"]' % tag)[0]
                 self.assertEqual(lnum, elem.sourceline, 'Line number incorrect for %s, source: %s:' % (tag, src))
 
@@ -214,9 +213,9 @@ def timing():
 
     for name, f in (('calibre', partial(parse, line_numbers=False)), ('html5lib', vanilla), ('calibre-old', html5_parse)):
         timings = []
-        for i in xrange(10):
+        for i in range(10):
             st = monotonic()
             f(raw)
             timings.append(monotonic() - st)
         avg = sum(timings)/len(timings)
-        print ('Average time for %s: %.2g' % (name, avg))
+        print(('Average time for %s: %.2g' % (name, avg)))

@@ -3,9 +3,12 @@ __doc__ = """External interface to the BeautifulSoup HTML parser.
 
 __all__ = ["fromstring", "parse", "convert_tree"]
 
+import re
+
+from calibre.ebooks.BeautifulSoup import (
+	BeautifulSoup, Comment, NavigableString, ProcessingInstruction, Tag
+)
 from lxml import etree, html
-from calibre.ebooks.BeautifulSoup import \
-     BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString
 
 
 def fromstring(data, beautifulsoup=None, makeelement=None, **bsargs):
@@ -114,8 +117,7 @@ try:
     from html.entities import name2codepoint  # Python 3
     name2codepoint
 except ImportError:
-    from htmlentitydefs import name2codepoint
-import re
+    from html.entities import name2codepoint
 
 handle_entities = re.compile("&(\w+);").sub
 
@@ -127,7 +129,7 @@ def unescape(string):
 
     def unescape_entity(m):
         try:
-            return unichr(name2codepoint[m.group(1)])
+            return chr(name2codepoint[m.group(1)])
         except KeyError:
             return m.group(0)  # use as is
     return handle_entities(unescape_entity, string)

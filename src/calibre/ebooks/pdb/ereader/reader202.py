@@ -12,8 +12,8 @@ import struct
 
 from calibre import CurrentDir
 from calibre.ebooks.metadata.opf2 import OPFCreator
-from calibre.ebooks.pdb.formatreader import FormatReader
 from calibre.ebooks.pdb.ereader import EreaderError
+from calibre.ebooks.pdb.formatreader import FormatReader
 
 
 class HeaderRecord(object):
@@ -75,7 +75,7 @@ class Reader202(FormatReader):
         assumed to be encoded as Windows-1252. The encoding is part of
         the eReader file spec and should always be this encoding.
         '''
-        if number not in range(1, self.header_record.num_text_pages + 1):
+        if number not in list(range(1, self.header_record.num_text_pages + 1)):
             return ''
 
         return self.decompress_text(number)
@@ -88,16 +88,16 @@ class Reader202(FormatReader):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        pml = u''
+        pml = ''
         for i in range(1, self.header_record.num_text_pages + 1):
             self.log.debug('Extracting text page %i' % i)
             pml += self.get_text_page(i)
 
         title = self.mi.title
-        if not isinstance(title, unicode):
+        if not isinstance(title, str):
             title = title.decode('utf-8', 'replace')
 
-        html = u'<html><head><title>%s</title></head><body>%s</body></html>' % \
+        html = '<html><head><title>%s</title></head><body>%s</body></html>' % \
             (title, pml_to_html(pml))
 
         with CurrentDir(output_dir):

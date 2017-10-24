@@ -1,18 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+
+from calibre.gui2.tweak_book import verify_link
+from calibre.gui2.tweak_book.editor import (
+	CSS_PROPERTY, LINK_PROPERTY, syntax_text_char_format
+)
+from calibre.gui2.tweak_book.editor.syntax.base import SyntaxHighlighter
+from PyQt5.Qt import QTextBlockUserData
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re
 
-from PyQt5.Qt import QTextBlockUserData
 
-from calibre.gui2.tweak_book import verify_link
-from calibre.gui2.tweak_book.editor import syntax_text_char_format, LINK_PROPERTY, CSS_PROPERTY
-from calibre.gui2.tweak_book.editor.syntax.base import SyntaxHighlighter
 
 space_pat = re.compile(r'[ \n\t\r\f]+')
 cdo_pat = re.compile(r'/\*')
@@ -297,7 +298,7 @@ def create_formats(highlighter):
     for name, msg in {
         'unknown-normal': _('Invalid text'),
         'unterminated-string': _('Unterminated string'),
-    }.iteritems():
+    }.items():
         f = formats[name] = syntax_text_char_format(formats['error'])
         f.setToolTip(msg)
     formats['link'] = syntax_text_char_format(theme['Link'])
@@ -340,4 +341,3 @@ li[rel="mewl"], p.mewl {
 }
 
 ''', path_is_raw=True, syntax='css')
-

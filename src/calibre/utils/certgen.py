@@ -1,12 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.constants import plugins
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from calibre.constants import plugins
 certgen, err = plugins['certgen']
 if err:
     raise ImportError('Failed to load the certgen module with error: %s' % err)

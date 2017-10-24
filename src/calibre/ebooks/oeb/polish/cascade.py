@@ -1,24 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
 from collections import defaultdict, namedtuple
 from functools import partial
 from itertools import count
 from operator import itemgetter
-import re
 
-from cssutils.css import CSSStyleSheet, CSSRule, Property
-
-from css_selectors import Select, INAPPROPRIATE_PSEUDO_CLASSES, SelectorError
 from calibre import as_unicode
 from calibre.ebooks.css_transform_rules import all_properties
 from calibre.ebooks.oeb.base import OEB_STYLES, XHTML
-from calibre.ebooks.oeb.normalize_css import normalizers, DEFAULTS
-from calibre.ebooks.oeb.stylizer import media_ok, INHERITED
-from tinycss.fonts3 import serialize_font_family, parse_font_family
+from calibre.ebooks.oeb.normalize_css import DEFAULTS, normalizers
+from calibre.ebooks.oeb.stylizer import INHERITED, media_ok
+from css_selectors import INAPPROPRIATE_PSEUDO_CLASSES, Select, SelectorError
+from cssutils.css import CSSRule, CSSStyleSheet, Property
+from tinycss.fonts3 import parse_font_family, serialize_font_family
+
 
 _html_css_stylesheet = None
 
@@ -97,7 +94,7 @@ def iterdeclaration(decl):
         if n is None:
             yield p
         else:
-            for k, v in n(p.name, p.propertyValue).iteritems():
+            for k, v in n(p.name, p.propertyValue).items():
                 yield Property(k, v, p.literalpriority)
 
 
@@ -154,7 +151,7 @@ def resolve_pseudo_declarations(decls):
     groups = defaultdict(list)
     for d in decls:
         groups[d.pseudo_element].append(d)
-    return {k:resolve_declarations(v) for k, v in groups.iteritems()}
+    return {k:resolve_declarations(v) for k, v in groups.items()}
 
 
 def resolve_styles(container, name, select=None, sheet_callback=None):
@@ -163,7 +160,7 @@ def resolve_styles(container, name, select=None, sheet_callback=None):
     style_map = defaultdict(list)
     pseudo_style_map = defaultdict(list)
     rule_index_counter = count()
-    pseudo_pat = re.compile(ur':{1,2}(%s)' % ('|'.join(INAPPROPRIATE_PSEUDO_CLASSES)), re.I)
+    pseudo_pat = re.compile(r':{1,2}(%s)' % ('|'.join(INAPPROPRIATE_PSEUDO_CLASSES)), re.I)
 
     def process_sheet(sheet, sheet_name):
         if sheet_callback is not None:
@@ -216,11 +213,11 @@ def resolve_styles(container, name, select=None, sheet_callback=None):
             style_map[elem].append(StyleDeclaration(Specificity(1, 0, 0, 0, 0), normalize_style_declaration(style, name), None))
 
     for l in (style_map, pseudo_style_map):
-        for x in l.itervalues():
+        for x in l.values():
             x.sort(key=itemgetter(0), reverse=True)
 
-    style_map = {elem:resolve_declarations(x) for elem, x in style_map.iteritems()}
-    pseudo_style_map = {elem:resolve_pseudo_declarations(x) for elem, x in pseudo_style_map.iteritems()}
+    style_map = {elem:resolve_declarations(x) for elem, x in style_map.items()}
+    pseudo_style_map = {elem:resolve_pseudo_declarations(x) for elem, x in pseudo_style_map.items()}
 
     return partial(resolve_property, style_map), partial(resolve_pseudo_property, style_map, pseudo_style_map), select
 
@@ -231,7 +228,7 @@ def defvals():
     global _defvals
     if _defvals is None:
         u = type('')
-        _defvals = {k:Values(Property(k, u(val)).propertyValue) for k, val in DEFAULTS.iteritems()}
+        _defvals = {k:Values(Property(k, u(val)).propertyValue) for k, val in DEFAULTS.items()}
     return _defvals
 
 

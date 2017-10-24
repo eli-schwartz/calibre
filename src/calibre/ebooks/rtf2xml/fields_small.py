@@ -10,9 +10,11 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import sys, os, re
+import os
+import re
+import sys
 
-from calibre.ebooks.rtf2xml import field_strings, copy
+from calibre.ebooks.rtf2xml import copy, field_strings
 from calibre.ptempfile import better_mktemp
 
 
@@ -214,7 +216,7 @@ file.
         see_string = ''
         changed_string = ''
         lines = my_string.split('\n')
-        end_bracket_count = sys.maxint
+        end_bracket_count = sys.maxsize
         for line in lines:
             token_info = line[:16]
             if token_info == 'ob<nu<open-brack':
@@ -248,7 +250,7 @@ file.
         bookmark_string = ''
         index_string = ''
         lines = my_string.split('\n')
-        end_bracket_count = sys.maxint
+        end_bracket_count = sys.maxsize
         for line in lines:
             token_info = line[:16]
             if token_info == 'ob<nu<open-brack':
@@ -335,7 +337,7 @@ file.
         book_type = 0
         toc_string = ''
         lines = my_string.split('\n')
-        end_bracket_count = sys.maxint
+        end_bracket_count = sys.maxsize
         for line in lines:
             token_info = line[:16]
             if token_info == 'ob<nu<open-brack':

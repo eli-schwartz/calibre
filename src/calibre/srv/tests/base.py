@@ -1,18 +1,24 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import atexit
+import gc
+import http.client
+import os
+import shutil
+import tempfile
+import time
+import unittest
+from functools import partial
+from io import BytesIO
+from threading import Thread
+
+from calibre.srv.utils import ServerLog
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import unittest, time, httplib, shutil, gc, tempfile, atexit, os
-from io import BytesIO
-from functools import partial
-from threading import Thread
 
-from calibre.srv.utils import ServerLog
 
 rmtree = partial(shutil.rmtree, ignore_errors=True)
 
@@ -118,7 +124,7 @@ class TestServer(Thread):
     def connect(self, timeout=None):
         if timeout is None:
             timeout = self.loop.opts.timeout
-        return httplib.HTTPConnection(self.address[0], self.address[1], strict=True, timeout=timeout)
+        return http.client.HTTPConnection(self.address[0], self.address[1], strict=True, timeout=timeout)
 
     def change_handler(self, handler):
         from calibre.srv.http_response import create_http_handler

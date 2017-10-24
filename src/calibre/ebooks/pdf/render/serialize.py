@@ -1,24 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import hashlib
+
+from calibre.constants import __appname__, __version__
+from calibre.ebooks.pdf.render.common import (
+	EOL, Array, Dictionary, Name, Reference, Stream, String, fmtnum, serialize
+)
+from calibre.ebooks.pdf.render.fonts import FontManager
+from calibre.ebooks.pdf.render.links import Links
+from calibre.utils.date import utcnow
+from PyQt5.Qt import QBuffer, QByteArray, QColor, QImage, QPainter, Qt, qRgba
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import hashlib
-from future_builtins import map
 
-from PyQt5.Qt import QBuffer, QByteArray, QImage, Qt, QColor, qRgba, QPainter
 
-from calibre.constants import (__appname__, __version__)
-from calibre.ebooks.pdf.render.common import (
-    Reference, EOL, serialize, Stream, Dictionary, String, Name, Array,
-    fmtnum)
-from calibre.ebooks.pdf.render.fonts import FontManager
-from calibre.ebooks.pdf.render.links import Links
-from calibre.utils.date import utcnow
 
 PDFVER = b'%PDF-1.4'  # 1.4 is needed for XMP metadata
 
@@ -528,5 +526,3 @@ class PDFStream(object):
         self.write_line('startxref')
         self.write_line('%d'%startxref)
         self.stream.write('%%EOF')
-
-

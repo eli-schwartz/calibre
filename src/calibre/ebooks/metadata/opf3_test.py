@@ -1,31 +1,27 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import unittest
 from collections import defaultdict
 from io import BytesIO
-import unittest
-
-from lxml import etree
 
 from calibre.ebooks.metadata.book import ALL_METADATA_FIELDS
 from calibre.ebooks.metadata.opf2 import OPF
 from calibre.ebooks.metadata.opf3 import (
-    parse_prefixes, reserved_prefixes, expand_prefix, read_identifiers,
-    read_metadata, set_identifiers, XPath, set_application_id, read_title,
-    read_refines, set_title, read_title_sort, read_languages, set_languages,
-    read_authors, Author, set_authors, ensure_prefix, read_prefixes,
-    read_book_producers, set_book_producers, read_timestamp, set_timestamp,
-    read_pubdate, set_pubdate, CALIBRE_PREFIX, read_last_modified, read_comments,
-    set_comments, read_publisher, set_publisher, read_tags, set_tags, read_rating,
-    set_rating, read_series, set_series, read_user_metadata, set_user_metadata,
-    read_author_link_map, read_user_categories, set_author_link_map, set_user_categories,
-    apply_metadata, read_raster_cover, ensure_is_only_raster_cover
+	CALIBRE_PREFIX, Author, XPath, apply_metadata, ensure_is_only_raster_cover,
+	ensure_prefix, expand_prefix, parse_prefixes, read_author_link_map, read_authors,
+	read_book_producers, read_comments, read_identifiers, read_languages, read_last_modified,
+	read_metadata, read_prefixes, read_pubdate, read_publisher, read_raster_cover,
+	read_rating, read_refines, read_series, read_tags, read_timestamp, read_title,
+	read_title_sort, read_user_categories, read_user_metadata, reserved_prefixes,
+	set_application_id, set_author_link_map, set_authors, set_book_producers, set_comments,
+	set_identifiers, set_languages, set_pubdate, set_publisher, set_rating, set_series,
+	set_tags, set_timestamp, set_title, set_user_categories, set_user_metadata
 )
 # This import is needed to prevent a test from running slowly
 from calibre.ebooks.oeb.polish.pretty import pretty_opf, pretty_xml_tree  # noqa
+from lxml import etree
+
 
 read_author_link_map, read_user_categories, set_author_link_map, set_user_categories
 

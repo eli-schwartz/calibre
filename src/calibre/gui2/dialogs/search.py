@@ -1,23 +1,23 @@
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re, copy
+import copy
+import re
 from datetime import date
 
-from PyQt5.Qt import (
-    QDialog, QDialogButtonBox, QFrame, QLabel, QComboBox, QIcon, QVBoxLayout,
-    QSize, QHBoxLayout, QTabWidget, QLineEdit, QWidget, QGroupBox, QFormLayout,
-    QSpinBox, QRadioButton
-)
-
 from calibre import strftime
-from calibre.library.caches import CONTAINS_MATCH, EQUALS_MATCH
 from calibre.gui2 import gprefs
 from calibre.gui2.complete2 import EditWithComplete
-from calibre.utils.icu import sort_key
+from calibre.library.caches import CONTAINS_MATCH, EQUALS_MATCH
 from calibre.utils.config import tweaks
 from calibre.utils.date import now
+from calibre.utils.icu import sort_key
 from calibre.utils.localization import localize_user_manual_link
+from PyQt5.Qt import (
+	QComboBox, QDialog, QDialogButtonBox, QFormLayout, QFrame, QGroupBox, QHBoxLayout, QIcon,
+	QLabel, QLineEdit, QRadioButton, QSize, QSpinBox, QTabWidget, QVBoxLayout, QWidget
+)
+
 
 box_values = {}
 last_matchkind = CONTAINS_MATCH
@@ -36,7 +36,7 @@ def init_dateop(cb):
 
 
 def current_dateop(cb):
-    return unicode(cb.itemData(cb.currentIndex()) or '')
+    return str(cb.itemData(cb.currentIndex()) or '')
 
 
 def create_msg_label(self):
@@ -146,7 +146,7 @@ def create_simple_tab(self, db):
     self.general_box = le = QLineEdit(self)
     l.addRow(self.general_combo, le)
     if self.box_last_values:
-        for k,v in self.box_last_values.items():
+        for k,v in list(self.box_last_values.items()):
             if k == 'general_index':
                 continue
             getattr(self, k).setText(v)
@@ -172,8 +172,8 @@ def create_date_tab(self, db):
     w.h1 = h = QHBoxLayout()
     l.addLayout(h)
     self.date_field = df = add(_("&Search the"), QComboBox(w))
-    vals = [((v['search_terms'] or [k])[0], v['name'] or k) for k, v in db.field_metadata.iteritems() if v.get('datatype', None) == 'datetime']
-    for k, v in sorted(vals, key=lambda (k, v): sort_key(v)):
+    vals = [((v['search_terms'] or [k])[0], v['name'] or k) for k, v in db.field_metadata.items() if v.get('datatype', None) == 'datetime']
+    for k, v in sorted(vals, key=lambda k_v: sort_key(k_v[1])):
         df.addItem(v, k)
     h.addWidget(df)
     self.dateop_date = dd = add(_("date column for books whose &date is "), QComboBox(w))
@@ -189,11 +189,11 @@ def create_date_tab(self, db):
     dy.setRange(102, 10000)
     dy.setValue(now().year)
     self.date_month = dm = add(_('mo&nth'), QComboBox(w))
-    for val, text in [(0, '')] + [(i, strftime('%B', date(2010, i, 1).timetuple())) for i in xrange(1, 13)]:
+    for val, text in [(0, '')] + [(i, strftime('%B', date(2010, i, 1).timetuple())) for i in range(1, 13)]:
         dm.addItem(text, val)
     self.date_day = dd = add(_('&day'), QSpinBox(w))
     dd.setRange(0, 31)
-    dd.setSpecialValueText(u' \xa0')
+    dd.setSpecialValueText(' \xa0')
     h.addStretch(10)
 
     w.h3 = h = QHBoxLayout()
@@ -295,7 +295,7 @@ class SearchDialog(QDialog):
         return (self.adv_search_string, self.box_search_string, self.date_search_string)[i]()
 
     def date_search_string(self):
-        field = unicode(self.date_field.itemData(self.date_field.currentIndex()) or '')
+        field = str(self.date_field.itemData(self.date_field.currentIndex()) or '')
         op = current_dateop(self.dateop_date)
         prefix = '%s:%s' % (field, op)
         if self.sel_date.isChecked():
@@ -311,7 +311,7 @@ class SearchDialog(QDialog):
             val = self.date_daysago.value()
             val *= {0:1, 1:7, 2:30, 3:365}[self.date_ago_type.currentIndex()]
             return '%s%sdaysago' % (prefix, val)
-        return '%s%s' % (prefix, unicode(self.date_human.itemData(self.date_human.currentIndex()) or ''))
+        return '%s%s' % (prefix, str(self.date_human.itemData(self.date_human.currentIndex()) or ''))
 
     def adv_search_string(self):
         mk = self.matchkind.currentIndex()
@@ -321,9 +321,8 @@ class SearchDialog(QDialog):
             self.mc = '='
         else:
             self.mc = '~'
-        all, any, phrase, none = map(lambda x: unicode(x.text()),
-                (self.all, self.any, self.phrase, self.none))
-        all, any, none = map(self.tokens, (all, any, none))
+        all, any, phrase, none = [str(x.text()) for x in (self.all, self.any, self.phrase, self.none)]
+        all, any, none = list(map(self.tokens, (all, any, none)))
         phrase = phrase.strip()
         all = ' and '.join(all)
         any = ' or '.join(any)
@@ -343,11 +342,11 @@ class SearchDialog(QDialog):
         return ans
 
     def token(self):
-        txt = unicode(self.text.text()).strip()
+        txt = str(self.text.text()).strip()
         if txt:
             if self.negate.isChecked():
                 txt = '!'+txt
-            tok = self.FIELDS[unicode(self.field.currentText())]+txt
+            tok = self.FIELDS[str(self.field.currentText())]+txt
             if re.search(r'\s', tok):
                 tok = '"%s"'%tok
             return tok
@@ -363,35 +362,35 @@ class SearchDialog(QDialog):
 
         ans = []
         self.box_last_values = {}
-        title = unicode(self.title_box.text()).strip()
+        title = str(self.title_box.text()).strip()
         self.box_last_values['title_box'] = title
         if title:
             ans.append('title:"' + self.mc + title + '"')
-        author = unicode(self.authors_box.text()).strip()
+        author = str(self.authors_box.text()).strip()
         self.box_last_values['authors_box'] = author
         if author:
             ans.append('author:"' + self.mc + author + '"')
-        series = unicode(self.series_box.text()).strip()
+        series = str(self.series_box.text()).strip()
         self.box_last_values['series_box'] = series
         if series:
             ans.append('series:"' + self.mc + series + '"')
 
-        tags = unicode(self.tags_box.text())
+        tags = str(self.tags_box.text())
         self.box_last_values['tags_box'] = tags
         tags = [t.strip() for t in tags.split(',') if t.strip()]
         if tags:
             tags = ['tags:"' + self.mc + t + '"' for t in tags]
             ans.append('(' + ' or '.join(tags) + ')')
-        general = unicode(self.general_box.text())
+        general = str(self.general_box.text())
         self.box_last_values['general_box'] = general
-        general_index = unicode(self.general_combo.currentText())
+        general_index = str(self.general_combo.currentText())
         self.box_last_values['general_index'] = general_index
         global box_values
         global last_matchkind
         box_values = copy.deepcopy(self.box_last_values)
         last_matchkind = mk
         if general:
-            ans.append(unicode(self.general_combo.currentText()) + ':"' +
+            ans.append(str(self.general_combo.currentText()) + ':"' +
                     self.mc + general + '"')
         if ans:
             return ' and '.join(ans)
@@ -405,4 +404,4 @@ if __name__ == '__main__':
     app = Application([])
     d = SearchDialog(None, db)
     d.exec_()
-    print(d.search_string())
+    print((d.search_string()))

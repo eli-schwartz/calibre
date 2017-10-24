@@ -1,22 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import print_function
+import errno
+import os
+from threading import Event, Thread
+
+from calibre import force_unicode, isbytestring, patheq
+from calibre.constants import filesystem_encoding, get_portable_base, iswindows
+from calibre.gui2 import choose_dir, error_dialog
+from calibre.gui2.dialogs.choose_library_ui import Ui_Dialog
+from calibre.gui2.dialogs.progress import ProgressDialog as PD
+from PyQt5.Qt import QDialog, Qt, QTimer, pyqtSignal
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, errno
-from threading import Thread, Event
 
-from PyQt5.Qt import QDialog, QTimer, Qt, pyqtSignal
 
-from calibre.gui2.dialogs.choose_library_ui import Ui_Dialog
-from calibre.gui2.dialogs.progress import ProgressDialog as PD
-from calibre.gui2 import error_dialog, choose_dir
-from calibre.constants import (filesystem_encoding, iswindows,
-        get_portable_base)
-from calibre import isbytestring, patheq, force_unicode
 
 
 class ProgressDialog(PD):
@@ -54,7 +54,7 @@ class ChooseLibrary(QDialog, Ui_Dialog):
         lp = db.library_path
         if isbytestring(lp):
             lp = lp.decode(filesystem_encoding)
-        loc = unicode(self.old_location.text()).format(lp)
+        loc = str(self.old_location.text()).format(lp)
         self.old_location.setText(loc)
         self.browse_button.clicked.connect(self.choose_loc)
         self.empty_library.toggled.connect(self.empty_library_toggled)
@@ -168,7 +168,7 @@ class ChooseLibrary(QDialog, Ui_Dialog):
             action = 'existing'
         elif self.empty_library.isChecked():
             action = 'new'
-        text = unicode(self.location.text()).strip()
+        text = str(self.location.text()).strip()
         if not text:
             return error_dialog(self, _('No location'), _('No location selected'),
                     show=True)

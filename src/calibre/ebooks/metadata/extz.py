@@ -8,8 +8,7 @@ Read meta information from extZ (TXTZ, HTMLZ...) files.
 '''
 
 import os
-
-from cStringIO import StringIO
+from io import StringIO
 
 from calibre.ebooks.metadata import MetaInformation
 from calibre.ebooks.metadata.opf2 import OPF

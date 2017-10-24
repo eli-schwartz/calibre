@@ -8,12 +8,14 @@ __license__   = 'GPL v3'
 __copyright__ = '2009, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-import struct, zlib
+import struct
+import zlib
 
 from calibre.ebooks.pdb.formatwriter import FormatWriter
 from calibre.ebooks.pdb.header import PdbHeaderBuilder
-from calibre.ebooks.txt.txtml import TXTMLizer
 from calibre.ebooks.txt.newlines import TxtNewlines, specified_newlines
+from calibre.ebooks.txt.txtml import TXTMLizer
+
 
 MAX_RECORD_SIZE = 8192
 
@@ -83,4 +85,3 @@ class Writer(FormatWriter):
         record += struct.pack('>LL', 0, 0)              # [24:32], padding
 
         return record
-

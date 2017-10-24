@@ -151,5 +151,3 @@ class USER_DEFINED(USBMS):
             names['carda'] = main
 
         return names
-
-

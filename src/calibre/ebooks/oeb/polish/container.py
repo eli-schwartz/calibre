@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
 # License: GPLv3 Copyright: 2013, Kovid Goyal <kovid at kovidgoyal.net>
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import errno
 import hashlib
 import logging
@@ -14,13 +11,9 @@ import time
 import unicodedata
 import uuid
 from collections import defaultdict
-from future_builtins import zip
 from io import BytesIO
 from itertools import count
-from urlparse import urlparse
-
-from cssutils import getUrls, replaceUrls
-from lxml import etree
+from urllib.parse import urlparse
 
 from calibre import CurrentDir, walk
 from calibre.constants import iswindows
@@ -28,33 +21,34 @@ from calibre.customize.ui import plugin_for_input_format, plugin_for_output_form
 from calibre.ebooks import escape_xpath_attr
 from calibre.ebooks.chardet import xml_to_unicode
 from calibre.ebooks.conversion.plugins.epub_input import (
-    ADOBE_OBFUSCATION, IDPF_OBFUSCATION, decrypt_font_data
+	ADOBE_OBFUSCATION, IDPF_OBFUSCATION, decrypt_font_data
 )
-from calibre.ebooks.conversion.preprocess import (
-    CSSPreProcessor as cssp, HTMLPreProcessor
-)
+from calibre.ebooks.conversion.preprocess import CSSPreProcessor as cssp, HTMLPreProcessor
 from calibre.ebooks.metadata.opf3 import (
-    CALIBRE_PREFIX, ensure_prefix, items_with_property, read_prefixes
+	CALIBRE_PREFIX, ensure_prefix, items_with_property, read_prefixes
 )
 from calibre.ebooks.metadata.utils import parse_opf_version
 from calibre.ebooks.mobi import MobiError
 from calibre.ebooks.mobi.reader.headers import MetadataHeader
 from calibre.ebooks.mobi.tweak import set_cover
 from calibre.ebooks.oeb.base import (
-    DC11_NS, OEB_DOCS, OEB_STYLES, OPF, OPF2_NS, Manifest, itercsslinks, iterlinks,
-    rewrite_links, serialize, urlquote, urlunquote
+	DC11_NS, OEB_DOCS, OEB_STYLES, OPF, OPF2_NS, Manifest, itercsslinks,
+	iterlinks, rewrite_links, serialize, urlquote, urlunquote
 )
 from calibre.ebooks.oeb.parse_utils import RECOVER_PARSER, NotHTML, parse_html
 from calibre.ebooks.oeb.polish.errors import DRMError, InvalidBook
 from calibre.ebooks.oeb.polish.parsing import parse as parse_html_tweak
 from calibre.ebooks.oeb.polish.utils import (
-    CommentFinder, PositionFinder, guess_type, parse_css
+	CommentFinder, PositionFinder, guess_type, parse_css
 )
 from calibre.ptempfile import PersistentTemporaryDirectory, PersistentTemporaryFile
 from calibre.utils.filenames import hardlink_file, nlinks_file
 from calibre.utils.ipc.simple_worker import WorkerError, fork_job
 from calibre.utils.logging import default_log
 from calibre.utils.zipfile import ZipFile
+from cssutils import getUrls, replaceUrls
+from lxml import etree
+
 
 exists, join, relpath = os.path.exists, os.path.join, os.path.relpath
 
@@ -161,7 +155,7 @@ class ContainerBase(object):  # {{{
         """
         def fix_data(d):
             return d.replace('\r\n', '\n').replace('\r', '\n')
-        if isinstance(data, unicode):
+        if isinstance(data, str):
             return fix_data(data)
         bom_enc = None
         if data[:4] in {b'\0\0\xfe\xff', b'\xff\xfe\0\0'}:
@@ -305,7 +299,7 @@ class Container(ContainerBase):  # {{{
             'tweak_mode': self.tweak_mode,
             'name_path_map': {
                 name:os.path.join(dest_dir, os.path.relpath(path, self.root))
-                for name, path in self.name_path_map.iteritems()}
+                for name, path in self.name_path_map.items()}
         }
 
     def add_name_to_manifest(self, name, process_manifest_item=None):
@@ -647,7 +641,7 @@ class Container(ContainerBase):  # {{{
         for item in self.opf_xpath('//opf:manifest/opf:item[@href and @media-type]'):
             ans[item.get('media-type').lower()].append(self.href_to_name(
                 item.get('href'), self.opf_name))
-        return {mt:tuple(v) for mt, v in ans.iteritems()}
+        return {mt:tuple(v) for mt, v in ans.items()}
 
     def manifest_items_with_property(self, property_name):
         ' All manifest items that have the specified property '
@@ -665,7 +659,7 @@ class Container(ContainerBase):  # {{{
             predicate = predicate.__eq__
         elif hasattr(predicate, '__contains__'):
             predicate = predicate.__contains__
-        for mt, names in self.manifest_type_map.iteritems():
+        for mt, names in self.manifest_type_map.items():
             if predicate(mt):
                 for name in names:
                     yield name
@@ -779,10 +773,10 @@ class Container(ContainerBase):  # {{{
         the form (name, linear). Will raise an error if one of the names is not
         present in the manifest. '''
         imap = self.manifest_id_map
-        imap = {name:item_id for item_id, name in imap.iteritems()}
+        imap = {name:item_id for item_id, name in imap.items()}
         items = [item for item, name, linear in self.spine_iter]
         tail, last_tail = (items[0].tail, items[-1].tail) if items else ('\n    ', '\n  ')
-        map(self.remove_from_xml, items)
+        list(map(self.remove_from_xml, items))
         spine = self.opf_xpath('//opf:spine')[0]
         spine.text = tail
         for name, linear in spine_items:
@@ -1043,7 +1037,7 @@ class Container(ContainerBase):  # {{{
         if set(self.name_path_map) != set(other.name_path_map):
             return 'Set of files is not the same'
         mismatches = []
-        for name, path in self.name_path_map.iteritems():
+        for name, path in self.name_path_map.items():
             opath = other.name_path_map[name]
             with open(path, 'rb') as f1, open(opath, 'rb') as f2:
                 if f1.read() != f2.read():
@@ -1247,7 +1241,7 @@ class EpubContainer(Container):
             return
 
         package_id = raw_unique_identifier = idpf_key = None
-        for attrib, val in self.opf.attrib.iteritems():
+        for attrib, val in self.opf.attrib.items():
             if attrib.endswith('unique-identifier'):
                 package_id = val
                 break
@@ -1258,13 +1252,13 @@ class EpubContainer(Container):
                     break
         if raw_unique_identifier is not None:
             idpf_key = raw_unique_identifier
-            idpf_key = re.sub(u'[\u0020\u0009\u000d\u000a]', u'', idpf_key)
+            idpf_key = re.sub('[\\u0020\\u0009\\u000d\\u000a]', '', idpf_key)
             idpf_key = hashlib.sha1(idpf_key.encode('utf-8')).digest()
         key = None
         for item in self.opf_xpath('//*[local-name()="metadata"]/*'
                                    '[local-name()="identifier"]'):
             scheme = None
-            for xkey in item.attrib.keys():
+            for xkey in list(item.attrib.keys()):
                 if xkey.endswith('scheme'):
                     scheme = item.get(xkey)
             if (scheme and scheme.lower() == 'uuid') or \
@@ -1276,7 +1270,7 @@ class EpubContainer(Container):
                     self.log.exception('Failed to parse obfuscation key')
                     key = None
 
-        for font, alg in fonts.iteritems():
+        for font, alg in fonts.items():
             tkey = key if alg == ADOBE_OBFUSCATION else idpf_key
             if not tkey:
                 raise ObfuscationKeyMissing('Failed to find obfuscation key')
@@ -1332,7 +1326,7 @@ class EpubContainer(Container):
             with open(join(self.root, 'mimetype'), 'wb') as f:
                 f.write(guess_type('a.epub'))
             zip_rebuilder(self.root, outpath)
-            for name, data in restore_fonts.iteritems():
+            for name, data in restore_fonts.items():
                 with self.open(name, 'wb') as f:
                     f.write(data)
 

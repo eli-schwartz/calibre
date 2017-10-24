@@ -1,28 +1,28 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import textwrap
+from functools import partial
+
+from calibre.ebooks.metadata import title_sort
+from calibre.gui2 import error_dialog, gprefs, question_dialog
+from calibre.gui2.dialogs.edit_authors_dialog import EditAuthorsDialog
+from calibre.gui2.dialogs.tag_categories import TagCategories
+from calibre.gui2.dialogs.tag_list_editor import TagListEditor
+from calibre.gui2.tag_browser.view import TagsView
+from calibre.gui2.widgets import HistoryLineEdit
+from calibre.library.field_metadata import category_icon_map
+from calibre.utils.icu import sort_key
+from PyQt5.Qt import (
+	QAction, QActionGroup, QFrame, QHBoxLayout, QIcon, QLabel, QMenu,
+	QSizePolicy, Qt, QTimer, QToolButton, QVBoxLayout, QWidget
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import textwrap
-from functools import partial
 
-from PyQt5.Qt import (
-    Qt, QIcon, QWidget, QHBoxLayout, QVBoxLayout, QToolButton, QLabel, QFrame,
-    QTimer, QMenu, QActionGroup, QAction, QSizePolicy)
 
-from calibre.gui2 import error_dialog, question_dialog, gprefs
-from calibre.gui2.widgets import HistoryLineEdit
-from calibre.library.field_metadata import category_icon_map
-from calibre.utils.icu import sort_key
-from calibre.gui2.tag_browser.view import TagsView
-from calibre.ebooks.metadata import title_sort
-from calibre.gui2.dialogs.tag_categories import TagCategories
-from calibre.gui2.dialogs.tag_list_editor import TagListEditor
-from calibre.gui2.dialogs.edit_authors_dialog import EditAuthorsDialog
 
 
 class TagBrowserMixin(object):  # {{{
@@ -121,7 +121,7 @@ class TagBrowserMixin(object):  # {{{
             if new_cat not in user_cats:
                 break
             i += 1
-            n = new_name + unicode(i)
+            n = new_name + str(i)
         # Add the new category
         user_cats[new_cat] = []
         db.new_api.set_pref('user_categories', user_cats)
@@ -157,7 +157,7 @@ class TagBrowserMixin(object):  # {{{
             category_name = category_name[1:]
         db = self.library_view.model().db
         user_cats = db.prefs.get('user_categories', {})
-        cat_keys = sorted(user_cats.keys(), key=sort_key)
+        cat_keys = sorted(list(user_cats.keys()), key=sort_key)
         has_children = False
         found = False
         for k in cat_keys:
@@ -265,7 +265,7 @@ class TagBrowserMixin(object):  # {{{
                     m.delete_item_from_all_user_categories(orig_name[item], category)
                 for old_id in to_rename:
                     m.rename_item_in_all_user_categories(orig_name[old_id],
-                                            category, unicode(to_rename[old_id]))
+                                            category, str(to_rename[old_id]))
 
                 db.new_api.remove_items(category, to_delete)
                 db.new_api.rename_items(category, to_rename, change_index=False)
@@ -590,7 +590,7 @@ class TagBrowserWidget(QFrame):  # {{{
     def find(self):
         model = self.tags_view.model()
         model.clear_boxed()
-        txt = unicode(self.item_search.currentText()).strip()
+        txt = str(self.item_search.currentText()).strip()
 
         if txt.startswith('*'):
             model.set_categories_filter(txt[1:])

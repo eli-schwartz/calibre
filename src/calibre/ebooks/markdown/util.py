@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 import re
 import sys
 
@@ -15,9 +14,9 @@ if PY3:  # pragma: no cover
     text_type = str
     int2str = chr
 else:  # pragma: no cover
-    string_type = basestring   # noqa
-    text_type = unicode        # noqa
-    int2str = unichr           # noqa
+    string_type = str   # noqa
+    text_type = str        # noqa
+    int2str = chr           # noqa
 
 
 """
@@ -36,8 +35,8 @@ BLOCK_LEVEL_ELEMENTS = re.compile(
     re.IGNORECASE
 )
 # Placeholders
-STX = '\u0002'  # Use STX ("Start of text") for start-of-placeholder
-ETX = '\u0003'  # Use ETX ("End of text") for end-of-placeholder
+STX = '\\u0002'  # Use STX ("Start of text") for start-of-placeholder
+ETX = '\\u0003'  # Use ETX ("End of text") for end-of-placeholder
 INLINE_PLACEHOLDER_PREFIX = STX+"klzzwxh:"
 INLINE_PLACEHOLDER = INLINE_PLACEHOLDER_PREFIX + "%s" + ETX
 INLINE_PLACEHOLDER_RE = re.compile(INLINE_PLACEHOLDER % r'([0-9]+)')
@@ -53,11 +52,11 @@ Constants you probably do not need to change
 """
 
 RTL_BIDI_RANGES = (
-    ('\u0590', '\u07FF'),
+    ('\\u0590', '\\u07FF'),
     # Hebrew (0590-05FF), Arabic (0600-06FF),
     # Syriac (0700-074F), Arabic supplement (0750-077F),
     # Thaana (0780-07BF), Nko (07C0-07FF).
-    ('\u2D30', '\u2D7F')  # Tifinagh
+    ('\\u2D30', '\\u2D7F')  # Tifinagh
 )
 
 # Extensions should use "markdown.util.etree" instead of "etree" (or do `from

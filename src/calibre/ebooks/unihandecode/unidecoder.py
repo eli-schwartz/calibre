@@ -60,6 +60,7 @@ it under the same terms as Perl itself.
 '''
 
 import re
+
 from calibre.ebooks.unihandecode.unicodepoints import CODEPOINTS
 from calibre.ebooks.unihandecode.zhcodepoints import CODEPOINTS as HANCODES
 
@@ -95,7 +96,7 @@ class Unidecoder(object):
         '''
         # Code groups withing CODEPOINTS take the form 'xAB'
         try:  # python2
-            return 'x%02x' % (ord(unicode(character)) >> 8)
+            return 'x%02x' % (ord(str(character)) >> 8)
         except:
             return 'x%02x' % (ord(character) >> 8)
 
@@ -105,7 +106,6 @@ class Unidecoder(object):
         the group character is a part of.
         '''
         try:  # python2
-            return ord(unicode(character)) & 255
+            return ord(str(character)) & 255
         except:
             return ord(character) & 255
-

@@ -1,17 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
 
 from calibre.db.cli import integers_from_string
 from calibre.db.errors import NoSuchFormat
 from calibre.library.save_to_disk import (
-    config, do_save_book_to_disk, get_formats, sanitize_args
+	config, do_save_book_to_disk, get_formats, sanitize_args
 )
 from calibre.utils.formatter_functions import load_user_template_functions
+
 
 readonly = True
 version = 0  # change this if you change signature of implementation()

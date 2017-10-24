@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -8,13 +7,12 @@ __docformat__ = 'restructuredtext en'
 import os
 from functools import partial
 
-from PyQt5.Qt import QModelIndex, QTimer
-
-from calibre.gui2 import error_dialog, Dispatcher, gprefs
-from calibre.gui2.tools import convert_single_ebook, convert_bulk_ebook
-from calibre.utils.config import prefs, tweaks
-from calibre.gui2.actions import InterfaceAction
 from calibre.customize.ui import plugin_for_input_format
+from calibre.gui2 import Dispatcher, error_dialog, gprefs
+from calibre.gui2.actions import InterfaceAction
+from calibre.gui2.tools import convert_bulk_ebook, convert_single_ebook
+from calibre.utils.config import prefs, tweaks
+from PyQt5.Qt import QModelIndex, QTimer
 
 
 class ConvertAction(InterfaceAction):

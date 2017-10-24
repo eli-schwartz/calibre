@@ -1,14 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+from calibre.gui2 import gprefs
+from calibre.gui2.ui import get_gui
+from PyQt5.Qt import QLabel, QListWidget, QListWidgetItem, Qt, QVBoxLayout, QWidget
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from calibre.gui2 import gprefs
-from calibre.gui2.ui import get_gui
-from PyQt5.Qt import QWidget, QListWidgetItem, Qt, QVBoxLayout, QLabel, QListWidget
 
 
 class PluginWidget(QWidget):
@@ -66,16 +65,16 @@ class PluginWidget(QWidget):
         fields = frozenset(gprefs.get(self.name+'_db_fields', self.all_fields))
         for x in range(self.db_fields.count()):
             item = self.db_fields.item(x)
-            item.setCheckState(Qt.Checked if unicode(item.data(Qt.UserRole)) in fields else Qt.Unchecked)
+            item.setCheckState(Qt.Checked if str(item.data(Qt.UserRole)) in fields else Qt.Unchecked)
 
     def options(self):
         # Save the currently activated fields
         fields, all_fields = [], []
-        for x in xrange(self.db_fields.count()):
+        for x in range(self.db_fields.count()):
             item = self.db_fields.item(x)
-            all_fields.append(unicode(item.data(Qt.UserRole)))
+            all_fields.append(str(item.data(Qt.UserRole)))
             if item.checkState() == Qt.Checked:
-                fields.append(unicode(item.data(Qt.UserRole)))
+                fields.append(str(item.data(Qt.UserRole)))
         gprefs.set(self.name+'_db_fields', fields)
         gprefs.set(self.name + '_db_fields_sort_order', {x:i for i, x in enumerate(all_fields)})
 

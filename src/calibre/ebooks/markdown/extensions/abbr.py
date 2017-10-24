@@ -16,13 +16,13 @@ License: [BSD](http://www.opensource.org/licenses/bsd-license.php)
 
 '''
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from . import Extension
-from ..preprocessors import Preprocessor
-from ..inlinepatterns import Pattern
-from ..util import etree, AtomicString
 import re
+
+from . import Extension
+from ..inlinepatterns import Pattern
+from ..preprocessors import Preprocessor
+from ..util import AtomicString, etree
+
 
 # Global Vars
 ABBR_REF_RE = re.compile(r'[*]\[(?P<abbr>[^\]]*)\][ ]?:\s*(?P<title>.*)')

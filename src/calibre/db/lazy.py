@@ -1,20 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import weakref
+from collections import MutableMapping, MutableSequence
+from copy import deepcopy
+from functools import wraps
+
+from calibre.ebooks.metadata.book.base import (
+	ALL_METADATA_FIELDS, NULL_VALUES, SIMPLE_GET, TOP_LEVEL_IDENTIFIERS, Metadata
+)
+from calibre.ebooks.metadata.book.formatter import SafeFormat
+from calibre.utils.date import utcnow
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import weakref
-from functools import wraps
-from collections import MutableMapping, MutableSequence
-from copy import deepcopy
 
-from calibre.ebooks.metadata.book.base import Metadata, SIMPLE_GET, TOP_LEVEL_IDENTIFIERS, NULL_VALUES, ALL_METADATA_FIELDS
-from calibre.ebooks.metadata.book.formatter import SafeFormat
-from calibre.utils.date import utcnow
 
 # Lazy format metadata retrieval {{{
 '''
@@ -46,7 +47,7 @@ class MutableBase(object):
 
     @resolved
     def __unicode__(self):
-        return unicode(self._values)
+        return str(self._values)
 
     @resolved
     def __len__(self):
@@ -389,7 +390,7 @@ class ProxyMetadata(Metadata):
 
     def all_field_keys(self):
         um = ga(self, '_user_metadata')
-        return frozenset(ALL_METADATA_FIELDS.union(um.iterkeys()))
+        return frozenset(ALL_METADATA_FIELDS.union(iter(um.keys())))
 
     @property
     def _proxy_metadata(self):

@@ -37,9 +37,9 @@
 # --------------------------------------------------------------------
 
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
 from . import util
+
+
 ElementTree = util.etree.ElementTree
 QName = util.etree.QName
 if hasattr(util.etree, 'test_comment'):  # pragma: no cover
@@ -153,7 +153,7 @@ def _serialize_html(write, elem, qnames, namespaces, format):
                 _serialize_html(write, e, qnames, None, format)
         else:
             write("<" + tag)
-            items = elem.items()
+            items = list(elem.items())
             if items or namespaces:
                 items = sorted(items)  # lexical order
                 for k, v in items:
@@ -169,7 +169,7 @@ def _serialize_html(write, elem, qnames, namespaces, format):
                     else:
                         write(" %s=\"%s\"" % (qnames[k], v))
                 if namespaces:
-                    items = namespaces.items()
+                    items = list(namespaces.items())
                     items.sort(key=lambda x: x[1])  # sort on prefix
                     for v, k in items:
                         if k:
@@ -261,7 +261,7 @@ def _namespaces(elem, default_namespace=None):
                 add_qname(tag)
         elif tag is not None and tag is not Comment and tag is not PI:
             _raise_serialization_error(tag)
-        for key, value in elem.items():
+        for key, value in list(elem.items()):
             if isinstance(key, QName):
                 key = key.text
             if key not in qnames:

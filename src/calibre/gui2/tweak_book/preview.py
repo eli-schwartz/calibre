@@ -1,36 +1,36 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import json
+import textwrap
+import time
+from base64 import b64encode
+from bisect import bisect_right
+from functools import partial
+from queue import Empty, Queue
+from threading import Thread
+from urllib.parse import urlparse
+
+from calibre import prints
+from calibre.constants import FAKE_HOST, FAKE_PROTOCOL
+from calibre.ebooks.oeb.base import OEB_DOCS, serialize
+from calibre.ebooks.oeb.polish.parsing import parse
+from calibre.gui2 import NO_URL_FORMATTING, error_dialog, open_url, secure_web_page
+from calibre.gui2.tweak_book import TOP, actions, current_container, editors, tprefs
+from calibre.gui2.viewer.config import config
+from calibre.gui2.viewer.documentview import apply_settings
+from calibre.gui2.widgets2 import HistoryLineEdit2
+from calibre.utils.ipc.simple_worker import offload_worker
+from PyQt5.Qt import (
+	QApplication, QIcon, QMenu, QNetworkAccessManager, QNetworkReply, QNetworkRequest,
+	QSize, Qt, QTimer, QToolBar, QUrl, QVBoxLayout, QWidget, pyqtSignal, pyqtSlot
+)
+from PyQt5.QtWebKitWidgets import QWebInspector, QWebPage, QWebView
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import time, textwrap, json
-from bisect import bisect_right
-from base64 import b64encode
-from future_builtins import map
-from threading import Thread
-from Queue import Queue, Empty
-from functools import partial
-from urlparse import urlparse
 
-from PyQt5.Qt import (
-    QWidget, QVBoxLayout, QApplication, QSize, QNetworkAccessManager, QMenu, QIcon,
-    QNetworkReply, QTimer, QNetworkRequest, QUrl, Qt, QToolBar,
-    pyqtSlot, pyqtSignal)
-from PyQt5.QtWebKitWidgets import QWebView, QWebInspector, QWebPage
 
-from calibre import prints
-from calibre.constants import FAKE_PROTOCOL, FAKE_HOST
-from calibre.ebooks.oeb.polish.parsing import parse
-from calibre.ebooks.oeb.base import serialize, OEB_DOCS
-from calibre.gui2 import error_dialog, open_url, NO_URL_FORMATTING, secure_web_page
-from calibre.gui2.tweak_book import current_container, editors, tprefs, actions, TOP
-from calibre.gui2.viewer.documentview import apply_settings
-from calibre.gui2.viewer.config import config
-from calibre.gui2.widgets2 import HistoryLineEdit2
-from calibre.utils.ipc.simple_worker import offload_worker
 
 shutdown = object()
 
@@ -278,7 +278,7 @@ class WebPage(QWebPage):
         self.init_javascript()
 
     def javaScriptConsoleMessage(self, msg, lineno, source_id):
-        prints('preview js:%s:%s:'%(unicode(source_id), lineno), unicode(msg))
+        prints('preview js:%s:%s:'%(str(source_id), lineno), str(msg))
 
     def init_javascript(self):
         if not hasattr(self, 'js'):
@@ -294,7 +294,7 @@ class WebPage(QWebPage):
     @pyqtSlot(str, str, str)
     def request_sync(self, tag_name, href, sourceline_address):
         try:
-            self.sync_requested.emit(unicode(tag_name), unicode(href), json.loads(unicode(sourceline_address)))
+            self.sync_requested.emit(str(tag_name), str(href), json.loads(str(sourceline_address)))
         except (TypeError, ValueError, OverflowError, AttributeError):
             pass
 
@@ -305,7 +305,7 @@ class WebPage(QWebPage):
     @pyqtSlot(str, str)
     def request_split(self, loc, totals):
         actions['split-in-preview'].setChecked(False)
-        loc, totals = json.loads(unicode(loc)), json.loads(unicode(totals))
+        loc, totals = json.loads(str(loc)), json.loads(str(totals))
         if not loc or not totals:
             return error_dialog(self.view(), _('Invalid location'),
                                 _('Cannot split on the body tag'), show=True)
@@ -321,7 +321,7 @@ class WebPage(QWebPage):
                     ans = None
                 return ans
             val = self.mainFrame().evaluateJavaScript('window.calibre_preview_integration.line_numbers()')
-            self._line_numbers = sorted(uniq(filter(lambda x:x is not None, map(atoi, val))))
+            self._line_numbers = sorted(uniq([x for x in map(atoi, val) if x is not None]))
         return self._line_numbers
 
     def go_to_line(self, lnum):
@@ -400,7 +400,7 @@ class WebView(QWebView):
         p = self.page()
         mf = p.mainFrame()
         r = mf.hitTestContent(ev.pos())
-        url = unicode(r.linkUrl().toString(NO_URL_FORMATTING)).strip()
+        url = str(r.linkUrl().toString(NO_URL_FORMATTING)).strip()
         ca = self.pageAction(QWebPage.Copy)
         if ca.isEnabled():
             menu.addAction(ca)
@@ -483,7 +483,7 @@ class Preview(QWidget):
             self.bar.addAction(ac)
 
     def find(self, direction):
-        text = unicode(self.search.text())
+        text = str(self.search.text())
         self.view.findText(text, QWebPage.FindWrapsAroundDocument | (
             QWebPage.FindBackward if direction == 'prev' else QWebPage.FindFlags(0)))
 

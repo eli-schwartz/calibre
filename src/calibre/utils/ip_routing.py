@@ -1,11 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-import subprocess, re
-from calibre.constants import iswindows, isosx
+import re
+import subprocess
+
+from calibre.constants import isosx, iswindows
 
 
 def get_address_of_default_gateway(family='AF_INET'):
@@ -78,4 +77,4 @@ else:
                     return addr
 
 if __name__ == '__main__':
-    print(get_default_route_src_address())
+    print((get_default_route_src_address()))

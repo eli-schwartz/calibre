@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -8,17 +7,15 @@ __docformat__ = 'restructuredtext en'
 from functools import partial
 from zipfile import ZipFile
 
-from PyQt5.Qt import (QToolButton, QAction, QIcon, QObject, QMenu,
-        QKeySequence)
-
 from calibre import prints
 from calibre.constants import isosx
 from calibre.gui2 import Dispatcher
 from calibre.gui2.keyboard import NameConflict
+from PyQt5.Qt import QAction, QIcon, QKeySequence, QMenu, QObject, QToolButton
 
 
 def menu_action_unique_name(plugin, unique_name):
-    return u'%s : menu action : %s'%(plugin.unique_name, unique_name)
+    return '%s : menu action : %s'%(plugin.unique_name, unique_name)
 
 
 class InterfaceAction(QObject):
@@ -149,7 +146,7 @@ class InterfaceAction(QObject):
         bn = self.__class__.__name__
         if getattr(self.interface_action_base_plugin, 'name'):
             bn = self.interface_action_base_plugin.name
-        return u'Interface Action: %s (%s)'%(bn, self.name)
+        return 'Interface Action: %s (%s)'%(bn, self.name)
 
     def create_action(self, spec=None, attr='qaction', shortcut_name=None):
         if spec is None:
@@ -161,7 +158,7 @@ class InterfaceAction(QObject):
             action = QAction(text, self.gui)
         if attr == 'qaction':
             mt = (action.text() if self.action_menu_clone_qaction is True else
-                    unicode(self.action_menu_clone_qaction))
+                    str(self.action_menu_clone_qaction))
             self.menuless_qaction = ma = QAction(action.icon(), mt, self.gui)
             ma.triggered.connect(action.trigger)
         for a in ((action, ma) if attr == 'qaction' else (action,)):
@@ -175,10 +172,10 @@ class InterfaceAction(QObject):
         if attr == 'qaction':
             shortcut_action = ma
         if shortcut is not None:
-            keys = ((shortcut,) if isinstance(shortcut, basestring) else
+            keys = ((shortcut,) if isinstance(shortcut, str) else
                     tuple(shortcut))
             if shortcut_name is None and spec[0]:
-                shortcut_name = unicode(spec[0])
+                shortcut_name = str(spec[0])
 
             if shortcut_name and self.action_spec[0] and not (
                     attr == 'qaction' and self.popup_type == QToolButton.InstantPopup):
@@ -189,7 +186,7 @@ class InterfaceAction(QObject):
                         group=self.action_spec[0])
                 except NameConflict as e:
                     try:
-                        prints(unicode(e))
+                        prints(str(e))
                     except:
                         pass
                     shortcut_action.setShortcuts([QKeySequence(key,
@@ -239,7 +236,7 @@ class InterfaceAction(QObject):
 
         '''
         if shortcut_name is None:
-            shortcut_name = unicode(text)
+            shortcut_name = str(text)
         ac = menu.addAction(text)
         if icon is not None:
             if not isinstance(icon, QIcon):
@@ -247,7 +244,7 @@ class InterfaceAction(QObject):
             ac.setIcon(icon)
         keys = ()
         if shortcut is not None and shortcut is not False:
-            keys = ((shortcut,) if isinstance(shortcut, basestring) else
+            keys = ((shortcut,) if isinstance(shortcut, str) else
                     tuple(shortcut))
         unique_name = menu_action_unique_name(self, unique_name)
         if description is not None:

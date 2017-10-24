@@ -1,25 +1,27 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import random
+import time
+from io import StringIO
+from struct import pack
+
+from calibre.ebooks import normalize
+from calibre.ebooks.compression.palmdoc import compress_doc
+from calibre.ebooks.mobi.langcodes import iana2mobi
+from calibre.ebooks.mobi.utils import (
+	RECORD_SIZE, align_block, create_text_record,
+	detect_periodical, encint, encode_trailing_data
+)
+from calibre.ebooks.mobi.writer2 import PALMDOC, UNCOMPRESSED
+from calibre.ebooks.mobi.writer2.indexer import Indexer
+from calibre.ebooks.mobi.writer2.serializer import Serializer
+from calibre.utils.filenames import ascii_filename
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import random, time
-from cStringIO import StringIO
-from struct import pack
 
-from calibre.ebooks import normalize
-from calibre.ebooks.mobi.writer2.serializer import Serializer
-from calibre.ebooks.compression.palmdoc import compress_doc
-from calibre.ebooks.mobi.langcodes import iana2mobi
-from calibre.utils.filenames import ascii_filename
-from calibre.ebooks.mobi.writer2 import (PALMDOC, UNCOMPRESSED)
-from calibre.ebooks.mobi.utils import (encint, encode_trailing_data,
-        align_block, detect_periodical, RECORD_SIZE, create_text_record)
-from calibre.ebooks.mobi.writer2.indexer import Indexer
 
 # Disabled as I dont care about uncrossable breaks
 WRITE_UNCROSSABLE_BREAKS = False
@@ -52,7 +54,7 @@ class MobiWriter(object):
         self.log = oeb.log
         pt = None
         if oeb.metadata.publication_type:
-            x = unicode(oeb.metadata.publication_type[0]).split(':')
+            x = str(oeb.metadata.publication_type[0]).split(':')
             if len(x) > 1:
                 pt = x[1].lower()
         self.publication_type = pt
@@ -105,7 +107,7 @@ class MobiWriter(object):
             self.log.exception('Failed to generate MOBI index:')
         else:
             self.primary_index_record_idx = len(self.records)
-            for i in xrange(self.last_text_record_idx + 1):
+            for i in range(self.last_text_record_idx + 1):
                 if i == 0:
                     continue
                 tbs = self.indexer.get_trailing_byte_sequence(i)
@@ -124,7 +126,7 @@ class MobiWriter(object):
 
         breaks = self.serializer.breaks
 
-        for i in xrange(1, self.last_text_record_idx+1):
+        for i in range(1, self.last_text_record_idx+1):
             offset = i * RECORD_SIZE
             pbreak = 0
             running = offset
@@ -239,7 +241,7 @@ class MobiWriter(object):
             0  # Unused
         ))  # 0 - 15 (0x0 - 0xf)
         uid = random.randint(0, 0xffffffff)
-        title = normalize(unicode(metadata.title[0])).encode('utf-8')
+        title = normalize(str(metadata.title[0])).encode('utf-8')
 
         # 0x0 - 0x3
         record0.write(b'MOBI')
@@ -428,7 +430,7 @@ class MobiWriter(object):
         for k, v in {'last_text_record':'last_text_record_idx',
                 'first_non_text_record':'first_non_text_record_idx',
                 'ncx_index':'primary_index_record_idx',
-                }.iteritems():
+                }.items():
             header_fields[k] = getattr(self, v)
         if header_fields['ncx_index'] is None:
             header_fields['ncx_index'] = NULL_INDEX
@@ -459,7 +461,7 @@ class MobiWriter(object):
         '''
         Write the PalmDB header
         '''
-        title = ascii_filename(unicode(self.oeb.metadata.title[0])).replace(
+        title = ascii_filename(str(self.oeb.metadata.title[0])).replace(
                 ' ', '_')[:31]
         title = title + (b'\0' * (32 - len(title)))
         now = int(time.time())
@@ -476,5 +478,3 @@ class MobiWriter(object):
     def write_content(self):
         for record in self.records:
             self.write(record)
-
-

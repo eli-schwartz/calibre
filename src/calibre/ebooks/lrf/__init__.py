@@ -5,11 +5,12 @@ This package contains logic to read and write LRF files.
 The LRF file format is documented at U{http://www.sven.de/librie/Librie/LrfFormat}.
 """
 
-from calibre.ebooks.lrf.pylrs.pylrs import Book as _Book
-from calibre.ebooks.lrf.pylrs.pylrs import TextBlock, Header, \
-                                             TextStyle, BlockStyle
-from calibre.ebooks.lrf.fonts import FONT_FILE_MAP
 from calibre.ebooks import ConversionError
+from calibre.ebooks.lrf.fonts import FONT_FILE_MAP
+from calibre.ebooks.lrf.pylrs.pylrs import (
+	BlockStyle, Book as _Book, Header, TextBlock, TextStyle
+)
+
 
 __docformat__ = "epytext"
 
@@ -91,7 +92,7 @@ def Book(options, logger, font_delta=0, header=None,
                linespace=int(10*profile.line_space),
                baselineskip=baselineskip,
                wordspace=10*options.wordspace)
-    if fonts['serif'] and fonts['serif'].has_key('normal'):  # noqa
+    if fonts['serif'] and 'normal' in fonts['serif']:  # noqa
         tsd['fontfacename'] = fonts['serif']['normal'][1]
 
     book = _Book(textstyledefault=tsd,
@@ -99,16 +100,15 @@ def Book(options, logger, font_delta=0, header=None,
                 blockstyledefault=dict(blockwidth=ps['textwidth']),
                 bookid=uuid4().hex,
                 **settings)
-    for family in fonts.keys():
+    for family in list(fonts.keys()):
         if fonts[family]:
-            for font in fonts[family].values():
+            for font in list(fonts[family].values()):
                 book.embed_font(*font)
                 FONT_FILE_MAP[font[1]] = font[0]
 
     for family in ['serif', 'sans', 'mono']:
         if not fonts[family]:
             fonts[family] = {'normal' : (None, profile.default_fonts[family])}
-        elif not fonts[family].has_key('normal'):  # noqa
+        elif 'normal' not in fonts[family]:  # noqa
             raise ConversionError('Could not find the normal version of the ' + family + ' font')
     return book, fonts
-

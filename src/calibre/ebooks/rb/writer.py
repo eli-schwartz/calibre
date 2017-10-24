@@ -4,8 +4,14 @@ __license__ = 'GPL 3'
 __copyright__ = '2009, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
+import io
 import struct
 import zlib
+
+from calibre.constants import __appname__, __version__
+from calibre.ebooks.rb import HEADER, unique_name
+from calibre.ebooks.rb.rbml import RBMLizer
+
 
 try:
     from PIL import Image
@@ -13,12 +19,7 @@ try:
 except ImportError:
     import Image
 
-import cStringIO
 
-from calibre.ebooks.rb.rbml import RBMLizer
-from calibre.ebooks.rb import HEADER
-from calibre.ebooks.rb import unique_name
-from calibre.constants import __appname__, __version__
 
 TEXT_RECORD_SIZE = 4096
 
@@ -121,8 +122,8 @@ class RBWriter(object):
                 try:
                     data = ''
 
-                    im = Image.open(cStringIO.StringIO(item.data)).convert('L')
-                    data = cStringIO.StringIO()
+                    im = Image.open(io.StringIO(item.data)).convert('L')
+                    data = io.StringIO()
                     im.save(data, 'PNG')
                     data = data.getvalue()
 
@@ -152,4 +153,3 @@ class RBWriter(object):
         text += 'BODY=index.html\n'
 
         return text
-

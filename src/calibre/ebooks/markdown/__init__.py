@@ -30,22 +30,22 @@ Copyright 2004 Manfred Stienstra (the original version)
 License: BSD (see LICENSE for details).
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from .__version__ import version, version_info  # noqa
 import codecs
-import sys
-import logging
-import warnings
 import importlib
+import logging
+import sys
+import warnings
+
 from . import util
-from .preprocessors import build_preprocessors
+from .__version__ import version, version_info  # noqa
 from .blockprocessors import build_block_parser
-from .treeprocessors import build_treeprocessors
+from .extensions import Extension
 from .inlinepatterns import build_inlinepatterns
 from .postprocessors import build_postprocessors
-from .extensions import Extension
+from .preprocessors import build_preprocessors
 from .serializers import to_html_string, to_xhtml_string
+from .treeprocessors import build_treeprocessors
+
 
 __all__ = ['Markdown', 'markdown', 'markdownFromFile']
 
@@ -126,7 +126,7 @@ class Markdown(object):
                           DeprecationWarning)
 
         # Loop through kwargs and assign defaults
-        for option, default in self.option_defaults.items():
+        for option, default in list(self.option_defaults.items()):
             setattr(self, option, kwargs.get(option, default))
 
         self.safeMode = kwargs.get('safe_mode', False)
@@ -368,14 +368,14 @@ class Markdown(object):
 
         # Split into lines and run the line preprocessors.
         self.lines = source.split("\n")
-        for prep in self.preprocessors.values():
+        for prep in list(self.preprocessors.values()):
             self.lines = prep.run(self.lines)
 
         # Parse the high-level elements.
         root = self.parser.parseDocument(self.lines).getroot()
 
         # Run the tree-processors
-        for treeprocessor in self.treeprocessors.values():
+        for treeprocessor in list(self.treeprocessors.values()):
             newRoot = treeprocessor.run(root)
             if newRoot is not None:
                 root = newRoot
@@ -398,7 +398,7 @@ class Markdown(object):
                                      'tags. Document=%r' % output.strip())
 
         # Run the text post-processors
-        for pp in self.postprocessors.values():
+        for pp in list(self.postprocessors.values()):
             output = pp.run(output)
 
         return output.strip()
@@ -439,7 +439,7 @@ class Markdown(object):
             if not isinstance(text, util.text_type):
                 text = text.decode(encoding)
 
-        text = text.lstrip('\ufeff')  # remove the byte-order mark
+        text = text.lstrip('\\ufeff')  # remove the byte-order mark
 
         # Convert
         html = self.convert(text)

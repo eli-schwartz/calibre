@@ -6,11 +6,9 @@ Preprocessors work on source text before we start doing anything too
 complicated.
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from . import util
-from . import odict
 import re
+
+from . import odict, util
 
 
 def build_preprocessors(md_instance, **kwargs):
@@ -166,7 +164,7 @@ class HtmlBlockPreprocessor(Preprocessor):
                     left_tag, left_index, ''.join(items[i:]))
                 right_listindex = \
                     self._stringindex_to_listindex(data_index, items[i:]) + i
-                if 'markdown' in attrs.keys():
+                if 'markdown' in list(attrs.keys()):
                     items[i] = items[i][left_index:]  # remove opening tag
                     placeholder = self.markdown.htmlStash.store_tag(
                         left_tag, attrs, i + 1, right_listindex + 1)
@@ -231,7 +229,7 @@ class HtmlBlockPreprocessor(Preprocessor):
 
                     if block.rstrip().endswith(">") \
                             and self._equal_tags(left_tag, right_tag):
-                        if self.markdown_in_raw and 'markdown' in attrs.keys():
+                        if self.markdown_in_raw and 'markdown' in list(attrs.keys()):
                             block = block[left_index:-len(right_tag) - 2]
                             new_blocks.append(self.markdown.htmlStash.
                                               store_tag(left_tag, attrs, 0, 2))
@@ -269,7 +267,7 @@ class HtmlBlockPreprocessor(Preprocessor):
                         text.insert(0, block[data_index:])
 
                     in_tag = False
-                    if self.markdown_in_raw and 'markdown' in attrs.keys():
+                    if self.markdown_in_raw and 'markdown' in list(attrs.keys()):
                         items[0] = items[0][left_index:]
                         items[-1] = items[-1][:-len(right_tag) - 2]
                         if items[len(items) - 1]:  # not a newline/empty string
@@ -291,7 +289,7 @@ class HtmlBlockPreprocessor(Preprocessor):
                     items = []
 
         if items:
-            if self.markdown_in_raw and 'markdown' in attrs.keys():
+            if self.markdown_in_raw and 'markdown' in list(attrs.keys()):
                 items[0] = items[0][left_index:]
                 items[-1] = items[-1][:-len(right_tag) - 2]
                 if items[len(items) - 1]:  # not a newline/empty string

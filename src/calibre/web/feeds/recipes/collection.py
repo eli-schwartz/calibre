@@ -1,22 +1,26 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import calendar
+import os
+import zipfile
+from datetime import timedelta
+from threading import RLock
+
+from calibre import force_unicode
+from calibre.utils.date import (
+	EPOCH, UNDEFINED_DATE, isoformat, local_tz, now as nowf, utcnow
+)
+from calibre.utils.iso8601 import parse_iso8601
+from calibre.utils.recycle_bin import delete_file
+from lxml import etree
+from lxml.builder import ElementMaker
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, calendar, zipfile
-from threading import RLock
-from datetime import timedelta
 
-from lxml import etree
-from lxml.builder import ElementMaker
 
-from calibre import force_unicode
-from calibre.utils.iso8601 import parse_iso8601
-from calibre.utils.date import now as nowf, utcnow, local_tz, isoformat, EPOCH, UNDEFINED_DATE
-from calibre.utils.recycle_bin import delete_file
 
 NS = 'http://calibre-ebook.com/recipe_collection'
 E = ElementMaker(namespace=NS, nsmap={None:NS})
@@ -67,7 +71,7 @@ def serialize_collection(mapping_of_recipe_classes):
         if isinstance(x.title, str):
             x.title.decode('ascii')
     '''
-    for urn in sorted(mapping_of_recipe_classes.keys(),
+    for urn in sorted(list(mapping_of_recipe_classes.keys()),
             key=lambda key: force_unicode(
                 getattr(mapping_of_recipe_classes[key], 'title', 'zzz'),
                 'utf-8')):
@@ -91,7 +95,7 @@ def serialize_builtin_recipes():
             try:
                 recipe_class = compile_recipe(stream.read())
             except:
-                print ('Failed to compile: %s'%f)
+                print(('Failed to compile: %s'%f))
                 raise
         if recipe_class is not None:
             recipe_mapping['builtin:'+rid] = recipe_class
@@ -108,7 +112,7 @@ def get_custom_recipe_collection(*args):
             custom_recipes
     bdir = os.path.dirname(custom_recipes.file_path)
     rmap = {}
-    for id_, x in custom_recipes.iteritems():
+    for id_, x in custom_recipes.items():
         title, fname = x
         recipe = os.path.join(bdir, fname)
         try:
@@ -117,7 +121,7 @@ def get_custom_recipe_collection(*args):
             if recipe_class is not None:
                 rmap['custom:%s'%id_] = recipe_class
         except:
-            print 'Failed to load recipe from: %r'%fname
+            print('Failed to load recipe from: %r'%fname)
             import traceback
             traceback.print_exc()
             continue
@@ -142,7 +146,7 @@ def update_custom_recipes(script_ids):
             fname = custom_recipe_filename(id_, title)
         else:
             fname = existing[1]
-        if isinstance(script, unicode):
+        if isinstance(script, str):
             script = script.encode('utf-8')
 
         custom_recipes[id_] = (title, fname)
@@ -162,16 +166,16 @@ def add_custom_recipes(script_map):
     from calibre.web.feeds.recipes import custom_recipes, \
             custom_recipe_filename
     id_ = 1000
-    keys = tuple(map(int, custom_recipes.iterkeys()))
+    keys = tuple(map(int, iter(custom_recipes.keys())))
     if keys:
         id_ = max(keys)+1
     bdir = os.path.dirname(custom_recipes.file_path)
     with custom_recipes:
-        for title, script in script_map.iteritems():
+        for title, script in script_map.items():
             fid = str(id_)
 
             fname = custom_recipe_filename(fid, title)
-            if isinstance(script, unicode):
+            if isinstance(script, str):
                 script = script.encode('utf-8')
 
             custom_recipes[fid] = (title, fname)
@@ -278,7 +282,7 @@ class SchedulerConfig(object):
                 try:
                     self.root = etree.fromstring(f.read())
                 except:
-                    print 'Failed to read recipe scheduler config'
+                    print('Failed to read recipe scheduler config')
                     import traceback
                     traceback.print_exc()
         elif os.path.exists(old_conf_path):
@@ -391,7 +395,7 @@ class SchedulerConfig(object):
         elif typ == 'day/time':
             text = '%d:%d:%d'%schedule
         elif typ in ('days_of_week', 'days_of_month'):
-            dw = ','.join(map(str, map(int, schedule[0])))
+            dw = ','.join(map(str, list(map(int, schedule[0]))))
             text = '%s:%d:%d'%(dw, schedule[1], schedule[2])
         else:
             raise ValueError('Unknown schedule type: %r'%typ)
@@ -528,7 +532,7 @@ class SchedulerConfig(object):
                 self.add_old_recipe(r)
             except:
                 continue
-        for k in c.keys():
+        for k in list(c.keys()):
             if k.startswith('recipe_account_info'):
                 try:
                     urn = k.replace('recipe_account_info_', '')
@@ -540,8 +544,8 @@ class SchedulerConfig(object):
                         username, password = c[k]
                     except:
                         username = password = ''
-                    self.set_account_info(urn, unicode(username),
-                            unicode(password))
+                    self.set_account_info(urn, str(username),
+                            str(password))
                 except:
                     continue
         del c

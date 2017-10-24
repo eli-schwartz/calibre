@@ -2,18 +2,21 @@
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, glob, re, functools
-from urlparse import urlparse
-from urllib import unquote
+import functools
+import glob
+import os
+import re
 from collections import Counter
-
-from lxml import etree
-from lxml.builder import ElementMaker
+from urllib.parse import unquote
+from urllib.parse import urlparse
 
 from calibre.constants import __appname__, __version__
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
 from calibre.ebooks.chardet import xml_to_unicode
 from calibre.utils.cleantext import clean_xml_chars
+from lxml import etree
+from lxml.builder import ElementMaker
+
 
 NCX_NS = "http://www.daisy.org/z3986/2005/ncx/"
 CALIBRE_NS = "http://calibre.kovidgoyal.net/2009/metadata"
@@ -31,7 +34,7 @@ C = ElementMaker(namespace=CALIBRE_NS, nsmap=NSMAP)
 class TOC(list):
 
     def __init__(self, href=None, fragment=None, text=None, parent=None,
-            play_order=0, base_path=os.getcwdu(), type='unknown', author=None,
+            play_order=0, base_path=os.getcwd(), type='unknown', author=None,
             description=None, toc_thumbnail=None):
         self.href = href
         self.fragment = fragment
@@ -143,7 +146,7 @@ class TOC(list):
 
                     self.read_html_toc(toc)
                 except:
-                    print 'WARNING: Could not read Table of Contents. Continuing anyway.'
+                    print('WARNING: Could not read Table of Contents. Continuing anyway.')
             else:
                 path = opfreader.manifest.item(toc.lower())
                 path = getattr(path, 'path', path)
@@ -151,7 +154,7 @@ class TOC(list):
                     try:
                         self.read_ncx_toc(path)
                     except Exception as err:
-                        print 'WARNING: Invalid NCX file:', err
+                        print('WARNING: Invalid NCX file:', err)
                     return
                 cwd = os.path.abspath(self.base_path)
                 m = glob.glob(os.path.join(cwd, '*.ncx'))
@@ -170,7 +173,7 @@ class TOC(list):
         XPath = functools.partial(etree.XPath, namespaces=xpn)
 
         def get_attr(node, default=None, attr='playorder'):
-            for name, val in node.attrib.items():
+            for name, val in list(node.attrib.items()):
                 if name and val and name.lower().endswith(attr):
                     return val
             return default
@@ -190,10 +193,10 @@ class TOC(list):
             nl = nl_path(np)
             if nl:
                 nl = nl[0]
-                text = u''
+                text = ''
                 for txt in txt_path(nl):
                     text += etree.tostring(txt, method='text',
-                            encoding=unicode, with_tail=False)
+                            encoding=str, with_tail=False)
                 content = content_path(np)
                 if content and text:
                     content = content[0]
@@ -218,7 +221,7 @@ class TOC(list):
         self.base_path = os.path.dirname(toc)
         soup = BeautifulSoup(open(toc, 'rb').read(), convertEntities=BeautifulSoup.HTML_ENTITIES)
         for a in soup.findAll('a'):
-            if not a.has_key('href'):  # noqa
+            if 'href' not in a:  # noqa
                 continue
             purl = urlparse(unquote(a['href']))
             href, fragment = purl[2], purl[5]
@@ -228,7 +231,7 @@ class TOC(list):
                 fragment = fragment.strip()
             href = href.strip()
 
-            txt = ''.join([unicode(s).strip() for s in a.findAll(text=True)])
+            txt = ''.join([str(s).strip() for s in a.findAll(text=True)])
             add = True
             for i in self.flat():
                 if i.href == href and i.fragment == fragment:
@@ -263,7 +266,7 @@ class TOC(list):
             text = clean_xml_chars(text)
             elem = E.navPoint(
                     E.navLabel(E.text(re.sub(r'\s+', ' ', text))),
-                    E.content(src=unicode(np.href)+(('#' + unicode(np.fragment))
+                    E.content(src=str(np.href)+(('#' + str(np.fragment))
                         if np.fragment else '')),
                     id=item_id,
                     playOrder=str(np.play_order)

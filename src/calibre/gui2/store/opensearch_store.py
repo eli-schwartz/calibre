@@ -1,24 +1,25 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
-
-__license__ = 'GPL 3'
-__copyright__ = '2011, John Schember <john@nachtimwald.com>'
-__docformat__ = 'restructuredtext en'
-
 from contextlib import closing
 
-from lxml import etree
-
-from PyQt5.Qt import QUrl
-
-from calibre import (browser, guess_extension)
+from calibre import browser, guess_extension
 from calibre.gui2 import open_url
 from calibre.gui2.store import StorePlugin
 from calibre.gui2.store.search_result import SearchResult
 from calibre.gui2.store.web_store_dialog import WebStoreDialog
 from calibre.utils.opensearch.description import Description
 from calibre.utils.opensearch.query import Query
+from lxml import etree
+from PyQt5.Qt import QUrl
+
+
+__license__ = 'GPL 3'
+__copyright__ = '2011, John Schember <john@nachtimwald.com>'
+__docformat__ = 'restructuredtext en'
+
+
+
+
 
 
 def open_search(url, query, max_results=10, timeout=60):
@@ -67,7 +68,7 @@ def open_search(url, query, max_results=10, timeout=60):
                             if ext:
                                 ext = ext[1:].upper().strip()
                                 s.downloads[ext] = href
-            s.formats = ', '.join(s.downloads.keys()).strip()
+            s.formats = ', '.join(list(s.downloads.keys())).strip()
 
             s.title = ' '.join(data.xpath('./*[local-name() = "title"]//text()')).strip()
             s.author = ', '.join(data.xpath('./*[local-name() = "author"]//*[local-name() = "name"]//text()')).strip()

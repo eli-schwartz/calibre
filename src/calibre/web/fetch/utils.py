@@ -1,10 +1,7 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-from calibre.utils.img import image_from_data, scale_image, image_to_data, blend_on_canvas
+from calibre.utils.img import blend_on_canvas, image_from_data, image_to_data, scale_image
 
 
 def rescale_image(data, scale_news_images, compress_news_images_max_size, compress_news_images_auto_size):

@@ -1,32 +1,31 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+import time
+from datetime import datetime
+from io import BytesIO
+from operator import attrgetter
+from queue import Empty, Queue
+from threading import Thread
+from urllib.parse import quote
+from urllib.parse import urlparse
+
+from calibre.customize.ui import all_metadata_plugins, metadata_plugins
+from calibre.ebooks.metadata import check_issn
+from calibre.ebooks.metadata.book.base import Metadata
+from calibre.ebooks.metadata.sources.base import create_log
+from calibre.ebooks.metadata.sources.prefs import msprefs
+from calibre.ebooks.metadata.xisbn import xisbn
+from calibre.utils.date import UNDEFINED_DATE, as_utc, utc_tz
+from calibre.utils.formatter import EvalFormatter
+from calibre.utils.html2text import html2text
+from calibre.utils.icu import lower
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import time, re
-from datetime import datetime
-from Queue import Queue, Empty
-from threading import Thread
-from io import BytesIO
-from operator import attrgetter
-from urlparse import urlparse
-from urllib import quote
 
-from calibre.customize.ui import metadata_plugins, all_metadata_plugins
-from calibre.ebooks.metadata import check_issn
-from calibre.ebooks.metadata.sources.base import create_log
-from calibre.ebooks.metadata.sources.prefs import msprefs
-from calibre.ebooks.metadata.xisbn import xisbn
-from calibre.ebooks.metadata.book.base import Metadata
-from calibre.utils.date import utc_tz, as_utc
-from calibre.utils.html2text import html2text
-from calibre.utils.icu import lower
-from calibre.utils.date import UNDEFINED_DATE
-from calibre.utils.formatter import EvalFormatter
 
 # Download worker {{{
 
@@ -96,7 +95,7 @@ class ISBNMerge(object):
 
     def isbn_in_pool(self, isbn):
         if isbn:
-            for isbns, pool in self.pools.iteritems():
+            for isbns, pool in self.pools.items():
                 if isbn in isbns:
                     return pool
         return None
@@ -144,7 +143,7 @@ class ISBNMerge(object):
 
     def finalize(self):
         has_isbn_result = False
-        for results in self.pools.itervalues():
+        for results in self.pools.values():
             if results:
                 has_isbn_result = True
                 break
@@ -189,7 +188,7 @@ class ISBNMerge(object):
 
         if len(groups) != len(self.results):
             self.results = []
-            for rgroup in groups.itervalues():
+            for rgroup in groups.values():
                 rel = [r.average_source_relevance for r in rgroup]
                 if len(rgroup) > 1:
                     result = self.merge(rgroup, None, do_asr=False)
@@ -203,7 +202,7 @@ class ISBNMerge(object):
             groups, empty = {}, []
             for result in self.results:
                 key = set()
-                for typ, val in result.identifiers.iteritems():
+                for typ, val in result.identifiers.items():
                     if typ and val:
                         key.add((typ, val))
                 if key:
@@ -224,7 +223,7 @@ class ISBNMerge(object):
 
             if len(groups) != len(self.results):
                 self.results = []
-                for rgroup in groups.itervalues():
+                for rgroup in groups.values():
                     rel = [r.average_source_relevance for r in rgroup]
                     if len(rgroup) > 1:
                         result = self.merge(rgroup, None, do_asr=False)
@@ -241,7 +240,7 @@ class ISBNMerge(object):
     def merge_isbn_results(self):
         self.results = []
         sources = set()
-        for min_year, results in self.pools.itervalues():
+        for min_year, results in self.pools.values():
             if results:
                 for r in results:
                     sources.add(r.identify_plugin)
@@ -359,7 +358,7 @@ class ISBNMerge(object):
 
 def merge_identify_results(result_map, log):
     isbn_merge = ISBNMerge(log)
-    for plugin, results in result_map.iteritems():
+    for plugin, results in result_map.items():
         for result in results:
             isbn_merge.add_result(result)
 
@@ -437,12 +436,12 @@ def identify(log, abort,  # {{{
         pass
 
     sort_kwargs = dict(kwargs)
-    for k in list(sort_kwargs.iterkeys()):
+    for k in list(sort_kwargs.keys()):
         if k not in ('title', 'authors', 'identifiers'):
             sort_kwargs.pop(k)
 
     longest, lp = -1, ''
-    for plugin, presults in results.iteritems():
+    for plugin, presults in results.items():
         presults.sort(key=plugin.identify_results_keygen(**sort_kwargs))
 
         # Throw away lower priority results from the same source that have exactly the same
@@ -470,7 +469,7 @@ def identify(log, abort,  # {{{
         for r in presults:
             log('\n\n---')
             try:
-                log(unicode(r))
+                log(str(r))
             except TypeError:
                 log(repr(r))
         if plog:
@@ -531,7 +530,7 @@ def identify(log, abort,  # {{{
 
 
 def urls_from_identifiers(identifiers):  # {{{
-    identifiers = {k.lower():v for k, v in identifiers.iteritems()}
+    identifiers = {k.lower():v for k, v in identifiers.items()}
     ans = []
     keys_left = set(identifiers)
 
@@ -542,7 +541,7 @@ def urls_from_identifiers(identifiers):  # {{{
     rules = msprefs['id_link_rules']
     if rules:
         formatter = EvalFormatter()
-        for k, val in identifiers.iteritems():
+        for k, val in identifiers.items():
             vals = {'id':quote(val if isinstance(val, bytes) else val.encode('utf-8')).decode('ascii')}
             items = rules.get(k) or ()
             for name, template in items:
@@ -580,7 +579,7 @@ def urls_from_identifiers(identifiers):  # {{{
         add(issn, 'issn', issn,
             'https://www.worldcat.org/issn/'+issn)
     q = {'http', 'https', 'file'}
-    for k, url in identifiers.iteritems():
+    for k, url in identifiers.items():
         if url and re.match(r'ur[il]\d*$', k) is not None:
             url = url[:8].replace('|', ':') + url[8:].replace('|', ',')
             if url.partition(':')[0].lower() in q:

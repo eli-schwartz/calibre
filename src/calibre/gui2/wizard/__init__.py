@@ -1,30 +1,33 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import os
+import re
+import traceback
+from contextlib import closing
+
+from calibre import __appname__
+from calibre.constants import filesystem_encoding, isportable, iswindows, plugins
+from calibre.gui2 import choose_dir, error_dialog
+from calibre.gui2.wizard.device_ui import Ui_WizardPage as DeviceUI
+from calibre.gui2.wizard.finish_ui import Ui_WizardPage as FinishUI
+from calibre.gui2.wizard.kindle_ui import Ui_WizardPage as KindleUI
+from calibre.gui2.wizard.library_ui import Ui_WizardPage as LibraryUI
+from calibre.gui2.wizard.send_email import smtp_prefs
+from calibre.gui2.wizard.stanza_ui import Ui_WizardPage as StanzaUI
+from calibre.utils.config import dynamic, prefs
+from calibre.utils.localization import localize_user_manual_link
+from PyQt5.Qt import (
+	QAbstractListModel, QDir, QIcon, QItemSelection,
+	QItemSelectionModel, Qt, QWizard, QWizardPage, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, traceback, re
-from contextlib import closing
 
 
-from PyQt5.Qt import (QWizard, QWizardPage, QIcon, Qt, QAbstractListModel,
-    QItemSelectionModel, pyqtSignal, QItemSelection, QDir)
-from calibre import __appname__
-from calibre.constants import (filesystem_encoding, iswindows, plugins,
-        isportable)
-from calibre.gui2.wizard.send_email import smtp_prefs
-from calibre.gui2.wizard.device_ui import Ui_WizardPage as DeviceUI
-from calibre.gui2.wizard.library_ui import Ui_WizardPage as LibraryUI
-from calibre.gui2.wizard.finish_ui import Ui_WizardPage as FinishUI
-from calibre.gui2.wizard.kindle_ui import Ui_WizardPage as KindleUI
-from calibre.gui2.wizard.stanza_ui import Ui_WizardPage as StanzaUI
-from calibre.utils.localization import localize_user_manual_link
 
-from calibre.utils.config import dynamic, prefs
-from calibre.gui2 import choose_dir, error_dialog
 
 if iswindows:
     winutil = plugins['winutil'][0]
@@ -410,7 +413,7 @@ class EZReaderPP(HanlinV5):
 
 
 def get_devices():
-    for x in globals().values():
+    for x in list(globals().values()):
         if isinstance(x, type) and issubclass(x, Device):
             yield x
 
@@ -491,7 +494,7 @@ class KindlePage(QWizardPage, KindleUI):
         opts = smtp_prefs().parse()
         accs = []
         has_default = False
-        for x, ac in opts.accounts.iteritems():
+        for x, ac in opts.accounts.items():
             default = ac[2]
             if x.strip().endswith('@kindle.com'):
                 accs.append((x, default))
@@ -503,14 +506,14 @@ class KindlePage(QWizardPage, KindleUI):
             self.to_address.setText(accs[0][0])
 
         def x():
-            t = unicode(self.to_address.text())
+            t = str(self.to_address.text())
             if t.strip():
                 return t.strip()
 
         self.send_email_widget.initialize(x)
 
     def commit(self):
-        x = unicode(self.to_address.text()).strip()
+        x = str(self.to_address.text()).strip()
         parts = x.split('@')
 
         if (len(parts) >= 2 and parts[0] and self.send_email_widget.set_email_settings(True)):
@@ -518,7 +521,7 @@ class KindlePage(QWizardPage, KindleUI):
             accounts = conf.parse().accounts
             if not accounts:
                 accounts = {}
-            for y in accounts.values():
+            for y in list(accounts.values()):
                 y[2] = False
             accounts[x] = ['AZW, MOBI, TPZ, PRC, AZW1', True, True]
             conf.set('accounts', accounts)
@@ -571,7 +574,7 @@ class StanzaPage(QWizardPage, StanzaUI):
             for p in range(8080, 8100):
                 try:
                     s.bind(('0.0.0.0', p))
-                    t = unicode(self.instructions.text())
+                    t = str(self.instructions.text())
                     t = re.sub(r':\d+', ':'+str(p), t)
                     self.instructions.setText(t)
                     return p
@@ -684,8 +687,8 @@ class LibraryPage(QWizardPage, LibraryUI):
 
     def change_language(self, idx):
         prefs['language'] = str(self.language.itemData(self.language.currentIndex()) or '')
-        import __builtin__
-        __builtin__.__dict__['_'] = lambda(x): x
+        import builtins
+        builtins.__dict__['_'] = lambda x: x
         from calibre.utils.localization import set_translators
         from calibre.gui2 import qt_app
         from calibre.ebooks.metadata.book.base import reset_field_metadata
@@ -715,7 +718,7 @@ class LibraryPage(QWizardPage, LibraryUI):
             return False
 
     def validatePage(self):
-        newloc = unicode(self.location.text())
+        newloc = str(self.location.text())
         if not self.is_library_dir_suitable(newloc):
             self.show_library_dir_error(newloc)
             return False
@@ -746,11 +749,11 @@ class LibraryPage(QWizardPage, LibraryUI):
                 self.show_library_dir_error(x)
 
     def show_library_dir_error(self, x):
-        if not isinstance(x, unicode):
+        if not isinstance(x, str):
             try:
                 x = x.decode(filesystem_encoding)
             except:
-                x = unicode(repr(x))
+                x = str(repr(x))
         error_dialog(self, _('Bad location'),
             _('You must choose an empty folder for '
                 'the calibre library. %s is not empty.')%x, show=True)
@@ -761,7 +764,7 @@ class LibraryPage(QWizardPage, LibraryUI):
         if not lp:
             fname = _('Calibre Library')
             try:
-                base = os.path.expanduser(u'~')
+                base = os.path.expanduser('~')
             except ValueError:
                 base = QDir.homePath().replace('/', os.sep)
             if iswindows:
@@ -780,7 +783,7 @@ class LibraryPage(QWizardPage, LibraryUI):
                 except:
                     traceback.print_exc()
                     try:
-                        lp = os.path.expanduser(u'~')
+                        lp = os.path.expanduser('~')
                     except ValueError:
                         lp = QDir.homePath().replace('/', os.sep)
         self.location.setText(lp)
@@ -791,7 +794,7 @@ class LibraryPage(QWizardPage, LibraryUI):
 
     def isComplete(self):
         try:
-            lp = unicode(self.location.text())
+            lp = str(self.location.text())
             ans = bool(lp) and os.path.exists(lp) and os.path.isdir(lp) and os.access(lp,
                     os.W_OK)
         except:
@@ -799,7 +802,7 @@ class LibraryPage(QWizardPage, LibraryUI):
         return ans
 
     def commit(self):
-        newloc = unicode(self.location.text())
+        newloc = str(self.location.text())
         try:
             dln = self.default_library_name
             if (dln and os.path.exists(dln) and not os.listdir(dln) and newloc != dln):
@@ -873,7 +876,7 @@ class Wizard(QWizard):
         self.resize(600, 520)
 
     def set_button_texts(self):
-        for but, text in self.BUTTON_TEXTS.iteritems():
+        for but, text in self.BUTTON_TEXTS.items():
             self.setButtonText(getattr(self, but+'Button'), _(text))
 
     def retranslate(self):
@@ -884,14 +887,14 @@ class Wizard(QWizard):
         self.set_finish_text()
 
     def accept(self):
-        pages = map(self.page, self.visitedPages())
+        pages = list(map(self.page, self.visitedPages()))
         for page in pages:
             page.commit()
         QWizard.accept(self)
 
     def set_finish_text(self, *args):
-        bt = unicode("<em>" + self.buttonText(self.FinishButton) + "</em>").replace('&', '')
-        t = unicode(self.finish_page.finish_text.text())
+        bt = str("<em>" + self.buttonText(self.FinishButton) + "</em>").replace('&', '')
+        t = str(self.finish_page.finish_text.text())
         if '%s' in t:
             self.finish_page.finish_text.setText(t%bt)
 

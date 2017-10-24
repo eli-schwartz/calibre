@@ -1,12 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from PyQt5.Qt import Qt
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from PyQt5.Qt import Qt
 
 
 def get_text_around_cursor(editor, before=True):
@@ -97,4 +95,3 @@ def smart_backspace(editor, ev):
         editor.setTextCursor(cursor)
         return True
     return False
-

@@ -1,18 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
-store_version = 7  # Needed for dynamic plugin loading
-
-__license__ = 'GPL 3'
-__copyright__ = '2012-2017, Tomasz Długosz <tomek3d@gmail.com>'
-__docformat__ = 'restructuredtext en'
-
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from contextlib import closing
-
-from lxml import html
-
-from PyQt5.Qt import QUrl
 
 from calibre import browser, url_slash_cleaner
 from calibre.gui2 import open_url
@@ -20,6 +9,19 @@ from calibre.gui2.store import StorePlugin
 from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.gui2.store.search_result import SearchResult
 from calibre.gui2.store.web_store_dialog import WebStoreDialog
+from lxml import html
+from PyQt5.Qt import QUrl
+
+
+store_version = 7  # Needed for dynamic plugin loading
+
+__license__ = 'GPL 3'
+__copyright__ = '2012-2017, Tomasz Długosz <tomek3d@gmail.com>'
+__docformat__ = 'restructuredtext en'
+
+
+
+
 
 
 class PublioStore(BasicStoreConfig, StorePlugin):
@@ -43,7 +45,7 @@ class PublioStore(BasicStoreConfig, StorePlugin):
         counter = max_results
         page = 1
         while counter:
-            with closing(br.open('http://www.publio.pl/e-booki,strona' + str(page) + '.html?q=' + urllib.quote(query), timeout=timeout)) as f:  # noqa
+            with closing(br.open('http://www.publio.pl/e-booki,strona' + str(page) + '.html?q=' + urllib.parse.quote(query), timeout=timeout)) as f:  # noqa
                 doc = html.fromstring(f.read())
                 for data in doc.xpath('//div[@class="products-list"]//div[@class="product-tile"]'):
                     if counter <= 0:

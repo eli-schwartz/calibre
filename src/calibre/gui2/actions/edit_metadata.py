@@ -1,30 +1,30 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, shutil, copy
+import copy
+import os
+import shutil
 from functools import partial
 from io import BytesIO
 
-from PyQt5.Qt import QMenu, QModelIndex, QTimer, QIcon, QApplication
-
-from calibre.gui2 import error_dialog, Dispatcher, question_dialog, gprefs
-from calibre.gui2.dialogs.metadata_bulk import MetadataBulkDialog
-from calibre.gui2.dialogs.confirm_delete import confirm
-from calibre.gui2.dialogs.device_category_editor import DeviceCategoryEditor
-from calibre.gui2.actions import InterfaceAction
+from calibre.db.errors import NoSuchFormat
 from calibre.ebooks.metadata import authors_to_string
 from calibre.ebooks.metadata.book.base import Metadata
 from calibre.ebooks.metadata.opf2 import OPF, metadata_to_opf
+from calibre.ebooks.metadata.sources.prefs import msprefs
+from calibre.gui2 import Dispatcher, error_dialog, gprefs, question_dialog
+from calibre.gui2.actions import InterfaceAction
+from calibre.gui2.actions.show_quickview import get_quickview_action_plugin
+from calibre.gui2.dialogs.confirm_delete import confirm
+from calibre.gui2.dialogs.device_category_editor import DeviceCategoryEditor
+from calibre.gui2.dialogs.metadata_bulk import MetadataBulkDialog
+from calibre.library.comments import merge_comments
 from calibre.utils.date import is_date_undefined
 from calibre.utils.icu import sort_key
-from calibre.db.errors import NoSuchFormat
-from calibre.library.comments import merge_comments
-from calibre.ebooks.metadata.sources.prefs import msprefs
-from calibre.gui2.actions.show_quickview import get_quickview_action_plugin
+from PyQt5.Qt import QApplication, QIcon, QMenu, QModelIndex, QTimer
 
 
 class EditMetadataAction(InterfaceAction):
@@ -256,7 +256,7 @@ class EditMetadataAction(InterfaceAction):
                     failed_ids |= d.rejected_ids
                     restrict_to_failed = True
                 nid_map = {}
-                for book_id, (changed, mi) in d.accepted.iteritems():
+                for book_id, (changed, mi) in d.accepted.items():
                     if mi is None:  # discarded
                         continue
                     if changed:
@@ -551,7 +551,7 @@ class EditMetadataAction(InterfaceAction):
                 if not dest_mi.comments:
                     dest_mi.comments = src_mi.comments
                 else:
-                    dest_mi.comments = unicode(dest_mi.comments) + u'\n\n' + unicode(src_mi.comments)
+                    dest_mi.comments = str(dest_mi.comments) + '\n\n' + str(src_mi.comments)
             if src_mi.title and (not dest_mi.title or
                     dest_mi.title == _('Unknown')):
                 dest_mi.title = src_mi.title
@@ -606,7 +606,7 @@ class EditMetadataAction(InterfaceAction):
                     if not dest_value:
                         db.set_custom(dest_id, src_value, num=colnum)
                     else:
-                        dest_value = unicode(dest_value) + u'\n\n' + unicode(src_value)
+                        dest_value = str(dest_value) + '\n\n' + str(src_value)
                         db.set_custom(dest_id, dest_value, num=colnum)
                 if (dt in {'bool', 'int', 'float', 'rating', 'datetime'} and dest_value is None):
                     db.set_custom(dest_id, src_value, num=colnum)
@@ -631,8 +631,8 @@ class EditMetadataAction(InterfaceAction):
         if d.result() == d.Accepted:
             to_rename = d.to_rename  # dict of new text to old ids
             to_delete = d.to_delete  # list of ids
-            for old_id, new_name in to_rename.iteritems():
-                model.rename_collection(old_id, new_name=unicode(new_name))
+            for old_id, new_name in to_rename.items():
+                model.rename_collection(old_id, new_name=str(new_name))
             for item in to_delete:
                 model.delete_collection_using_id(item)
             self.gui.upload_collections(model.db, view=view, oncard=oncard)
@@ -659,7 +659,7 @@ class EditMetadataAction(InterfaceAction):
         '''
         if title is None:
             title = _('Applying changed metadata')
-        self.apply_id_map = list(id_map.iteritems())
+        self.apply_id_map = list(id_map.items())
         self.apply_current_idx = 0
         self.apply_failures = []
         self.applied_ids = set()

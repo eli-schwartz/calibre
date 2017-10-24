@@ -107,15 +107,15 @@ class DeviceConfig(object):
                     if hasattr(config_widget.opt_extra_customization[i], 'isChecked'):
                         ec.append(config_widget.opt_extra_customization[i].isChecked())
                     elif hasattr(config_widget.opt_extra_customization[i], 'currentText'):
-                        ec.append(unicode(config_widget.opt_extra_customization[i].currentText()).strip())
+                        ec.append(str(config_widget.opt_extra_customization[i].currentText()).strip())
                     else:
-                        ec.append(unicode(config_widget.opt_extra_customization[i].text()).strip())
+                        ec.append(str(config_widget.opt_extra_customization[i].text()).strip())
             else:
-                ec = unicode(config_widget.opt_extra_customization.text()).strip()
+                ec = str(config_widget.opt_extra_customization.text()).strip()
                 if not ec:
                     ec = None
             proxy['extra_customization'] = ec
-        st = unicode(config_widget.opt_save_template.text())
+        st = str(config_widget.opt_save_template.text())
         proxy['save_template'] = st
 
     @classmethod

@@ -1,22 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
 
 from collections import defaultdict
 from threading import Thread
 
-from PyQt5.Qt import (
-    QVBoxLayout, QTextBrowser, QProgressBar, Qt, QWidget, QStackedWidget,
-    QLabel, QSizePolicy, pyqtSignal, QIcon, QInputDialog
-)
-
 from calibre.gui2 import error_dialog
-from calibre.gui2.tweak_book import current_container, set_current_container, editors
+from calibre.gui2.tweak_book import current_container, editors, set_current_container
 from calibre.gui2.tweak_book.boss import get_boss
 from calibre.gui2.tweak_book.widgets import Dialog
+from PyQt5.Qt import (
+	QIcon, QInputDialog, QLabel, QProgressBar, QSizePolicy,
+	QStackedWidget, Qt, QTextBrowser, QVBoxLayout, QWidget, pyqtSignal
+)
 
 
 def get_data(name):
@@ -140,7 +135,7 @@ class CheckExternalLinks(Dialog):
             for name, href in {(l[0], l[1]) for l in err[0]}:
                 nmap[name].add(href)
 
-            for name, hrefs in nmap.iteritems():
+            for name, hrefs in nmap.items():
                 raw = oraw = get_data(name)
                 for href in hrefs:
                     raw = raw.replace(href, newurl)

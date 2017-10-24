@@ -1,27 +1,28 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import sys
+import textwrap
+from io import BytesIO
+
+from calibre.ebooks.oeb.polish.container import get_container
+from calibre.ebooks.oeb.polish.fonts import change_font, font_family_data
+from calibre.gui2 import error_dialog, info_dialog
+from calibre.gui2.tweak_book import current_container, set_current_container
+from calibre.gui2.tweak_book.widgets import BusyCursor, Dialog
+from calibre.utils.fonts.metadata import FontMetadata, UnsupportedFont
+from calibre.utils.fonts.scanner import NoFonts, font_scanner
+from calibre.utils.icu import primary_sort_key as sort_key
+from PyQt5.Qt import (
+	QAbstractTableModel, QApplication, QFormLayout, QHBoxLayout, QIcon,
+	QLabel, QLineEdit, QMessageBox, QPushButton, QSize, QSplitter, Qt,
+	QTableView, QTextEdit, QTimer, QVBoxLayout, QWidget, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import sys, textwrap
-from io import BytesIO
 
-from PyQt5.Qt import (
-    QSplitter, QVBoxLayout, QTableView, QWidget, QLabel, QAbstractTableModel,
-    Qt, QTimer, QPushButton, pyqtSignal, QFormLayout, QLineEdit, QIcon, QSize,
-    QHBoxLayout, QTextEdit, QApplication, QMessageBox)
 
-from calibre.ebooks.oeb.polish.container import get_container
-from calibre.ebooks.oeb.polish.fonts import font_family_data, change_font
-from calibre.gui2 import error_dialog, info_dialog
-from calibre.gui2.tweak_book import current_container, set_current_container
-from calibre.gui2.tweak_book.widgets import Dialog, BusyCursor
-from calibre.utils.icu import primary_sort_key as sort_key
-from calibre.utils.fonts.scanner import font_scanner, NoFonts
-from calibre.utils.fonts.metadata import FontMetadata, UnsupportedFont
 
 
 def show_font_face_rule_for_font_file(file_data, added_name, parent=None):
@@ -102,7 +103,7 @@ class AllFonts(QAbstractTableModel):
 
     def do_sort(self):
         reverse = not self.sorted_on[1]
-        self.items = sorted(self.font_data.iterkeys(), key=sort_key, reverse=reverse)
+        self.items = sorted(iter(self.font_data.keys()), key=sort_key, reverse=reverse)
         if self.sorted_on[0] != 'name':
             self.items.sort(key=self.font_data.get, reverse=reverse)
 
@@ -179,7 +180,7 @@ class ChangeFontFamily(Dialog):
 
     @property
     def family(self):
-        return unicode(self._family.text())
+        return str(self._family.text())
 
     @property
     def normalized_family(self):
@@ -314,7 +315,7 @@ class ManageFonts(Dialog):
         fonts = self.get_selected_data()
         if not fonts:
             return
-        d = ChangeFontFamily(', '.join(fonts), {f for f, embedded in self.model.font_data.iteritems() if embedded}, self)
+        d = ChangeFontFamily(', '.join(fonts), {f for f, embedded in self.model.font_data.items() if embedded}, self)
         if d.exec_() != d.Accepted:
             return
         changed = False

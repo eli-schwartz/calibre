@@ -1,20 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+import threading
+
+from calibre import browser, random_user_agent
+from calibre.customize import Plugin
+from calibre.ebooks.metadata import check_isbn
+from calibre.utils.icu import capitalize, lower, upper
+from calibre.utils.localization import canonicalize_lang, get_lang
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re, threading
-from future_builtins import map
 
-from calibre import browser, random_user_agent
-from calibre.customize import Plugin
-from calibre.utils.icu import capitalize, lower, upper
-from calibre.ebooks.metadata import check_isbn
-from calibre.utils.localization import canonicalize_lang, get_lang
 
 
 def create_log(ostream=None):
@@ -66,7 +65,7 @@ class InternalMetadataCompareKeyGen(object):
     def __init__(self, mi, source_plugin, title, authors, identifiers):
         same_identifier = 2
         idents = mi.get_identifiers()
-        for k, v in identifiers.iteritems():
+        for k, v in identifiers.items():
             if idents.get(k) == v:
                 same_identifier = 1
                 break
@@ -309,7 +308,7 @@ class Source(Plugin):
 
     def get_related_isbns(self, id_):
         with self.cache_lock:
-            for isbn, q in self._isbn_to_identifier_cache.iteritems():
+            for isbn, q in self._isbn_to_identifier_cache.items():
                 if q == id_:
                     yield isbn
 

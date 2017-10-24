@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,10 +6,10 @@ __docformat__ = 'restructuredtext en'
 
 import textwrap
 
-from calibre.gui2.preferences import ConfigWidgetBase, test_widget, Setting
-from calibre.gui2.preferences.misc_ui import Ui_Form
-from calibre.gui2 import (config, open_local_file, gprefs)
 from calibre import get_proxies
+from calibre.gui2 import config, gprefs, open_local_file
+from calibre.gui2.preferences import ConfigWidgetBase, Setting, test_widget
+from calibre.gui2.preferences.misc_ui import Ui_Form
 
 
 class WorkersSetting(Setting):
@@ -45,7 +44,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         txt = _('No proxies used')
         if proxies:
             lines = ['<br><code>%s: %s</code>'%(t, p) for t, p in
-                    proxies.iteritems()]
+                    proxies.items()]
             txt = _('<b>Using proxies:</b>') + ''.join(lines)
         self.proxies.setText(txt)
 
@@ -71,4 +70,3 @@ if __name__ == '__main__':
     from PyQt5.Qt import QApplication
     app = QApplication([])
     test_widget('Advanced', 'Misc')
-

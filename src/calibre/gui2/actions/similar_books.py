@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,9 +6,8 @@ __docformat__ = 'restructuredtext en'
 
 from functools import partial
 
-from PyQt5.Qt import QToolButton
-
 from calibre.gui2.actions import InterfaceAction
+from PyQt5.Qt import QToolButton
 
 
 class SimilarBooksAction(InterfaceAction):
@@ -74,7 +72,7 @@ class SimilarBooksAction(InterfaceAction):
         if not val:
             return
 
-        if isinstance(val, basestring):
+        if isinstance(val, str):
             val = [val]
         search = [col + ':"='+t.replace('"', '\\"')+'"' for t in val]
         if search:

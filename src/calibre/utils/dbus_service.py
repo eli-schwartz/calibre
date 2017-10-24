@@ -24,26 +24,27 @@
 # DEALINGS IN THE SOFTWARE.
 #
 
-from __future__ import absolute_import
-
-__all__ = ('BusName', 'Object', 'PropertiesInterface', 'method', 'dbus_property', 'signal')
-__docformat__ = 'restructuredtext'
-
+from . import logging
 import sys
-import logging
 import threading
 import traceback
 from collections import Sequence
 
 import _dbus_bindings
 from dbus import (
-    INTROSPECTABLE_IFACE, ObjectPath, PROPERTIES_IFACE, SessionBus, Signature,
-    Struct, validate_bus_name, validate_object_path)
+	INTROSPECTABLE_IFACE, PROPERTIES_IFACE, ObjectPath, SessionBus,
+	Signature, Struct, validate_bus_name, validate_object_path
+)
 from dbus.decorators import method, signal, validate_interface_name, validate_member_name
-from dbus.exceptions import (
-    DBusException, NameExistsException, UnknownMethodException)
-from dbus.lowlevel import ErrorMessage, MethodReturnMessage, MethodCallMessage
+from dbus.exceptions import DBusException, NameExistsException, UnknownMethodException
+from dbus.lowlevel import ErrorMessage, MethodCallMessage, MethodReturnMessage
 from dbus.proxies import LOCAL_PATH
+
+
+__all__ = ('BusName', 'Object', 'PropertiesInterface', 'method', 'dbus_property', 'signal')
+__docformat__ = 'restructuredtext'
+
+
 is_py2 = sys.version_info.major == 2
 
 
@@ -398,7 +399,7 @@ class InterfaceType(type):
 
     def __new__(cls, name, bases, dct):
         # Properties require the PropertiesInterface base.
-        for func in dct.values():
+        for func in list(dct.values()):
             if isinstance(func, dbus_property):
                 for b in bases:
                     if issubclass(b, PropertiesInterface):
@@ -414,12 +415,12 @@ class InterfaceType(type):
         for b in bases:
             base_interface_table = getattr(b, '_dbus_interface_table', False)
             if base_interface_table:
-                for (interface, method_table) in base_interface_table.items():
+                for (interface, method_table) in list(base_interface_table.items()):
                     our_method_table = interface_table.setdefault(interface, {})
                     our_method_table.update(method_table)
 
         # add in all the name -> method entries for our own methods/signals
-        for func in dct.values():
+        for func in list(dct.values()):
             if getattr(func, '_dbus_interface', False):
                 method_table = interface_table.setdefault(func._dbus_interface, {})
                 method_table[func.__name__] = func
@@ -518,7 +519,7 @@ class PropertiesInterface(Interface):
                 raise DBusException("Name %s on object interface %s is not a property" % (property_name, interface_name))
             return prop
         else:
-            for interface in interfaces.itervalues():
+            for interface in interfaces.values():
                 prop = interface.get(property_name)
                 if prop and isinstance(prop, dbus_property):
                     return prop
@@ -558,10 +559,10 @@ class PropertiesInterface(Interface):
                 raise DBusException("No interface %s on object" % interface_name)
             ifaces = [iface]
         else:
-            ifaces = interfaces.values()
+            ifaces = list(interfaces.values())
         properties = {}
         for iface in ifaces:
-            for name, prop in iface.items():
+            for name, prop in list(iface.items()):
                 if not isinstance(prop, dbus_property):
                     continue
                 if not prop.fget or name in properties:
@@ -979,10 +980,10 @@ class Object(Interface):
         reflection_data += '<node name="%s">\n' % object_path
 
         interfaces = self._dbus_interface_table
-        for (name, funcs) in interfaces.items():
+        for (name, funcs) in list(interfaces.items()):
             reflection_data += '  <interface name="%s">\n' % (name)
 
-            for func in funcs.values():
+            for func in list(funcs.values()):
                 if getattr(func, '_dbus_is_method', False):
                     reflection_data += self.__class__._reflect_on_method(func)
                 elif getattr(func, '_dbus_is_signal', False):

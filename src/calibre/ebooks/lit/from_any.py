@@ -1,4 +1,14 @@
-from __future__ import with_statement
+import glob
+import logging
+import os
+import sys
+
+from calibre.ebooks.epub import config as common_config
+from calibre.ebooks.epub.from_any import USAGE, any2epub, formats
+from calibre.ebooks.lit.writer import oeb2lit
+from calibre.ptempfile import TemporaryDirectory
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
@@ -7,12 +17,7 @@ __docformat__ = 'restructuredtext en'
 Convert any ebook format to LIT.
 '''
 
-import sys, os, glob, logging
 
-from calibre.ebooks.epub.from_any import any2epub, formats, USAGE
-from calibre.ebooks.epub import config as common_config
-from calibre.ptempfile import TemporaryDirectory
-from calibre.ebooks.lit.writer import oeb2lit
 
 
 def config(defaults=None):
@@ -56,7 +61,7 @@ def main(args=sys.argv):
     opts, args = parser.parse_args(args)
     if len(args) < 2:
         parser.print_help()
-        print 'No input file specified.'
+        print('No input file specified.')
         return 1
     any2lit(opts, args[1])
     return 0

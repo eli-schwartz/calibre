@@ -1,17 +1,20 @@
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import gc
+import io
+import sys
+import traceback
+import weakref
+
+from calibre import prints
+from calibre.gui2 import error_dialog
+from calibre.utils.config import OptionParser
+from PyQt5.Qt import QAction, QIcon, QMainWindow, QMenu, QMenuBar, QObject, QTimer
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
 
-import StringIO, traceback, sys, gc, weakref
 
-from PyQt5.Qt import (QMainWindow, QTimer, QAction, QMenu, QMenuBar, QIcon,
-                      QObject)
-from calibre.utils.config import OptionParser
-from calibre.gui2 import error_dialog
-from calibre import prints
 
 
 def option_parser(usage='''\
@@ -51,24 +54,24 @@ class GarbageCollector(QObject):
         # return self.debug_cycles()
         l0, l1, l2 = gc.get_count()
         if self.debug:
-            print ('gc_check called:', l0, l1, l2)
+            print(('gc_check called:', l0, l1, l2))
         if l0 > self.threshold[0]:
             num = gc.collect(0)
             if self.debug:
-                print ('collecting gen 0, found:', num, 'unreachable')
+                print(('collecting gen 0, found:', num, 'unreachable'))
             if l1 > self.threshold[1]:
                 num = gc.collect(1)
                 if self.debug:
-                    print ('collecting gen 1, found:', num, 'unreachable')
+                    print(('collecting gen 1, found:', num, 'unreachable'))
                 if l2 > self.threshold[2]:
                     num = gc.collect(2)
                     if self.debug:
-                        print ('collecting gen 2, found:', num, 'unreachable')
+                        print(('collecting gen 2, found:', num, 'unreachable'))
 
     def debug_cycles(self):
         gc.collect()
         for obj in gc.garbage:
-            print (obj, repr(obj), type(obj))
+            print((obj, repr(obj), type(obj)))
 
 
 class ExceptionHandler(object):
@@ -133,7 +136,7 @@ class MainWindow(QMainWindow):
         if type is KeyboardInterrupt:
             return
         try:
-            sio = StringIO.StringIO()
+            sio = io.StringIO()
             try:
                 from calibre.debug import print_basic_debug_info
                 print_basic_debug_info(out=sio)
@@ -144,7 +147,7 @@ class MainWindow(QMainWindow):
                 prints(value.locking_debug_msg, file=sio)
             fe = sio.getvalue()
             prints(fe, file=sys.stderr)
-            msg = '<b>%s</b>:'%type.__name__ + unicode(str(value), 'utf8', 'replace')
+            msg = '<b>%s</b>:'%type.__name__ + str(str(value), 'utf8', 'replace')
             error_dialog(self, _('Unhandled exception'), msg, det_msg=fe,
                     show=True)
         except BaseException:

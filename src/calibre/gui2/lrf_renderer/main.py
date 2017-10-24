@@ -1,21 +1,24 @@
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
-import sys, logging, os, traceback, time
+import logging
+import os
+import sys
+import time
+import traceback
 
-from PyQt5.Qt import (
-    QKeySequence, QPainter, QDialog, QSpinBox, QSlider, QIcon, Qt, QCoreApplication, QThread, QScrollBar)
-
-from calibre import __appname__, setup_cli_handlers, islinux, isbsd
+from calibre import __appname__, isbsd, islinux, setup_cli_handlers
 from calibre.ebooks.lrf.lrfparser import LRFDocument
-
-from calibre.gui2 import error_dialog, \
-                         config, choose_files, Application
+from calibre.gui2 import Application, choose_files, config, error_dialog
 from calibre.gui2.dialogs.conversion_error import ConversionErrorDialog
-from calibre.gui2.lrf_renderer.main_ui import Ui_MainWindow
 from calibre.gui2.lrf_renderer.config_ui import Ui_ViewerConfig
-from calibre.gui2.main_window import MainWindow
 from calibre.gui2.lrf_renderer.document import Document
+from calibre.gui2.lrf_renderer.main_ui import Ui_MainWindow
+from calibre.gui2.main_window import MainWindow
 from calibre.gui2.search_box import SearchBox2
+from PyQt5.Qt import (
+	QCoreApplication, QDialog, QIcon, QKeySequence,
+	QPainter, QScrollBar, QSlider, QSpinBox, Qt, QThread
+)
 
 
 class RenderWorker(QThread):
@@ -89,7 +92,7 @@ class Main(MainWindow, Ui_MainWindow):
         self.action_previous_page.setShortcuts([QKeySequence.MoveToPreviousPage, QKeySequence(Qt.Key_Backspace)])
         self.action_next_match.setShortcuts(QKeySequence.FindNext)
         self.addAction(self.action_next_match)
-        self.action_next_page.triggered[(bool)].connect(self.next)
+        self.action_next_page.triggered[(bool)].connect(self.__next__)
         self.action_previous_page.triggered[(bool)].connect(self.previous)
         self.action_back.triggered[(bool)].connect(self.back)
         self.action_forward.triggered[(bool)].connect(self.forward)
@@ -179,11 +182,11 @@ class Main(MainWindow, Ui_MainWindow):
                 import cProfile
                 lrf = self.renderer.lrf
                 cProfile.runctx('self.document.render(lrf)', globals(), locals(), lrf.metadata.title+'.stats')
-                print 'Stats written to', self.renderer.lrf.metadata.title+'.stats'
+                print('Stats written to', self.renderer.lrf.metadata.title+'.stats')
             else:
                 start = time.time()
                 self.document.render(self.renderer.lrf)
-                print 'Layout time:', time.time()-start, 'seconds'
+                print('Layout time:', time.time()-start, 'seconds')
             self.renderer.lrf = None
 
             self.graphics_view.setScene(self.document)
@@ -196,12 +199,12 @@ class Main(MainWindow, Ui_MainWindow):
             self.graphics_view.setFocus(Qt.OtherFocusReason)
         elif self.renderer.exception is not None:
             exception = self.renderer.exception
-            print >>sys.stderr, 'Error rendering document'
-            print >>sys.stderr, exception
-            print >>sys.stderr, self.renderer.formatted_traceback
-            msg =  u'<p><b>%s</b>: '%(exception.__class__.__name__,) + unicode(str(exception), 'utf8', 'replace') + u'</p>'
-            msg += u'<p>Failed to render document</p>'
-            msg += u'<p>Detailed <b>traceback</b>:<pre>'
+            print('Error rendering document', file=sys.stderr)
+            print(exception, file=sys.stderr)
+            print(self.renderer.formatted_traceback, file=sys.stderr)
+            msg =  '<p><b>%s</b>: '%(exception.__class__.__name__,) + str(str(exception), 'utf8', 'replace') + '</p>'
+            msg += '<p>Failed to render document</p>'
+            msg += '<p>Detailed <b>traceback</b>:<pre>'
             msg += self.renderer.formatted_traceback + '</pre>'
             d = ConversionErrorDialog(self, 'Error while rendering file', msg)
             d.exec_()
@@ -217,7 +220,7 @@ class Main(MainWindow, Ui_MainWindow):
         QCoreApplication.processEvents()
 
     def next(self, triggered):
-        self.document.next()
+        next(self.document)
 
     def next_match(self, triggered):
         try:
@@ -242,7 +245,7 @@ class Main(MainWindow, Ui_MainWindow):
         if d > 0:
             self.document.previous()
         elif d < 0:
-            self.document.next()
+            next(self.document)
 
     def closeEvent(self, event):
         if self.renderer is not None and self.renderer.isRunning():

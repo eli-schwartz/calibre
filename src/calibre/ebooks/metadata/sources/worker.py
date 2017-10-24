@@ -1,12 +1,9 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 # License: GPLv3 Copyright: 2012, Kovid Goyal <kovid at kovidgoyal.net>
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import os
 from collections import Counter
 from io import BytesIO
-from Queue import Empty, Queue
+from queue import Empty, Queue
 from threading import Event, Thread
 
 from calibre.customize.ui import metadata_plugins
@@ -54,7 +51,7 @@ def main(do_identify, covers, metadata, ensure_fields, tdir):
     log = GUILog()
     patch_plugins()
 
-    for book_id, mi in metadata.iteritems():
+    for book_id, mi in metadata.items():
         mi = OPF(BytesIO(mi), basedir=tdir,
                 populate_spine=False).to_book_metadata()
         title, authors, identifiers = mi.title, mi.authors, mi.identifiers

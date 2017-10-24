@@ -1,19 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import OrderedDict
+
+from calibre.gui2 import error_dialog, gprefs
+from calibre.gui2.actions import InterfaceAction
+from PyQt5.Qt import (
+	QCheckBox, QDialog, QDialogButtonBox, QGridLayout, QIcon, QLabel, QTimer
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from collections import OrderedDict
 
-from PyQt5.Qt import (QTimer, QDialog, QGridLayout, QCheckBox, QLabel,
-                      QDialogButtonBox, QIcon)
 
-from calibre.gui2 import error_dialog, gprefs
-from calibre.gui2.actions import InterfaceAction
 
 SUPPORTED = {'EPUB', 'AZW3'}
 
@@ -55,7 +55,7 @@ class ChooseFormat(QDialog):  # {{{
         def fget(self):
             for b in self.buttons:
                 if b.isChecked():
-                    yield unicode(b.text())[1:]
+                    yield str(b.text())[1:]
 
         def fset(self, formats):
             formats = {x.upper() for x in formats}
@@ -129,7 +129,7 @@ class ToCEditAction(InterfaceAction):
         return self.get_supported_books(ans)
 
     def do_edit(self, book_id_map):
-        for book_id, fmts in book_id_map.iteritems():
+        for book_id, fmts in book_id_map.items():
             if len(fmts) > 1:
                 d = ChooseFormat(fmts, self.gui)
                 if d.exec_() != d.Accepted:

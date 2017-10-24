@@ -1,20 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-from future_builtins import map
+from collections import namedtuple
+from io import BytesIO
+from struct import pack
+
+from calibre.ebooks.mobi.utils import CNCX, align_block, encint
+from calibre.ebooks.mobi.writer8.header import Header
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from collections import namedtuple
-from struct import pack
-from io import BytesIO
-from future_builtins import zip
 
-from calibre.ebooks.mobi.utils import CNCX, encint, align_block
-from calibre.ebooks.mobi.writer8.header import Header
 
 TagMeta_ = namedtuple('TagMeta',
         'name number values_per_entry bitmask end_flag')
@@ -146,7 +143,7 @@ class Index(object):  # {{{
         for i, (index_num, tags) in enumerate(self.entries):
             control_bytes = self.control_bytes[i]
             buf.seek(0), buf.truncate(0)
-            index_num = (index_num.encode('utf-8') if isinstance(index_num, unicode) else index_num)
+            index_num = (index_num.encode('utf-8') if isinstance(index_num, str) else index_num)
             raw = bytearray(index_num)
             raw.insert(0, len(index_num))
             buf.write(bytes(raw))
@@ -379,7 +376,7 @@ if __name__ == '__main__':
     # calibre and kindlegen and compare the output
     import os, subprocess
     os.chdir('/t')
-    paras = ['<p>%d</p>' % i for i in xrange(4000)]
+    paras = ['<p>%d</p>' % i for i in range(4000)]
     raw = '<html><body>' + '\n\n'.join(paras) + '</body></html>'
 
     src = 'index.html'
@@ -393,4 +390,3 @@ if __name__ == '__main__':
 
     from calibre.gui2.tweak_book.diff.main import main
     main(['cdiff', 'decompiled_index/mobi8/ncx.record', 'x/ncx.record'])
-

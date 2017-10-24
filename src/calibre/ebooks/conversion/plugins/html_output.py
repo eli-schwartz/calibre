@@ -1,14 +1,18 @@
-from __future__ import with_statement
+import os
+import re
+import shutil
+from os.path import abspath, basename, dirname, exists, relpath as _relpath
+
+from calibre import CurrentDir
+from calibre.customize.conversion import OptionRecommendation, OutputFormatPlugin
+from calibre.ptempfile import PersistentTemporaryDirectory
+
+
 __license__ = 'GPL 3'
 __copyright__ = '2010, Fabian Grassl <fg@jusmeum.de>'
 __docformat__ = 'restructuredtext en'
 
-import os, re, shutil
-from os.path import dirname, abspath, relpath as _relpath, exists, basename
 
-from calibre.customize.conversion import OutputFormatPlugin, OptionRecommendation
-from calibre import CurrentDir
-from calibre.ptempfile import PersistentTemporaryDirectory
 
 
 def relpath(*args):
@@ -45,7 +49,7 @@ class HTMLOutput(OutputFormatPlugin):
         Generate table of contents
         '''
         from lxml import etree
-        from urllib import unquote
+        from urllib.parse import unquote
 
         from calibre.ebooks.oeb.base import element
         with CurrentDir(output_dir):
@@ -79,7 +83,7 @@ class HTMLOutput(OutputFormatPlugin):
         from lxml import etree
         from calibre.utils import zipfile
         from templite import Templite
-        from urllib import unquote
+        from urllib.parse import unquote
         from calibre.ebooks.html.meta import EasyMeta
 
         # read template files
@@ -129,7 +133,7 @@ class HTMLOutput(OutputFormatPlugin):
                     toc=html_toc, meta=meta, nextLink=nextLink,
                     tocUrl=tocUrl, cssLink=cssLink,
                     firstContentPageLink=nextLink)
-            if isinstance(t, unicode):
+            if isinstance(t, str):
                 t = t.encode('utf-8')
             f.write(t)
 

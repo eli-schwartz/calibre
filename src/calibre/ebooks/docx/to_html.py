@@ -1,34 +1,39 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import errno
+import math
+import os
+import re
+import sys
+import uuid
+from collections import OrderedDict, defaultdict
+
+from calibre import guess_type
+from calibre.ebooks.docx.cleanup import cleanup_markup
+from calibre.ebooks.docx.container import DOCX, fromstring
+from calibre.ebooks.docx.fields import Fields
+from calibre.ebooks.docx.fonts import Fonts
+from calibre.ebooks.docx.footnotes import Footnotes
+from calibre.ebooks.docx.images import Images
+from calibre.ebooks.docx.names import XML, generate_anchor
+from calibre.ebooks.docx.numbering import Numbering
+from calibre.ebooks.docx.settings import Settings
+from calibre.ebooks.docx.styles import PageProperties, Styles, inherit
+from calibre.ebooks.docx.tables import Tables
+from calibre.ebooks.docx.theme import Theme
+from calibre.ebooks.docx.toc import create_toc
+from calibre.ebooks.metadata.opf2 import OPFCreator
+from calibre.utils.localization import canonicalize_lang, lang_as_iso639_1
+from lxml import html
+from lxml.html.builder import (
+	BODY, BR, DD, DIV, DL, DT, H1, HEAD, HTML, LINK, META, SPAN, SUP, TITLE, A, P
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import sys, os, re, math, errno, uuid
-from collections import OrderedDict, defaultdict
 
-from lxml import html
-from lxml.html.builder import (
-    HTML, HEAD, TITLE, BODY, LINK, META, P, SPAN, BR, DIV, SUP, A, DT, DL, DD, H1)
 
-from calibre import guess_type
-from calibre.ebooks.docx.container import DOCX, fromstring
-from calibre.ebooks.docx.names import XML, generate_anchor
-from calibre.ebooks.docx.styles import Styles, inherit, PageProperties
-from calibre.ebooks.docx.numbering import Numbering
-from calibre.ebooks.docx.fonts import Fonts
-from calibre.ebooks.docx.images import Images
-from calibre.ebooks.docx.tables import Tables
-from calibre.ebooks.docx.footnotes import Footnotes
-from calibre.ebooks.docx.cleanup import cleanup_markup
-from calibre.ebooks.docx.theme import Theme
-from calibre.ebooks.docx.toc import create_toc
-from calibre.ebooks.docx.fields import Fields
-from calibre.ebooks.docx.settings import Settings
-from calibre.ebooks.metadata.opf2 import OPFCreator
-from calibre.utils.localization import canonicalize_lang, lang_as_iso639_1
 
 NBSP = '\xa0'
 
@@ -63,7 +68,7 @@ class Convert(object):
         self.notes_text = notes_text or _('Notes')
         self.notes_nopb = notes_nopb
         self.nosupsub = nosupsub
-        self.dest_dir = dest_dir or os.getcwdu()
+        self.dest_dir = dest_dir or os.getcwd()
         self.mi = self.docx.metadata
         self.body = BODY()
         self.theme = Theme(self.namespace)
@@ -116,7 +121,7 @@ class Convert(object):
 
         self.read_page_properties(doc)
         self.current_rels = relationships_by_id
-        for wp, page_properties in self.page_map.iteritems():
+        for wp, page_properties in self.page_map.items():
             self.current_page = page_properties
             if wp.tag.endswith('}p'):
                 p = self.convert_p(wp)
@@ -156,7 +161,7 @@ class Convert(object):
                 self.styles.apply_contextual_spacing(paras)
                 self.mark_block_runs(paras)
 
-        for p, wp in self.object_map.iteritems():
+        for p, wp in self.object_map.items():
             if len(p) > 0 and not p.text and len(p[0]) > 0 and not p[0].text and p[0][0].get('class', None) == 'tab':
                 # Paragraph uses tabs for indentation, convert to text-indent
                 parent = p[0]
@@ -175,7 +180,7 @@ class Convert(object):
                         indent = float(style.text_indent[:-2]) + indent
                     style.text_indent = '%.3gpt' % indent
                     parent.text = tabs[-1].tail or ''
-                    map(parent.remove, tabs)
+                    list(map(parent.remove, tabs))
 
         self.images.rid_map = orig_rid_map
 
@@ -186,7 +191,7 @@ class Convert(object):
         self.tables.apply_markup(self.object_map, self.page_map)
 
         numbered = []
-        for html_obj, obj in self.object_map.iteritems():
+        for html_obj, obj in self.object_map.items():
             raw = obj.get('calibre_num_id', None)
             if raw is not None:
                 lvl, num_id = raw.partition(':')[0::2]
@@ -206,7 +211,7 @@ class Convert(object):
 
         self.log.debug('Converting styles to CSS')
         self.styles.generate_classes()
-        for html_obj, obj in self.object_map.iteritems():
+        for html_obj, obj in self.object_map.items():
             style = self.styles.resolve(obj)
             if style is not None:
                 css = style.css
@@ -214,7 +219,7 @@ class Convert(object):
                     cls = self.styles.class_name(css)
                     if cls:
                         html_obj.set('class', cls)
-        for html_obj, css in self.framed_map.iteritems():
+        for html_obj, css in self.framed_map.items():
             cls = self.styles.class_name(css)
             if cls:
                 html_obj.set('class', cls)
@@ -390,13 +395,13 @@ class Convert(object):
         doc_anchors = frozenset(self.namespace.XPath('./w:body/w:bookmarkStart[@w:name]')(doc))
         if doc_anchors:
             current_bm = set()
-            rmap = {v:k for k, v in self.object_map.iteritems()}
+            rmap = {v:k for k, v in self.object_map.items()}
             for p in self.namespace.descendants(doc, 'w:p', 'w:bookmarkStart[@w:name]'):
                 if p.tag.endswith('}p'):
                     if current_bm and p in rmap:
                         para = rmap[p]
                         if 'id' not in para.attrib:
-                            para.set('id', generate_anchor(next(iter(current_bm)), frozenset(self.anchor_map.itervalues())))
+                            para.set('id', generate_anchor(next(iter(current_bm)), frozenset(iter(self.anchor_map.values()))))
                         for name in current_bm:
                             self.anchor_map[name] = para.get('id')
                         current_bm = set()
@@ -452,10 +457,10 @@ class Convert(object):
                     # _GoBack is a special bookmark inserted by Word 2010 for
                     # the return to previous edit feature, we ignore it
                     old_anchor = current_anchor
-                    self.anchor_map[anchor] = current_anchor = generate_anchor(anchor, frozenset(self.anchor_map.itervalues()))
+                    self.anchor_map[anchor] = current_anchor = generate_anchor(anchor, frozenset(iter(self.anchor_map.values())))
                     if old_anchor is not None:
                         # The previous anchor was not applied to any element
-                        for a, t in tuple(self.anchor_map.iteritems()):
+                        for a, t in tuple(self.anchor_map.items()):
                             if t == old_anchor:
                                 self.anchor_map[a] = current_anchor
             elif x.tag.endswith('}hyperlink'):
@@ -463,11 +468,11 @@ class Convert(object):
             elif x.tag.endswith('}instrText') and x.text and x.text.strip().startswith('TOC '):
                 old_anchor = current_anchor
                 anchor = str(uuid.uuid4())
-                self.anchor_map[anchor] = current_anchor = generate_anchor('toc', frozenset(self.anchor_map.itervalues()))
+                self.anchor_map[anchor] = current_anchor = generate_anchor('toc', frozenset(iter(self.anchor_map.values())))
                 self.toc_anchor = current_anchor
                 if old_anchor is not None:
                     # The previous anchor was not applied to any element
-                    for a, t in tuple(self.anchor_map.iteritems()):
+                    for a, t in tuple(self.anchor_map.items()):
                         if t == old_anchor:
                             self.anchor_map[a] = current_anchor
         if current_anchor is not None:
@@ -542,7 +547,7 @@ class Convert(object):
 
     def resolve_links(self):
         self.resolved_link_map = {}
-        for hyperlink, spans in self.link_map.iteritems():
+        for hyperlink, spans in self.link_map.items():
             relationships_by_id = self.link_source_map[hyperlink]
             span = spans[0]
             if len(spans) > 1:
@@ -568,7 +573,7 @@ class Convert(object):
             # hrefs that point nowhere give epubcheck a hernia. The element
             # should be styled explicitly by Word anyway.
             # span.set('href', '#')
-        rmap = {v:k for k, v in self.object_map.iteritems()}
+        rmap = {v:k for k, v in self.object_map.items()}
         for hyperlink, runs in self.fields.hyperlink_fields:
             spans = [rmap[r] for r in runs if r in rmap]
             if not spans:
@@ -675,9 +680,9 @@ class Convert(object):
                 ans.append(text.elem)
                 ans[-1].set('class', 'tab')
             elif self.namespace.is_tag(child, 'w:noBreakHyphen'):
-                text.buf.append(u'\u2011')
+                text.buf.append('\\u2011')
             elif self.namespace.is_tag(child, 'w:softHyphen'):
-                text.buf.append(u'\u00ad')
+                text.buf.append('\\u00ad')
         if text.buf:
             setattr(text.elem, text.attr, ''.join(text.buf))
 
@@ -708,7 +713,7 @@ class Convert(object):
             last_run.append((html_obj, style))
 
     def apply_frames(self):
-        for run in filter(None, self.framed):
+        for run in [_f for _f in self.framed if _f]:
             style = run[0][1]
             paras = tuple(x[0] for x in run)
             parent = paras[0].getparent()
@@ -720,7 +725,7 @@ class Convert(object):
 
         if not self.block_runs:
             return
-        rmap = {v:k for k, v in self.object_map.iteritems()}
+        rmap = {v:k for k, v in self.object_map.items()}
         for border_style, blocks in self.block_runs:
             paras = tuple(rmap[p] for p in blocks)
             parent = paras[0].getparent()
@@ -785,7 +790,7 @@ if __name__ == '__main__':
     import shutil
     from calibre.utils.logging import default_log
     default_log.filter_level = default_log.DEBUG
-    dest_dir = os.path.join(os.getcwdu(), 'docx_input')
+    dest_dir = os.path.join(os.getcwd(), 'docx_input')
     if os.path.exists(dest_dir):
         shutil.rmtree(dest_dir)
     os.mkdir(dest_dir)

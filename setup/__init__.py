@@ -1,12 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import errno
+import os
+import platform
+import re
+import subprocess
+import sys
+import time
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, re, os, platform, subprocess, time, errno
 
 is64bit = platform.architecture()[0] == '64bit'
 iswindows = re.search('win(32|64)', sys.platform)
@@ -28,15 +33,15 @@ _cache_dir_built = False
 
 
 def newer(targets, sources):
-    if isinstance(targets, basestring):
+    if isinstance(targets, str):
         targets = [targets]
-    if isinstance(sources, basestring):
+    if isinstance(sources, str):
         sources = [sources]
     for f in targets:
         if not os.path.exists(f):
             return True
-    ttimes = map(lambda x: os.stat(x).st_mtime, targets)
-    stimes = map(lambda x: os.stat(x).st_mtime, sources)
+    ttimes = [os.stat(x).st_mtime for x in targets]
+    stimes = [os.stat(x).st_mtime for x in sources]
     newest_source, oldest_target = max(stimes), min(ttimes)
     return newest_source > oldest_target
 
@@ -73,10 +78,10 @@ def require_clean_git():
         c('git rev-parse --verify HEAD'.split(), stdout=null)
         c('git update-index -q --ignore-submodules --refresh'.split())
         if p('git diff-files --quiet --ignore-submodules'.split()).wait() != 0:
-            print >>sys.stderr, 'You have unstaged changes in your working tree'
+            print('You have unstaged changes in your working tree', file=sys.stderr)
             raise SystemExit(1)
         if p('git diff-index --cached --quiet --ignore-submodules HEAD --'.split()).wait() != 0:
-            print >>sys.stderr, 'Your git index contains uncommitted changes'
+            print('Your git index contains uncommitted changes', file=sys.stderr)
             raise SystemExit(1)
 
 
@@ -131,7 +136,7 @@ def prints(*args, **kwargs):
     enc = preferred_encoding
     safe_encode = kwargs.get('safe_encode', False)
     for i, arg in enumerate(args):
-        if isinstance(arg, unicode):
+        if isinstance(arg, str):
             try:
                 arg = arg.encode(enc)
             except UnicodeEncodeError:
@@ -142,8 +147,8 @@ def prints(*args, **kwargs):
             try:
                 arg = str(arg)
             except ValueError:
-                arg = unicode(arg)
-            if isinstance(arg, unicode):
+                arg = str(arg)
+            if isinstance(arg, str):
                 try:
                     arg = arg.encode(enc)
                 except UnicodeEncodeError:
@@ -267,9 +272,9 @@ class Command(object):
         sys.stdout.flush()
 
     def warn(self, *args, **kwargs):
-        print '\n'+'_'*20, 'WARNING','_'*20
+        print('\n'+'_'*20, 'WARNING','_'*20)
         prints(*args, **kwargs)
-        print '_'*50
+        print('_'*50)
         warnings.append((args, kwargs))
         sys.stdout.flush()
 

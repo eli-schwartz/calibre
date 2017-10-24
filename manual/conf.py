@@ -11,16 +11,21 @@
 # All configuration values have a default value; values that are commented out
 # serve to show the default value.
 
-import sys, os, errno
+import errno
+import os
+import sys
 from datetime import date
+
+import calibre.utils.localization as l  # Ensure calibre translations are installed
+import custom
+from calibre.utils.localization import get_language
+from setup import __appname__, __version__
+
 
 # If your extensions are in another directory, add it here.
 base = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(base)
 sys.path.insert(0, os.path.dirname(base))
-from setup import __appname__, __version__
-import calibre.utils.localization as l  # Ensure calibre translations are installed
-import custom
 del sys.path[0]
 del l
 custom
@@ -157,7 +162,6 @@ html_last_updated_fmt = '%b %d, %Y'
 # html_title       = title
 html_short_title = _('Start')
 
-from calibre.utils.localization import get_language
 html_context = {}
 html_context['other_languages'] = [
     (lc, get_language(lc)) for lc in os.environ.get('ALL_USER_MANUAL_LANGUAGES', '').split() if lc != language]
@@ -168,7 +172,7 @@ def sort_languages(x):
     lc, name = x
     if lc == language:
         return ''
-    return sort_key(unicode(name))
+    return sort_key(str(name))
 
 
 html_context['other_languages'].sort(key=sort_languages)
@@ -176,13 +180,13 @@ html_context['support_text'] = _('Support calibre')
 html_context['support_tooltip'] = _('Contribute to support calibre development')
 del sort_languages, get_language
 
-epub_author      = u'Kovid Goyal'
-epub_publisher   = u'Kovid Goyal'
-epub_copyright   = u'© {} Kovid Goyal'.format(date.today().year)
-epub_description = u'Comprehensive documentation for calibre'
-epub_identifier  = u'https://manual.calibre-ebook.com'
-epub_scheme      = u'url'
-epub_uid         = u'S54a88f8e9d42455e9c6db000e989225f'
+epub_author      = 'Kovid Goyal'
+epub_publisher   = 'Kovid Goyal'
+epub_copyright   = '© {} Kovid Goyal'.format(date.today().year)
+epub_description = 'Comprehensive documentation for calibre'
+epub_identifier  = 'https://manual.calibre-ebook.com'
+epub_scheme      = 'url'
+epub_uid         = 'S54a88f8e9d42455e9c6db000e989225f'
 epub_tocdepth    = 4
 epub_tocdup      = True
 epub_cover       = ('epub_cover.jpg', 'epub_cover_template.html')

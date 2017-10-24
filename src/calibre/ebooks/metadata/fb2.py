@@ -1,23 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 __license__   = 'GPL v3'
 __copyright__ = '2011, Roman Mukhin <ramses_ru at hotmail.com>, '\
                 '2008, Anatoly Shipitsin <norguhtar at gmail.com>'
 '''Read meta information from fb2 files'''
 
-import os, random
+import os
+import random
+from base64 import b64encode
 from functools import partial
 from string import ascii_letters, digits
-from base64 import b64encode
 
-from lxml import etree
-
+from calibre import force_unicode, guess_all_extensions, guess_type, prints
+from calibre.ebooks.chardet import xml_to_unicode
+from calibre.ebooks.metadata import MetaInformation, check_isbn
 from calibre.utils.date import parse_only_date
 from calibre.utils.img import save_cover_data_to
 from calibre.utils.imghdr import identify
-from calibre import guess_type, guess_all_extensions, prints, force_unicode
-from calibre.ebooks.metadata import MetaInformation, check_isbn
-from calibre.ebooks.chardet import xml_to_unicode
+from lxml import etree
 
 
 NAMESPACES = {
@@ -26,7 +25,7 @@ NAMESPACES = {
     'xlink' :   'http://www.w3.org/1999/xlink'
 }
 
-tostring = partial(etree.tostring, method='text', encoding=unicode)
+tostring = partial(etree.tostring, method='text', encoding=str)
 
 
 def XLINK(tag):
@@ -51,7 +50,7 @@ class Context(object):
 
     def get_or_create(self, parent, tag, attribs={}, at_start=True):
         xpathstr='./fb:'+tag
-        for n, v in attribs.items():
+        for n, v in list(attribs.items()):
             xpathstr += '[@%s="%s"]' % (n, v)
         ans = self.XPath(xpathstr)(parent)
         if ans:
@@ -95,7 +94,7 @@ def get_metadata(stream):
 
     # fallback for book_title
     if book_title:
-        book_title = unicode(book_title)
+        book_title = str(book_title)
     else:
         book_title = force_unicode(os.path.splitext(
             os.path.basename(getattr(stream, 'name',
@@ -232,7 +231,7 @@ def _parse_tags(root, mi, ctx):
         # -- i18n Translations-- ?
         tags = ctx.XPath('//fb:%s/fb:genre/text()' % genre_sec)(root)
         if tags:
-            mi.tags = list(map(unicode, tags))
+            mi.tags = list(map(str, tags))
             break
 
 
@@ -284,7 +283,7 @@ def _parse_pubdate(root, mi, ctx):
     year = ctx.XPath('number(//fb:publish-info/fb:year/text())')(root)
     if float.is_integer(year):
         # only year is available, so use 2nd of June
-        mi.pubdate = parse_only_date(type(u'')(int(year)))
+        mi.pubdate = parse_only_date(type('')(int(year)))
 
 
 def _parse_language(root, mi, ctx):
@@ -424,7 +423,7 @@ def ensure_namespace(doc):
                 break
     if bare_tags:
         import re
-        raw = etree.tostring(doc, encoding=unicode)
+        raw = etree.tostring(doc, encoding=str)
         raw = re.sub(r'''<(description|body)\s+xmlns=['"]['"]>''', r'<\1>', raw)
         doc = etree.fromstring(raw)
     return doc

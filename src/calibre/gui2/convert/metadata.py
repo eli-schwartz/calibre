@@ -1,25 +1,26 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import errno
+import os
+import re
+
+from calibre.ebooks.metadata import MetaInformation, string_to_authors, title_sort
+from calibre.ebooks.metadata.opf2 import metadata_to_opf
+from calibre.gui2 import choose_images, error_dialog
+from calibre.gui2.convert import Widget
+from calibre.gui2.convert.metadata_ui import Ui_Form
+from calibre.library.comments import comments_to_html
+from calibre.ptempfile import PersistentTemporaryFile
+from calibre.utils.config import tweaks
+from calibre.utils.icu import sort_key
+from PyQt5.Qt import QPixmap
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, re, errno
 
-from PyQt5.Qt import QPixmap
 
-from calibre.gui2 import choose_images, error_dialog
-from calibre.gui2.convert.metadata_ui import Ui_Form
-from calibre.ebooks.metadata import (string_to_authors, MetaInformation,
-        title_sort)
-from calibre.ebooks.metadata.opf2 import metadata_to_opf
-from calibre.ptempfile import PersistentTemporaryFile
-from calibre.gui2.convert import Widget
-from calibre.utils.icu import sort_key
-from calibre.library.comments import comments_to_html
-from calibre.utils.config import tweaks
 
 
 def create_opf_file(db, book_id, opf_file=None):
@@ -72,7 +73,7 @@ class MetadataWidget(Widget, Ui_Form):
         self.cover_data = data
 
     def deduce_author_sort(self, *args):
-        au = unicode(self.author.currentText())
+        au = str(self.author.currentText())
         au = re.sub(r'\s+et al\.$', '', au)
         authors = string_to_authors(au)
         self.author_sort.setText(self.db.author_sort_from_authors(authors))
@@ -154,30 +155,30 @@ class MetadataWidget(Widget, Ui_Form):
         self.publisher.update_items_cache([x[1] for x in all_publishers])
 
     def get_title_and_authors(self):
-        title = unicode(self.title.text()).strip()
+        title = str(self.title.text()).strip()
         if not title:
             title = _('Unknown')
-        authors = unicode(self.author.text()).strip()
+        authors = str(self.author.text()).strip()
         authors = string_to_authors(authors) if authors else [_('Unknown')]
         return title, authors
 
     def get_metadata(self):
         title, authors = self.get_title_and_authors()
         mi = MetaInformation(title, authors)
-        publisher = unicode(self.publisher.text()).strip()
+        publisher = str(self.publisher.text()).strip()
         if publisher:
             mi.publisher = publisher
-        author_sort = unicode(self.author_sort.text()).strip()
+        author_sort = str(self.author_sort.text()).strip()
         if author_sort:
             mi.author_sort = author_sort
         comments = self.comment.html
         if comments:
             mi.comments = comments
         mi.series_index = float(self.series_index.value())
-        series = unicode(self.series.currentText()).strip()
+        series = str(self.series.currentText()).strip()
         if series:
             mi.series = series
-        tags = [t.strip() for t in unicode(self.tags.text()).strip().split(',')]
+        tags = [t.strip() for t in str(self.tags.text()).strip().split(',')]
         if tags:
             mi.tags = tags
 
@@ -185,7 +186,7 @@ class MetadataWidget(Widget, Ui_Form):
 
     def select_cover(self):
         files = choose_images(self, 'change cover dialog',
-                             _('Choose cover for ') + unicode(self.title.text()))
+                             _('Choose cover for ') + str(self.title.text()))
         if not files:
             return
         _file = files[0]

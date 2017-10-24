@@ -1,14 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from future_builtins import map
-import sys, locale, codecs, os, importlib, collections
+import codecs
+import collections
+import importlib
+import locale
+import os
+import sys
 
-__appname__   = u'calibre'
+
+__appname__   = 'calibre'
 numeric_version = (3, 10, 0)
-__version__   = u'.'.join(map(unicode, numeric_version))
-__author__    = u"Kovid Goyal <kovid@kovidgoyal.net>"
+__version__   = '.'.join(map(str, numeric_version))
+__author__    = "Kovid Goyal <kovid@kovidgoyal.net>"
 
 '''
 Various run time constants.
@@ -39,9 +43,9 @@ isworker = 'CALIBRE_WORKER' in os.environ or 'CALIBRE_SIMPLE_WORKER' in os.envir
 if isworker:
     os.environ.pop('CALIBRE_FORCE_ANSI', None)
 FAKE_PROTOCOL, FAKE_HOST = 'https', 'calibre-internal.invalid'
-VIEWER_APP_UID = u'com.calibre-ebook.viewer'
-EDITOR_APP_UID = u'com.calibre-ebook.edit-book'
-MAIN_APP_UID = u'com.calibre-ebook.main-gui'
+VIEWER_APP_UID = 'com.calibre-ebook.viewer'
+EDITOR_APP_UID = 'com.calibre-ebook.edit-book'
+MAIN_APP_UID = 'com.calibre-ebook.main-gui'
 try:
     preferred_encoding = locale.getpreferredencoding()
     codecs.lookup(preferred_encoding)
@@ -66,7 +70,7 @@ def get_osx_version():
             ver = platform.mac_ver()[0].split('.')
             if len(ver) == 2:
                 ver.append(0)
-            _osx_ver = OSX(*(map(int, ver)))
+            _osx_ver = OSX(*(list(map(int, ver))))
         except:
             _osx_ver = OSX(0, 0, 0)
     return _osx_ver
@@ -87,19 +91,14 @@ else:
         filesystem_encoding = 'utf-8'
 
 
-DEBUG = b'CALIBRE_DEBUG' in os.environ
-
-
-def debug():
-    global DEBUG
-    DEBUG = True
+DEBUG = True
 
 
 _cache_dir = None
 
 
 def _get_cache_dir():
-    confcache = os.path.join(config_dir, u'caches')
+    confcache = os.path.join(config_dir, 'caches')
     if isportable:
         return confcache
     if 'CALIBRE_CACHE_DIRECTORY' in os.environ:
@@ -108,13 +107,13 @@ def _get_cache_dir():
     if iswindows:
         w = plugins['winutil'][0]
         try:
-            candidate = os.path.join(w.special_folder_path(w.CSIDL_LOCAL_APPDATA), u'%s-cache'%__appname__)
+            candidate = os.path.join(w.special_folder_path(w.CSIDL_LOCAL_APPDATA), '%s-cache'%__appname__)
         except ValueError:
             return confcache
     elif isosx:
-        candidate = os.path.join(os.path.expanduser(u'~/Library/Caches'), __appname__)
+        candidate = os.path.join(os.path.expanduser('~/Library/Caches'), __appname__)
     else:
-        candidate = os.environ.get('XDG_CACHE_HOME', u'~/.cache')
+        candidate = os.environ.get('XDG_CACHE_HOME', '~/.cache')
         candidate = os.path.join(os.path.expanduser(candidate),
                                     __appname__)
         if isinstance(candidate, bytes):
@@ -208,7 +207,7 @@ if plugins is None:
 
 # config_dir {{{
 
-CONFIG_DIR_MODE = 0700
+CONFIG_DIR_MODE = 0o700
 
 if 'CALIBRE_CONFIG_DIRECTORY' in os.environ:
     config_dir = os.path.abspath(os.environ['CALIBRE_CONFIG_DIRECTORY'])
@@ -234,7 +233,6 @@ else:
     if not os.path.exists(config_dir) or \
             not os.access(config_dir, os.W_OK) or not \
             os.access(config_dir, os.X_OK):
-        print 'No write acces to', config_dir, 'using a temporary dir instead'
         import tempfile, atexit
         config_dir = tempfile.mkdtemp(prefix='calibre-config-')
 
@@ -274,11 +272,11 @@ def get_portable_base():
 
 def get_unicode_windows_env_var(name):
     import ctypes
-    name = unicode(name)
+    name = str(name)
     n = ctypes.windll.kernel32.GetEnvironmentVariableW(name, None, 0)
     if n == 0:
         return None
-    buf = ctypes.create_unicode_buffer(u'\0'*n)
+    buf = ctypes.create_unicode_buffer('\0'*n)
     ctypes.windll.kernel32.GetEnvironmentVariableW(name, buf, n)
     return buf.value
 
@@ -292,7 +290,7 @@ def get_windows_username():
     import ctypes
     try:
         advapi32 = ctypes.windll.advapi32
-        GetUserName = getattr(advapi32, u'GetUserNameW')
+        GetUserName = getattr(advapi32, 'GetUserNameW')
     except AttributeError:
         pass
     else:
@@ -301,7 +299,7 @@ def get_windows_username():
         if GetUserName(buf, ctypes.byref(n)):
             return buf.value
 
-    return get_unicode_windows_env_var(u'USERNAME')
+    return get_unicode_windows_env_var('USERNAME')
 
 
 def get_windows_temp_path():
@@ -309,7 +307,7 @@ def get_windows_temp_path():
     n = ctypes.windll.kernel32.GetTempPathW(0, None)
     if n == 0:
         return None
-    buf = ctypes.create_unicode_buffer(u'\0'*n)
+    buf = ctypes.create_unicode_buffer('\0'*n)
     ctypes.windll.kernel32.GetTempPathW(n, buf)
     ans = buf.value
     return ans if ans else None
@@ -319,11 +317,11 @@ def get_windows_user_locale_name():
     import ctypes
     k32 = ctypes.windll.kernel32
     n = 255
-    buf = ctypes.create_unicode_buffer(u'\0'*n)
+    buf = ctypes.create_unicode_buffer('\0'*n)
     n = k32.GetUserDefaultLocaleName(buf, n)
     if n == 0:
         return None
-    return u'_'.join(buf.value.split(u'-')[:2])
+    return '_'.join(buf.value.split('-')[:2])
 
 
 number_formats = None
@@ -338,19 +336,19 @@ def get_windows_number_formats():
         from ctypes.wintypes import DWORD
         k32 = ctypes.windll.kernel32
         n = 25
-        buf = ctypes.create_unicode_buffer(u'\0'*n)
+        buf = ctypes.create_unicode_buffer('\0'*n)
         k32.GetNumberFormatEx.argtypes = [ctypes.c_wchar_p, DWORD, ctypes.c_wchar_p, ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_int]
         k32.GetNumberFormatEx.restype = ctypes.c_int
-        if k32.GetNumberFormatEx(None, 0, u'123456.7', None, buf, n) == 0:
+        if k32.GetNumberFormatEx(None, 0, '123456.7', None, buf, n) == 0:
             raise ctypes.WinError()
         src = buf.value
-        thousands_sep, decimal_point = u',.'
-        idx = src.find(u'6')
-        if idx > -1 and src[idx+1] != u'7':
+        thousands_sep, decimal_point = ',.'
+        idx = src.find('6')
+        if idx > -1 and src[idx+1] != '7':
             decimal_point = src[idx+1]
             src = src[:idx]
         for c in src:
-            if c not in u'123456':
+            if c not in '123456':
                 thousands_sep = c
                 break
         number_formats = (thousands_sep, decimal_point)

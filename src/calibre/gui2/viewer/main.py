@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
@@ -8,21 +7,15 @@ import sys
 import traceback
 from functools import partial
 from threading import Thread
-
-from PyQt5.Qt import (
-    QAction, QApplication, QByteArray, QIcon, QInputDialog, QModelIndex, QObject,
-    QPropertyAnimation, QSize, Qt, QTime, QTimer, pyqtSignal
-)
+from time import monotonic
 
 from calibre import as_unicode, force_unicode, isbytestring, prints
-from calibre.constants import (
-    DEBUG, VIEWER_APP_UID, filesystem_encoding, islinux, iswindows
-)
+from calibre.constants import DEBUG, VIEWER_APP_UID, filesystem_encoding, islinux, iswindows
 from calibre.customize.ui import available_input_formats
 from calibre.ebooks.oeb.iterator.book import EbookIterator
 from calibre.gui2 import (
-    Application, add_to_recent_docs, choose_files, error_dialog, info_dialog,
-    open_url, set_app_uid, setup_gui_option_parser
+	Application, add_to_recent_docs, choose_files, error_dialog,
+	info_dialog, open_url, set_app_uid, setup_gui_option_parser
 )
 from calibre.gui2.viewer.toc import TOC
 from calibre.gui2.viewer.ui import Main as MainWindow
@@ -32,8 +25,11 @@ from calibre.utils.config import Config, JSONConfig, StringConfig
 from calibre.utils.ipc import RC, viewer_socket_address
 from calibre.utils.localization import canonicalize_lang, get_lang, lang_as_iso639_1
 from calibre.utils.zipfile import BadZipfile
+from PyQt5.Qt import (
+	QAction, QApplication, QByteArray, QIcon, QInputDialog, QModelIndex,
+	QObject, QPropertyAnimation, QSize, Qt, QTime, QTimer, pyqtSignal
+)
 
-from time import monotonic
 
 vprefs = JSONConfig('viewer')
 vprefs.defaults['singleinstance'] = False
@@ -414,7 +410,7 @@ class EbookViewer(MainWindow):
                 at_start=True)
 
     def lookup(self, word):
-        from urllib import quote
+        from urllib.parse import quote
         word = quote(word.encode('utf-8'))
         lang = canonicalize_lang(self.view.current_language) or get_lang() or 'en'
         try:
@@ -631,11 +627,11 @@ class EbookViewer(MainWindow):
         tt = '%(action)s [%(sc)s]\n'+_('Current magnification: %(mag).1f')
         sc = _(' or ').join(self.view.shortcuts.get_shortcuts('Font larger'))
         self.action_font_size_larger.setToolTip(
-                tt %dict(action=unicode(self.action_font_size_larger.text()),
+                tt %dict(action=str(self.action_font_size_larger.text()),
                          mag=val, sc=sc))
         sc = _(' or ').join(self.view.shortcuts.get_shortcuts('Font smaller'))
         self.action_font_size_smaller.setToolTip(
-                tt %dict(action=unicode(self.action_font_size_smaller.text()),
+                tt %dict(action=str(self.action_font_size_smaller.text()),
                          mag=val, sc=sc))
         self.action_font_size_larger.setEnabled(self.view.multiplier < 3)
         self.action_font_size_smaller.setEnabled(self.view.multiplier > 0.2)
@@ -662,10 +658,10 @@ class EbookViewer(MainWindow):
         self.load_path(self.iterator.spine[index])
 
     def find_next(self):
-        self.find(unicode(self.search.text()), repeat=True)
+        self.find(str(self.search.text()), repeat=True)
 
     def find_previous(self):
-        self.find(unicode(self.search.text()), repeat=True, backwards=True)
+        self.find(str(self.search.text()), repeat=True, backwards=True)
 
     def do_search(self, text, backwards):
         self.pending_search = None
@@ -684,7 +680,7 @@ class EbookViewer(MainWindow):
             self.history.add(self.pos.value())
             path = self.iterator.spine[self.iterator.spine.index(path)]
             if url.hasFragment():
-                frag = unicode(url.fragment())
+                frag = str(url.fragment())
             if path != self.current_page:
                 self.pending_anchor = frag
                 self.load_path(path)
@@ -890,7 +886,7 @@ class EbookViewer(MainWindow):
             num += 1
         title, ok = QInputDialog.getText(self, _('Add bookmark'),
                 _('Enter title for bookmark:'), text=bm)
-        title = unicode(title).strip()
+        title = str(title).strip()
         if ok and title:
             bm = self.view.bookmark()
             bm['spine'] = self.current_index

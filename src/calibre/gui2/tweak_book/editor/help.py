@@ -1,19 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
-
 import json
 from functools import partial
-
-from lxml import html
 
 from calibre import browser
 from calibre.ebooks.oeb.polish.container import OEB_DOCS
 from calibre.ebooks.oeb.polish.utils import guess_type
+from lxml import html
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 
 class URLMap(object):

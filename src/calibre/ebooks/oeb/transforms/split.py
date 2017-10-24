@@ -1,4 +1,23 @@
-from __future__ import with_statement
+import collections
+import copy
+import functools
+import math
+import os
+import re
+from collections import OrderedDict
+
+from calibre import as_unicode
+from calibre.ebooks.epub import rules
+from calibre.ebooks.oeb.base import (
+	OEB_STYLES, XHTML, XPNSMAP as NAMESPACES,
+	rewrite_links, urldefrag, urlnormalize, urlunquote
+)
+from calibre.ebooks.oeb.polish.split import do_split
+from css_selectors import Select, SelectorError
+from lxml import etree
+from lxml.etree import XPath as _XPath
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
@@ -9,18 +28,8 @@ forced at "likely" locations to conform to size limitations. This transform
 assumes a prior call to the flatcss transform.
 '''
 
-import os, math, functools, collections, re, copy
-from collections import OrderedDict
 
-from lxml.etree import XPath as _XPath
-from lxml import etree
 
-from calibre import as_unicode
-from calibre.ebooks.epub import rules
-from calibre.ebooks.oeb.base import (OEB_STYLES, XPNSMAP as NAMESPACES,
-        urldefrag, rewrite_links, urlunquote, XHTML, urlnormalize)
-from calibre.ebooks.oeb.polish.split import do_split
-from css_selectors import Select, SelectorError
 
 XPath = functools.partial(_XPath, namespaces=NAMESPACES)
 
@@ -200,7 +209,7 @@ class FlowSplitter(object):
         self.csp_counter    = 0
 
         base, ext = os.path.splitext(self.base)
-        self.base = base.replace('%', '%%')+u'_split_%.3d'+ext
+        self.base = base.replace('%', '%%')+'_split_%.3d'+ext
 
         self.trees = [self.item.data.getroottree()]
         self.splitting_on_page_breaks = True
@@ -242,9 +251,9 @@ class FlowSplitter(object):
 
         self.trees = [orig_tree]
         while ordered_ids:
-            pb_id, (pattern, before) = ordered_ids.iteritems().next()
+            pb_id, (pattern, before) = next(iter(ordered_ids.items()))
             del ordered_ids[pb_id]
-            for i in xrange(len(self.trees)-1, -1, -1):
+            for i in range(len(self.trees)-1, -1, -1):
                 tree = self.trees[i]
                 elem = pattern(tree)
                 if elem:
@@ -293,8 +302,8 @@ class FlowSplitter(object):
         body = self.get_body(root)
         if body is None:
             return False
-        txt = re.sub(ur'\s+|\xa0', '',
-                etree.tostring(body, method='text', encoding=unicode))
+        txt = re.sub(r'\s+|\xa0', '',
+                etree.tostring(body, method='text', encoding=str))
         if len(txt) > 1:
             return False
         for img in root.xpath('//h:img', namespaces=NAMESPACES):
@@ -309,7 +318,7 @@ class FlowSplitter(object):
         rest = text.replace('\r', '')
         parts = re.split('\n\n', rest)
         self.log.debug('\t\t\t\tFound %d parts'%len(parts))
-        if max(map(len, parts)) > size:
+        if max(list(map(len, parts))) > size:
             raise SplitError('Cannot split as file contains a <pre> tag '
                 'with a very large paragraph', root)
         ans = []
@@ -336,7 +345,7 @@ class FlowSplitter(object):
                 for frag in frags:
                     pre2 = copy.copy(pre)
                     pre2.text = frag
-                    pre2.tail = u''
+                    pre2.tail = ''
                     new_pres.append(pre2)
                 new_pres[-1].tail = pre.tail
                 p = pre.getparent()
@@ -436,7 +445,7 @@ class FlowSplitter(object):
 
         spine_pos = self.item.spine_position
 
-        for current, tree in zip(*map(reversed, (self.files, self.trees))):
+        for current, tree in zip(*list(map(reversed, (self.files, self.trees)))):
             for a in tree.getroot().xpath('//h:a[@href]', namespaces=NAMESPACES):
                 href = a.get('href').strip()
                 if href.startswith('#'):
@@ -452,7 +461,7 @@ class FlowSplitter(object):
             self.oeb.spine.insert(spine_pos, new_item, self.item.linear)
 
         if self.oeb.guide:
-            for ref in self.oeb.guide.values():
+            for ref in list(self.oeb.guide.values()):
                 href, frag = urldefrag(ref.href)
                 if href == self.item.href:
                     nhref = self.anchor_map[frag if frag else None]

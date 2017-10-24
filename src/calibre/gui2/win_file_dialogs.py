@@ -1,14 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-import sys, subprocess, struct, os
+import os
+import struct
+import subprocess
+import sys
 from threading import Thread
 from uuid import uuid4
 
-from PyQt5.Qt import pyqtSignal, QEventLoop, Qt
+from PyQt5.Qt import QEventLoop, Qt, pyqtSignal
+
 
 is64bit = sys.maxsize > (1 << 32)
 base = os.path.dirname(sys.executable)
@@ -76,7 +77,7 @@ def serialize_file_types(file_types):
         buf.append(struct.pack(b'=H%ds' % len(x), len(x), x))
     for name, extensions in file_types:
         add(name or _('Files'))
-        if isinstance(extensions, basestring):
+        if isinstance(extensions, str):
             extensions = extensions.split()
         add('; '.join('*.' + ext.lower() for ext in extensions))
     return b''.join(buf)
@@ -211,7 +212,7 @@ def run_file_dialog(
         raise Exception(server.err_msg)
     if not server.data:
         return ()
-    parts = list(filter(None, server.data.split(b'\0')))
+    parts = list([_f for _f in server.data.split(b'\0') if _f])
     if DEBUG:
         prints('piped data from file dialog helper:', type('')(parts))
     if len(parts) < 2:
@@ -244,7 +245,7 @@ def choose_dir(window, name, title, default_dir='~', no_save_dir=False):
 
 
 def choose_files(window, name, title,
-                 filters=(), all_files=True, select_only_single_file=False, default_dir=u'~'):
+                 filters=(), all_files=True, select_only_single_file=False, default_dir='~'):
     name, initial_folder = get_initial_folder(name, title, default_dir)
     file_types = list(filters)
     if all_files:
@@ -347,7 +348,7 @@ class PipeServer(Thread):
 
 def test(helper=HELPER):
     pipename = '\\\\.\\pipe\\%s' % uuid4()
-    echo = '\U0001f431 Hello world!'
+    echo = '\\U0001f431 Hello world!'
     secret = os.urandom(32).replace(b'\0', b' ')
     data = serialize_string('PIPENAME', pipename) +  serialize_string('ECHO', echo) + serialize_secret(secret)
     server = PipeServer(pipename)
@@ -358,7 +359,7 @@ def test(helper=HELPER):
     if server.err_msg is not None:
         raise RuntimeError(server.err_msg)
     server.join(2)
-    parts = filter(None, server.data.split(b'\0'))
+    parts = [_f for _f in server.data.split(b'\0') if _f]
     if parts[0] != secret:
         raise RuntimeError('Did not get back secret: %r != %r' % (secret, parts[0]))
     q = parts[1].decode('utf-8')

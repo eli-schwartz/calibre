@@ -3,22 +3,34 @@
 __license__ = 'GPL v3'
 __copyright__ = '2010, Greg Riker'
 
-import datetime, os, platform, re, shutil, time, unicodedata, zlib
+import datetime
+import os
+import platform
+import re
+import shutil
+import time
+import unicodedata
+import zlib
 from copy import deepcopy
 from xml.sax.saxutils import escape
 
 from calibre import (
-    prepare_string_for_xml, strftime, force_unicode, isbytestring, replace_entities, as_unicode)
-from calibre.constants import isosx, cache_dir
+	as_unicode, force_unicode, isbytestring,
+	prepare_string_for_xml, replace_entities, strftime
+)
+from calibre.constants import cache_dir, isosx
 from calibre.customize.conversion import DummyReporter
 from calibre.customize.ui import output_profiles
-from calibre.ebooks.BeautifulSoup import BeautifulSoup, BeautifulStoneSoup, Tag, NavigableString
+from calibre.ebooks.BeautifulSoup import (
+	BeautifulSoup, BeautifulStoneSoup, NavigableString, Tag
+)
 from calibre.ebooks.chardet import substitute_entites
 from calibre.ebooks.metadata import author_to_author_sort
-from calibre.library.catalogs import AuthorSortMismatchException, EmptyCatalogException, \
-                                     InvalidGenresSourceFieldException
+from calibre.library.catalogs import (
+	AuthorSortMismatchException, EmptyCatalogException, InvalidGenresSourceFieldException
+)
 from calibre.ptempfile import PersistentTemporaryDirectory
-from calibre.utils.date import format_date, is_date_undefined, now as nowf, as_local_time
+from calibre.utils.date import as_local_time, format_date, is_date_undefined, now as nowf
 from calibre.utils.filenames import ascii_text, shorten_components_to
 from calibre.utils.formatter import TemplateFormatter
 from calibre.utils.icu import capitalize, collation_order, sort_key
@@ -155,8 +167,8 @@ class CatalogBuilder(object):
         self.html_filelist_1 = []
         self.html_filelist_2 = []
         self.individual_authors = None
-        self.merge_comments_rule = dict(zip(['field', 'position', 'hr'],
-                                            _opts.merge_comments_rule.split(':')))
+        self.merge_comments_rule = dict(list(zip(['field', 'position', 'hr'],
+                                            _opts.merge_comments_rule.split(':'))))
         self.ncx_soup = None
         self.output_profile = self.get_output_profile(_opts)
         self.play_order = 1
@@ -239,15 +251,15 @@ class CatalogBuilder(object):
          (str): sort key
         """
         if not book['series']:
-            fs = u'{:<%d}!{!s}' % longest_author_sort
+            fs = '{:<%d}!{!s}' % longest_author_sort
             key = fs.format(capitalize(book['author_sort']),
                             capitalize(book['title_sort']))
         else:
             index = book['series_index']
             integer = int(index)
             fraction = index - integer
-            series_index = u'%04d%s' % (integer, str(u'%0.4f' % fraction).lstrip(u'0'))
-            fs = u'{:<%d}~{!s}{!s}' % longest_author_sort
+            series_index = '%04d%s' % (integer, str('%0.4f' % fraction).lstrip('0'))
+            fs = '{:<%d}~{!s}{!s}' % longest_author_sort
             key = fs.format(capitalize(book['author_sort']),
                             self.generate_sort_title(book['series']),
                             series_index)
@@ -581,7 +593,7 @@ class CatalogBuilder(object):
         for rule in self.prefix_rules:
             # Literal comparison for Tags field
             if rule['field'].lower() == 'tags':
-                if rule['pattern'].lower() in map(unicode.lower, record['tags']):
+                if rule['pattern'].lower() in list(map(str.lower, record['tags'])):
                     if self.DEBUG and self.opts.verbose:
                         self.opts.log.info("  %s '%s' by %s (%s: Tags includes '%s')" %
                                (rule['prefix'], record['title'],
@@ -611,7 +623,7 @@ class CatalogBuilder(object):
                         # locale version
                         field_contents = _(repr(field_contents))
                     try:
-                        if re.search(rule['pattern'], unicode(field_contents),
+                        if re.search(rule['pattern'], str(field_contents),
                                 re.IGNORECASE) is not None:
                             if self.DEBUG:
                                 _log_prefix_rule_match_info(rule, record, field_contents)
@@ -656,9 +668,9 @@ class CatalogBuilder(object):
         # Hack to force the cataloged leading letter to be
         # an unadorned character if the accented version sorts before the unaccented
         exceptions = {
-                        u'Ä':   u'A',
-                        u'Ö':   u'O',
-                        u'Ü':   u'U'
+                        'Ä':   'A',
+                        'Ö':   'O',
+                        'Ü':   'U'
                      }
 
         if key is not None:
@@ -678,19 +690,19 @@ class CatalogBuilder(object):
                 # Hackhackhackhackhack
                 # icu returns bogus results with curly apostrophes, maybe others under OS X 10.6.x
                 # When we see the magic combo of 0/-1 for ordnum/ordlen, special case the logic
-                last_c = u''
+                last_c = ''
                 if ordnum == 0 and ordlen == -1:
                     if icu_upper(c[0]) != last_c:
                         last_c = icu_upper(c[0])
-                        if last_c in exceptions.keys():
-                            last_c = exceptions[unicode(last_c)]
+                        if last_c in list(exceptions.keys()):
+                            last_c = exceptions[str(last_c)]
                         last_ordnum = ordnum
                     cl_list[idx] = last_c
                 else:
                     if last_ordnum != ordnum:
                         last_c = icu_upper(c[0:ordlen])
-                        if last_c in exceptions.keys():
-                            last_c = exceptions[unicode(last_c)]
+                        if last_c in list(exceptions.keys()):
+                            last_c = exceptions[str(last_c)]
                         last_ordnum = ordnum
                     else:
                         last_c = cl_list[idx-1]
@@ -699,8 +711,8 @@ class CatalogBuilder(object):
             else:
                 if last_ordnum != ordnum:
                     last_c = icu_upper(c[0:ordlen])
-                    if last_c in exceptions.keys():
-                        last_c = exceptions[unicode(last_c)]
+                    if last_c in list(exceptions.keys()):
+                        last_c = exceptions[str(last_c)]
                     last_ordnum = ordnum
                 else:
                     last_c = cl_list[idx-1]
@@ -710,9 +722,9 @@ class CatalogBuilder(object):
             print("     establish_equivalencies():")
             if key:
                 for idx, item in enumerate(item_list):
-                    print("      %s %s" % (cl_list[idx], item[sort_field]))
+                    print(("      %s %s" % (cl_list[idx], item[sort_field])))
             else:
-                print("      %s %s" % (cl_list[idx], item))
+                print(("      %s %s" % (cl_list[idx], item)))
 
         return cl_list
 
@@ -769,9 +781,9 @@ class CatalogBuilder(object):
             tl = [i['title'] for i in books_by_author]
             lt = max(tl, key=len)
             fs = '{:<6}{:<%d} {:<%d} {!s}' % (len(lt), len(las))
-            print(fs.format('', 'Title', 'Author', 'Series'))
+            print((fs.format('', 'Title', 'Author', 'Series')))
             for i in books_by_author:
-                print(fs.format('', i['title'], i['author_sort'], i['series']))
+                print((fs.format('', i['title'], i['author_sort'], i['series'])))
 
         # Build the unique_authors set from existing data
         authors = [(record['author'], capitalize(record['author_sort'])) for record in books_by_author]
@@ -817,7 +829,7 @@ class CatalogBuilder(object):
         if self.DEBUG and self.opts.verbose:
             self.opts.log.info("\nfetch_books_by_author(): %d unique authors" % len(unique_authors))
             for author in unique_authors:
-                self.opts.log.info((u" %-50s %-25s %2d" % (author[0][0:45], author[1][0:20],
+                self.opts.log.info((" %-50s %-25s %2d" % (author[0][0:45], author[1][0:20],
                     author[2])).encode('utf-8'))
             self.opts.log.info("\nfetch_books_by_author(): %d individual authors" % len(individual_authors))
             for author in sorted(individual_authors):
@@ -849,7 +861,7 @@ class CatalogBuilder(object):
                 self.opts.log.info("fetch_books_by_title(): %d books" % len(self.books_by_title))
                 self.opts.log.info(" %-40s %-40s" % ('title', 'title_sort'))
                 for title in self.books_by_title:
-                    self.opts.log.info((u" %-40s %-40s" % (title['title'][0:40],
+                    self.opts.log.info((" %-40s %-40s" % (title['title'][0:40],
                                                             title['title_sort'][0:40])).encode('utf-8'))
         else:
             error_msg = _("No books to catalog.\nCheck 'Excluded books' rules in E-book options.\n")
@@ -934,7 +946,7 @@ class CatalogBuilder(object):
             if is_date_undefined(record['pubdate']):
                 this_title['date'] = None
             else:
-                this_title['date'] = strftime(u'%B %Y', as_local_time(record['pubdate']).timetuple())
+                this_title['date'] = strftime('%B %Y', as_local_time(record['pubdate']).timetuple())
 
             this_title['timestamp'] = record['timestamp']
 
@@ -1070,11 +1082,11 @@ class CatalogBuilder(object):
         from calibre.devices.kindle.bookmark import Bookmark
         from calibre.ebooks.metadata import MetaInformation
 
-        MBP_FORMATS = [u'azw', u'mobi', u'prc', u'txt']
+        MBP_FORMATS = ['azw', 'mobi', 'prc', 'txt']
         mbp_formats = set(MBP_FORMATS)
-        PDR_FORMATS = [u'pdf']
+        PDR_FORMATS = ['pdf']
         pdr_formats = set(PDR_FORMATS)
-        TAN_FORMATS = [u'tpz', u'azw1']
+        TAN_FORMATS = ['tpz', 'azw1']
         tan_formats = set(TAN_FORMATS)
 
         class BookmarkDevice(Device):
@@ -1265,7 +1277,7 @@ class CatalogBuilder(object):
             normalized_tags.append(_normalize_tag(tag, max_len))
             friendly_tags.append(tag)
 
-        genre_tags_dict = dict(zip(friendly_tags, normalized_tags))
+        genre_tags_dict = dict(list(zip(friendly_tags, normalized_tags)))
 
         # Test for multiple genres resolving to same normalized form
         normalized_set = set(normalized_tags)
@@ -1323,7 +1335,7 @@ class CatalogBuilder(object):
         """
         # Kindle TOC descriptions won't render certain characters
         # Fix up
-        massaged = unicode(BeautifulStoneSoup(description, convertEntities=BeautifulStoneSoup.HTML_ENTITIES))
+        massaged = str(BeautifulStoneSoup(description, convertEntities=BeautifulStoneSoup.HTML_ENTITIES))
 
         # Replace '&' with '&#38;'
         massaged = re.sub("&", "&#38;", massaged)
@@ -1641,7 +1653,7 @@ class CatalogBuilder(object):
                     key=lambda x: sort_key(self._kf_books_by_author_sorter_author_sort(x, len(las))))
 
                 # Create a new month anchor
-                date_string = strftime(u'%B %Y', current_date.timetuple())
+                date_string = strftime('%B %Y', current_date.timetuple())
                 pIndexTag = Tag(soup, "p")
                 pIndexTag['class'] = "date_index"
                 aTag = Tag(soup, "a")
@@ -1900,7 +1912,7 @@ class CatalogBuilder(object):
         def _add_books_to_html_by_day(todays_list, dtc):
             if len(todays_list):
                 # Create a new day anchor
-                date_string = strftime(u'%A, %B %d', current_date.timetuple())
+                date_string = strftime('%A, %B %d', current_date.timetuple())
                 pIndexTag = Tag(soup, "p")
                 pIndexTag['class'] = "date_index"
                 aTag = Tag(soup, "a")
@@ -2660,7 +2672,7 @@ class CatalogBuilder(object):
                         title_str=title_str,
                         xmlns=XHTML_NS,
                         )
-            for k, v in args.iteritems():
+            for k, v in args.items():
                 if isbytestring(v):
                     args[k] = v.decode('utf-8')
             generated_html = P('catalog/template.xhtml',
@@ -3253,9 +3265,9 @@ class CatalogBuilder(object):
             navLabelTag = Tag(ncx_soup, 'navLabel')
             textTag = Tag(ncx_soup, 'text')
             if len(title_letters[i]) > 1:
-                fmt_string = _(u"Series beginning with %s")
+                fmt_string = _("Series beginning with %s")
             else:
-                fmt_string = _(u"Series beginning with '%s'")
+                fmt_string = _("Series beginning with '%s'")
             textTag.insert(0, NavigableString(fmt_string %
                 (title_letters[i] if len(title_letters[i]) > 1 else title_letters[i])))
             navLabelTag.insert(0, textTag)
@@ -3386,9 +3398,9 @@ class CatalogBuilder(object):
             navLabelTag = Tag(ncx_soup, 'navLabel')
             textTag = Tag(ncx_soup, 'text')
             if len(title_letters[i]) > 1:
-                fmt_string = _(u"Titles beginning with %s")
+                fmt_string = _("Titles beginning with %s")
             else:
-                fmt_string = _(u"Titles beginning with '%s'")
+                fmt_string = _("Titles beginning with '%s'")
             textTag.insert(0, NavigableString(fmt_string %
                 (title_letters[i] if len(title_letters[i]) > 1 else title_letters[i])))
             navLabelTag.insert(0, textTag)
@@ -3509,9 +3521,9 @@ class CatalogBuilder(object):
             navLabelTag = Tag(ncx_soup, 'navLabel')
             textTag = Tag(ncx_soup, 'text')
             if authors_by_letter[1] == self.SYMBOLS:
-                fmt_string = _(u"Authors beginning with %s")
+                fmt_string = _("Authors beginning with %s")
             else:
-                fmt_string = _(u"Authors beginning with '%s'")
+                fmt_string = _("Authors beginning with '%s'")
             textTag.insert(0, NavigableString(fmt_string % authors_by_letter[1]))
             navLabelTag.insert(0, textTag)
             navPointByLetterTag.insert(0, navLabelTag)
@@ -3679,7 +3691,7 @@ class CatalogBuilder(object):
         # Add *article* entries for each populated month
         # master_months_list{}: [0]:titles list [1]:date
         for books_by_month in master_month_list:
-            datestr = strftime(u'%B %Y', books_by_month[1].timetuple())
+            datestr = strftime('%B %Y', books_by_month[1].timetuple())
             navPointByMonthTag = Tag(ncx_soup, 'navPoint')
             if self.generate_for_kindle_mobi:
                 navPointByMonthTag['class'] = "article"
@@ -3829,7 +3841,7 @@ class CatalogBuilder(object):
         # Add *article* entries for each populated day
         # master_day_list{}: [0]:titles list [1]:date
         for books_by_day in master_day_list:
-            datestr = strftime(u'%A, %B %d', books_by_day[1].timetuple())
+            datestr = strftime('%A, %B %d', books_by_day[1].timetuple())
             navPointByDayTag = Tag(ncx_soup, 'navPoint')
             if self.generate_for_kindle_mobi:
                 navPointByDayTag['class'] = "article"
@@ -3980,7 +3992,7 @@ class CatalogBuilder(object):
                     for title in genre['books']:
                         titles.append(title['title'])
                     titles = sorted(titles, key=lambda x: (self.generate_sort_title(x), self.generate_sort_title(x)))
-                    titles_list = self.generate_short_description(u" &bull; ".join(titles), dest="description")
+                    titles_list = self.generate_short_description(" &bull; ".join(titles), dest="description")
                     cmTag.insert(0, NavigableString(self.format_ncx_text(titles_list, dest='description')))
 
                 navPointVolumeTag.insert(3, cmTag)
@@ -4255,7 +4267,7 @@ class CatalogBuilder(object):
             else:
                 return _short_description(description, self.opts.description_clip)
         else:
-            print " returning description with unspecified destination '%s'" % description
+            print(" returning description with unspecified destination '%s'" % description)
             raise RuntimeError
 
     def generate_sort_title(self, title):
@@ -4468,7 +4480,7 @@ class CatalogBuilder(object):
         Return:
          (str): legal XHTML anchor string of unicode character name
         """
-        fullname = u''.join(unicodedata.name(unicode(cc)) for cc in c)
+        fullname = ''.join(unicodedata.name(str(cc)) for cc in c)
         terms = fullname.split()
         return "_".join(terms)
 
@@ -4596,8 +4608,8 @@ class CatalogBuilder(object):
         """
 
         templates = {}
-        execfile(P('catalog/section_list_templates.py'), templates)
-        for name, template in templates.iteritems():
+        exec(compile(open(P('catalog/section_list_templates.py')).read(), P('catalog/section_list_templates.py'), 'exec'), templates)
+        for name, template in templates.items():
             if name.startswith('by_') and name.endswith('_template'):
                 setattr(self, name, force_unicode(template, 'utf-8'))
 
@@ -4643,7 +4655,7 @@ class CatalogBuilder(object):
                                                         lost_cr.group(2),
                                                         lost_cr.group(3)))
         # Extract pre-built elements - annotations, etc.
-        if not isinstance(comments, unicode):
+        if not isinstance(comments, str):
             comments = comments.decode('utf-8', 'replace')
         soup = BeautifulSoup(comments)
         elems = soup.findAll('div')
@@ -4656,7 +4668,7 @@ class CatalogBuilder(object):
         # Convert \n\n to <p>s
         if re.search('\n\n', comments):
             soup = BeautifulSoup()
-            split_ps = comments.split(u'\n\n')
+            split_ps = comments.split('\n\n')
             tsc = 0
             for p in split_ps:
                 pTag = Tag(soup, 'p')
@@ -4815,7 +4827,7 @@ class CatalogBuilder(object):
                             # locale version
                             field_contents = _(repr(field_contents))
 
-                        matched = re.search(pat, unicode(field_contents),
+                        matched = re.search(pat, str(field_contents),
                                 re.IGNORECASE)
                         if matched is not None:
                             if self.opts.verbose:
@@ -4898,7 +4910,7 @@ class CatalogBuilder(object):
             self.progress_int = 0.01
         self.reporter(self.progress_int, self.progress_string)
         if self.opts.cli_environment:
-            log_msg = u"%3.0f%% %s" % (self.progress_int * 100, self.progress_string)
+            log_msg = "%3.0f%% %s" % (self.progress_int * 100, self.progress_string)
             if self.opts.verbose:
                 log_msg += " (%s)" % str(datetime.timedelta(seconds=int(time.time() - self.opts.start_time)))
         else:

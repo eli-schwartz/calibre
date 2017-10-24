@@ -1,33 +1,36 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import ssl, socket, select, os, traceback
-from io import BytesIO
-from Queue import Empty, Full
+import os
+import select
+import socket
+import ssl
+import traceback
 from functools import partial
+from io import BytesIO
+from queue import Empty, Full
+from time import monotonic
 
 from calibre import as_unicode
 from calibre.ptempfile import TemporaryDirectory
 from calibre.srv.errors import JobQueueFull
-from calibre.srv.pool import ThreadPool, PluginPool
-from calibre.srv.opts import Options
 from calibre.srv.jobs import JobsManager
+from calibre.srv.opts import Options
+from calibre.srv.pool import PluginPool, ThreadPool
 from calibre.srv.utils import (
-    socket_errors_socket_closed, socket_errors_nonblocking, HandleInterrupt,
-    socket_errors_eintr, start_cork, stop_cork, DESIRED_SEND_BUFFER_SIZE,
-    create_sock_pair)
-from calibre.utils.socket_inheritance import set_socket_inherit
+	DESIRED_SEND_BUFFER_SIZE, HandleInterrupt, create_sock_pair, socket_errors_eintr,
+	socket_errors_nonblocking, socket_errors_socket_closed, start_cork, stop_cork
+)
 from calibre.utils.logging import ThreadSafeLog
-from time import monotonic
 from calibre.utils.mdns import get_external_ip
+from calibre.utils.socket_inheritance import set_socket_inherit
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
 
 READ, WRITE, RDWR, WAIT = 'READ', 'WRITE', 'RDWR', 'WAIT'
-WAKEUP, JOB_DONE = bytes(bytearray(xrange(2)))
+WAKEUP, JOB_DONE = bytes(bytearray(range(2)))
 
 
 class ReadBuffer(object):  # {{{
@@ -500,7 +503,7 @@ class ServerLoop(object):
         now = monotonic()
         read_needed, write_needed, readable, remove, close_needed = [], [], [], [], []
         has_ssl = self.ssl_context is not None
-        for s, conn in self.connection_map.iteritems():
+        for s, conn in self.connection_map.items():
             if now - conn.last_activity > self.opts.timeout:
                 if conn.handle_timeout():
                     conn.last_activity = now
@@ -546,7 +549,7 @@ class ServerLoop(object):
                 # e.args[0]
                 if getattr(e, 'errno', e.args[0]) in socket_errors_eintr:
                     return
-                for s, conn in tuple(self.connection_map.iteritems()):
+                for s, conn in tuple(self.connection_map.items()):
                     try:
                         select.select([s], [], [], 0)
                     except (select.error, socket.error) as e:
@@ -676,7 +679,7 @@ class ServerLoop(object):
                 self.socket = None
         except socket.error:
             pass
-        for s, conn in tuple(self.connection_map.iteritems()):
+        for s, conn in tuple(self.connection_map.items()):
             self.close(s, conn)
         wait_till = monotonic() + self.opts.shutdown_timeout
         for pool in (self.plugin_pool, self.pool):

@@ -1,13 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+
+from calibre.ebooks.oeb.base import XPath, urlunquote
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re
-from calibre.ebooks.oeb.base import XPath, urlunquote
 
 
 class DataURL(object):

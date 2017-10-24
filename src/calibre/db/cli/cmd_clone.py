@@ -1,14 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
 
 from calibre import patheq
 from calibre.constants import iswindows
 from calibre.db.legacy import LibraryDatabase
+
 
 readonly = True
 version = 0  # change this if you change signature of implementation()

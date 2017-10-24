@@ -44,7 +44,7 @@ def filter_jchars(c):
 
 
 def nonj_len(word):
-    u"""Returns number of non-Asian words in {word}
+    """Returns number of non-Asian words in {word}
     - 日本語AアジアンB -> 2
     - hello -> 1
     @param word: A word, possibly containing Asian characters
@@ -56,7 +56,7 @@ def nonj_len(word):
     # -> ['spam', 'eggs']
     # The length of which is 2!
     chars = [filter_jchars(c) for c in word]
-    return len(u''.join(chars).split())
+    return len(''.join(chars).split())
 
 
 def get_wordcount(text):

@@ -1,16 +1,14 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-import json, base64
-from functools import partial
+import base64
+import json
 from datetime import datetime
+from functools import partial
 
 import msgpack
-
 from calibre.utils.iso8601 import parse_iso8601
+
 
 MSGPACK_MIME = 'application/x-msgpack'
 CANARY = 'jPoAv3zOyHvQ5JFNYg4hJ9'
@@ -24,7 +22,7 @@ def encoded(typ, data, for_json):
 
 def encoder(obj, for_json=False):
     if isinstance(obj, datetime):
-        return encoded(0, unicode(obj.isoformat()), for_json)
+        return encoded(0, str(obj.isoformat()), for_json)
     if isinstance(obj, (set, frozenset)):
         return encoded(1, tuple(obj), for_json)
     if getattr(obj, '__calibre_serializable__', False):

@@ -1,14 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import os
+import sys
+
+from lxml import etree
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, os
 
-from lxml import etree
 
 
 class Font(object):
@@ -38,10 +39,10 @@ class Image(Element):
     def __init__(self, img, opts, log, idc):
         Element.__init__(self)
         self.opts, self.log = opts, log
-        self.id = idc.next()
+        self.id = next(idc)
         self.top, self.left, self.width, self.height, self.iwidth, self.iheight = \
-          map(float, map(img.get, ('top', 'left', 'rwidth', 'rheight', 'iwidth',
-              'iheight')))
+          list(map(float, list(map(img.get, ('top', 'left', 'rwidth', 'rheight', 'iwidth',
+              'iheight')))))
         self.src = img.get('src')
         self.bottom = self.top + self.height
         self.right = self.left + self.width
@@ -59,11 +60,11 @@ class Text(Element):
 
     def __init__(self, text, font_map, opts, log, idc):
         Element.__init__(self)
-        self.id = idc.next()
+        self.id = next(idc)
         self.opts, self.log = opts, log
         self.font_map = font_map
-        self.top, self.left, self.width, self.height = map(float, map(text.get,
-            ('top', 'left', 'width', 'height')))
+        self.top, self.left, self.width, self.height = list(map(float, list(map(text.get,
+            ('top', 'left', 'width', 'height')))))
         self.bottom  = self.top + self.height
         self.right = self.left + self.width
         self.font = self.font_map[text.get('font')]
@@ -73,10 +74,10 @@ class Text(Element):
 
         text.tail = ''
         self.text_as_string = etree.tostring(text, method='text',
-                encoding=unicode)
-        self.raw = text.text if text.text else u''
+                encoding=str)
+        self.raw = text.text if text.text else ''
         for x in text.iterchildren():
-            self.raw += etree.tostring(x, method='xml', encoding=unicode)
+            self.raw += etree.tostring(x, method='xml', encoding=str)
         self.average_character_width = self.width/len(self.text_as_string)
 
     def coalesce(self, other, page_number):
@@ -109,7 +110,7 @@ class FontSizeStats(dict):
         total = float(sum(stats.values()))
         self.most_common_size, self.chars_at_most_common_size = -1, 0
 
-        for sz, chars in stats.items():
+        for sz, chars in list(stats.items()):
             if chars >= self.chars_at_most_common_size:
                 self.most_common_size, self.chars_at_most_common_size = sz, chars
             self[sz] = chars/total
@@ -131,7 +132,7 @@ class Interval(object):
         right = abs(self.right - parent.right)
         return abs(left-right) < 3
 
-    def __nonzero__(self):
+    def __bool__(self):
         return self.width > 0
 
     def __eq__(self, other):
@@ -169,7 +170,7 @@ class Column(object):
         self.elements.sort(cmp=lambda x,y:cmp(x.bottom,y.bottom))
         self.top = self.elements[0].top
         self.bottom = self.elements[-1].bottom
-        self.left, self.right = sys.maxint, 0
+        self.left, self.right = sys.maxsize, 0
         for x in self:
             self.left = min(self.left, x.left)
             self.right = max(self.right, x.right)
@@ -316,7 +317,7 @@ class Region(object):
                 col = most_suitable_column(elem)
                 if self.opts.verbose > 3:
                     idx = self.columns.index(col)
-                    self.log.debug(u'Absorbing singleton %s into column'%elem.to_html(),
+                    self.log.debug('Absorbing singleton %s into column'%elem.to_html(),
                             idx)
                 col.add(elem)
 
@@ -356,11 +357,11 @@ class Region(object):
                         max_overlap = width
                         max_overlap_index = j
                 col_map[i] = max_overlap_index
-            lines = max(map(len, region.columns))
+            lines = max(list(map(len, region.columns)))
             if at == 'bottom':
-                lines = range(lines)
+                lines = list(range(lines))
             else:
-                lines = range(lines-1, -1, -1)
+                lines = list(range(lines-1, -1, -1))
             for i in lines:
                 for j, src in enumerate(region.columns):
                     dest = self.columns[col_map[j]]
@@ -423,8 +424,8 @@ class Page(object):
         self.opts, self.log = opts, log
         self.font_map = font_map
         self.number = int(page.get('number'))
-        self.width, self.height = map(float, map(page.get,
-            ('width', 'height')))
+        self.width, self.height = list(map(float, list(map(page.get,
+            ('width', 'height')))))
         self.id = 'page%d'%self.number
 
         self.texts = []
@@ -621,7 +622,7 @@ class PDFDocument(object):
         self.opts, self.log = opts, log
         parser = etree.XMLParser(recover=True)
         self.root = etree.fromstring(xml, parser=parser)
-        idc = iter(xrange(sys.maxint))
+        idc = iter(range(sys.maxsize))
 
         self.fonts = []
         self.font_map = {}
@@ -692,10 +693,6 @@ class PDFDocument(object):
         for elem in self.elements:
             html.extend(elem.to_html())
         html += ['</body>', '</html>']
-        raw = (u'\n'.join(html)).replace('</strong><strong>', '')
+        raw = ('\n'.join(html)).replace('</strong><strong>', '')
         with open('index.html', 'wb') as f:
             f.write(raw.encode('utf-8'))
-
-
-
-

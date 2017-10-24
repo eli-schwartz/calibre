@@ -1,22 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import json
 import re
 import time
 from collections import defaultdict, namedtuple
-from future_builtins import map
-from urllib import quote_plus, urlencode
-from urlparse import parse_qs
 from time import monotonic
-
-from lxml import etree
+from urllib.parse import quote_plus, urlencode
+from urllib.parse import parse_qs
 
 from calibre import browser as _browser, prints, random_user_agent
 from calibre.utils.random_ua import accept_header_for_ua
+from lxml import etree
+
 
 current_version = (1, 0, 0)
 minimum_calibre_version = (2, 80, 0)
@@ -27,7 +23,7 @@ Result = namedtuple('Result', 'url title cached_url')
 
 
 def tostring(elem):
-    return etree.tostring(elem, encoding=unicode, method='text', with_tail=False)
+    return etree.tostring(elem, encoding=str, method='text', with_tail=False)
 
 
 def browser():
@@ -42,7 +38,7 @@ def browser():
 
 
 def encode_query(**query):
-    q = {k.encode('utf-8'): v.encode('utf-8') for k, v in query.iteritems()}
+    q = {k.encode('utf-8'): v.encode('utf-8') for k, v in query.items()}
     return urlencode(q).decode('utf-8')
 
 
@@ -122,7 +118,7 @@ def wayback_url_processor(url):
 
 def ddg_search(terms, site=None, br=None, log=prints, safe_search=False, dump_raw=None, timeout=60):
     # https://duck.co/help/results/syntax
-    terms = map(ddg_term, terms)
+    terms = list(map(ddg_term, terms))
     terms = [quote_term(t) for t in terms]
     if site is not None:
         terms.append(quote_term(('site:' + site)))
@@ -142,9 +138,9 @@ def ddg_develop():
     br = browser()
     for result in ddg_search('heroes abercrombie'.split(), 'www.amazon.com', dump_raw='/t/raw.html', br=br)[0]:
         if '/dp/' in result.url:
-            print(result.title)
-            print(' ', result.url)
-            print(' ', wayback_machine_cached_url(result.url, br))
+            print((result.title))
+            print((' ', result.url))
+            print((' ', wayback_machine_cached_url(result.url, br)))
             print()
 # }}}
 
@@ -164,7 +160,7 @@ def bing_url_processor(url):
 
 def bing_search(terms, site=None, br=None, log=prints, safe_search=False, dump_raw=None, timeout=60):
     # http://vlaurie.com/computers2/Articles/bing_advanced_search.htm
-    terms = map(bing_term, terms)
+    terms = list(map(bing_term, terms))
     terms = [quote_term(t) for t in terms]
     if site is not None:
         terms.append(quote_term(('site:' + site)))
@@ -198,9 +194,9 @@ def bing_develop():
     br = browser()
     for result in bing_search('heroes abercrombie'.split(), 'www.amazon.com', dump_raw='/t/raw.html', br=br)[0]:
         if '/dp/' in result.url:
-            print(result.title)
-            print(' ', result.url)
-            print(' ', result.cached_url)
+            print((result.title))
+            print((' ', result.url))
+            print((' ', result.cached_url))
             print()
 # }}}
 
@@ -219,7 +215,7 @@ def google_url_processor(url):
 
 
 def google_search(terms, site=None, br=None, log=prints, safe_search=False, dump_raw=None, timeout=60):
-    terms = map(google_term, terms)
+    terms = list(map(google_term, terms))
     terms = [quote_term(t) for t in terms]
     if site is not None:
         terms.append(quote_term(('site:' + site)))
@@ -249,9 +245,9 @@ def google_develop():
     br = browser()
     for result in google_search('1423146786'.split(), 'www.amazon.com', dump_raw='/t/raw.html', br=br)[0]:
         if '/dp/' in result.url:
-            print(result.title)
-            print(' ', result.url)
-            print(' ', result.cached_url)
+            print((result.title))
+            print((' ', result.url))
+            print((' ', result.cached_url))
             print()
 # }}}
 

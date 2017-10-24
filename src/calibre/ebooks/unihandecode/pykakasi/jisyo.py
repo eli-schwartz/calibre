@@ -2,7 +2,8 @@
 #  jisyo.py
 #
 # Copyright 2011 Hiroshi Miura <miurahr@linux.com>
-import cPickle, marshal
+import pickle
+import marshal
 from zlib import decompress
 
 
@@ -22,18 +23,18 @@ class jisyo (object):
 
     def __init__(self):
         if self.kanwadict is None:
-            self.kanwadict = cPickle.loads(
+            self.kanwadict = pickle.loads(
                 P('localization/pykakasi/kanwadict2.pickle', data=True))
         if self.itaijidict is None:
-            self.itaijidict = cPickle.loads(
+            self.itaijidict = pickle.loads(
                 P('localization/pykakasi/itaijidict2.pickle', data=True))
         if self.kanadict is None:
-            self.kanadict = cPickle.loads(
+            self.kanadict = pickle.loads(
                 P('localization/pykakasi/kanadict2.pickle', data=True))
 
     def load_jisyo(self, char):
         try:  # python2
-            key = "%04x"%ord(unicode(char))
+            key = "%04x"%ord(str(char))
         except:  # python3
             key = "%04x"%ord(char)
 
@@ -45,4 +46,3 @@ class jisyo (object):
             except:
                 return None
         return table
-

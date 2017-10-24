@@ -1,18 +1,14 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
 from collections import namedtuple
-from future_builtins import map
-
-from lxml import etree
 
 from calibre.ebooks.chardet import xml_to_unicode
 from calibre.ebooks.oeb.base import OPF
 from calibre.ebooks.oeb.polish.utils import guess_type
 from calibre.utils.localization import lang_as_iso639_1
+from lxml import etree
+
 
 PARSER = etree.XMLParser(recover=True, no_network=True)
 
@@ -54,9 +50,9 @@ def normalize_languages(opf_languages, mi_languages):
     ' Preserve original country codes and use 2-letter lang codes where possible '
     def parse(x):
         return None
-    opf_languages = filter(None, map(parse, opf_languages))
+    opf_languages = [_f for _f in map(parse, opf_languages) if _f]
     cc_map = {c.langcode:c.countrycode for c in opf_languages}
-    mi_languages = filter(None, map(parse, mi_languages))
+    mi_languages = [_f for _f in map(parse, mi_languages) if _f]
 
     def norm(x):
         lc = x.langcode

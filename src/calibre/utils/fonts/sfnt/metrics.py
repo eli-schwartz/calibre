@@ -1,15 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.utils.fonts.sfnt.container import UnsupportedFont
+from calibre.utils.fonts.utils import get_all_font_names
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from future_builtins import map
-from calibre.utils.fonts.utils import get_all_font_names
-from calibre.utils.fonts.sfnt.container import UnsupportedFont
 
 
 class FontMetrics(object):
@@ -47,8 +44,8 @@ class FontMetrics(object):
 
         # Metrics for embedding in PDF
         pdf_scale = self.pdf_scale = lambda x:int(round(x*1000./self.units_per_em))
-        self.pdf_ascent, self.pdf_descent = map(pdf_scale,
-                        (self.os2.typo_ascender, self.os2.typo_descender))
+        self.pdf_ascent, self.pdf_descent = list(map(pdf_scale,
+                        (self.os2.typo_ascender, self.os2.typo_descender)))
         self.pdf_bbox = tuple(map(pdf_scale, self.bbox))
         self.pdf_capheight = pdf_scale(getattr(self.os2, 'cap_height',
                                                self.os2.typo_ascender))
@@ -95,7 +92,7 @@ class FontMetrics(object):
         Return the advance widths (in pixels) for all glyphs corresponding to
         the characters in string at the specified pixel_size and stretch factor.
         '''
-        if not isinstance(string, type(u'')):
+        if not isinstance(string, type('')):
             raise ValueError('Must supply a unicode object')
         chars = tuple(map(ord, string))
         cmap = self.cmap.get_character_map(chars)
@@ -120,11 +117,10 @@ if __name__ == '__main__':
         raw = f.read()
     sfnt = Sfnt(raw)
     m = FontMetrics(sfnt)
-    print ('Ascent:', m.pdf_ascent)
-    print ('Descent:', m.pdf_descent)
-    print ('PDF BBox:', m.pdf_bbox)
-    print ('CapHeight:', m.pdf_capheight)
-    print ('AvgWidth:', m.pdf_avg_width)
-    print ('ItalicAngle', m.post.italic_angle)
-    print ('StemV', m.pdf_stemv)
-
+    print(('Ascent:', m.pdf_ascent))
+    print(('Descent:', m.pdf_descent))
+    print(('PDF BBox:', m.pdf_bbox))
+    print(('CapHeight:', m.pdf_capheight))
+    print(('AvgWidth:', m.pdf_avg_width))
+    print(('ItalicAngle', m.post.italic_angle))
+    print(('StemV', m.pdf_stemv))

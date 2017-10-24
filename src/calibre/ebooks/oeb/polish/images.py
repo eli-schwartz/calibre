@@ -1,15 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
 import os
 from functools import partial
-from threading import Thread, Event
-from Queue import Queue, Empty
+from queue import Empty, Queue
+from threading import Event, Thread
 
-from calibre import detect_ncpus, human_readable, force_unicode, filesystem_encoding
+from calibre import detect_ncpus, filesystem_encoding, force_unicode, human_readable
 
 
 class Worker(Thread):
@@ -82,10 +79,10 @@ def compress_images(container, report=None, names=None, jpeg_quality=None, progr
         if not keep_going:
             abort.set()
     progress_callback(0, len(images), '')
-    [Worker(abort, 'CompressImage%d' % i, queue, results, container, jpeg_quality, pc) for i in xrange(min(detect_ncpus(), len(images)))]
+    [Worker(abort, 'CompressImage%d' % i, queue, results, container, jpeg_quality, pc) for i in range(min(detect_ncpus(), len(images)))]
     queue.join()
     before_total = after_total = 0
-    for name, (ok, res) in results.iteritems():
+    for name, (ok, res) in results.items():
         name = force_unicode(name, filesystem_encoding)
         if ok:
             before, after = res

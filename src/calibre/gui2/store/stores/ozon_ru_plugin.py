@@ -1,16 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
-store_version = 3  # Needed for dynamic plugin loading
-
-__license__ = 'GPL 3'
-__copyright__ = '2011-2013, Roman Mukhin <ramses_ru at hotmail.com>'
-__docformat__ = 'restructuredtext en'
-
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from contextlib import closing
-
-from PyQt5.Qt import QUrl
 
 from calibre import browser, url_slash_cleaner
 from calibre.ebooks.chardet import xml_to_unicode
@@ -18,6 +9,17 @@ from calibre.gui2 import open_url
 from calibre.gui2.store import StorePlugin
 from calibre.gui2.store.search_result import SearchResult
 from calibre.gui2.store.web_store_dialog import WebStoreDialog
+from PyQt5.Qt import QUrl
+
+
+store_version = 3  # Needed for dynamic plugin loading
+
+__license__ = 'GPL 3'
+__copyright__ = '2011-2013, Roman Mukhin <ramses_ru at hotmail.com>'
+__docformat__ = 'restructuredtext en'
+
+
+
 
 shop_url = 'http://www.ozon.ru'
 
@@ -34,7 +36,7 @@ def parse_html(raw):
 
 
 def search(query, max_results=15, timeout=60):
-    url = 'http://www.ozon.ru/?context=search&text=%s&store=1,0&group=div_book' % urllib.quote_plus(query)
+    url = 'http://www.ozon.ru/?context=search&text=%s&store=1,0&group=div_book' % urllib.parse.quote_plus(query)
 
     counter = max_results
     br = browser()

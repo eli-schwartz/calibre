@@ -1,14 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+
+from calibre.ebooks.docx.index import polish_index_markup, process_index
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re
 
-from calibre.ebooks.docx.index import process_index, polish_index_markup
 
 
 class Field(object):
@@ -222,7 +221,7 @@ class Fields(object):
     def polish_markup(self, object_map):
         if not self.index_fields:
             return
-        rmap = {v:k for k, v in object_map.iteritems()}
+        rmap = {v:k for k, v in object_map.items()}
         for idx, blocks in self.index_fields:
             polish_index_markup(idx, [rmap[b] for b in blocks])
 

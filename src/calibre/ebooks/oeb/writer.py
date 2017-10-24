@@ -1,14 +1,14 @@
 '''
 Directory output OEBBook writer.
 '''
-from __future__ import with_statement
+import os
+
+from calibre.ebooks.oeb.base import OPF_MIME, DirContainer, OEBError, xml2str
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2008, Marshall T. Vandegrift <llasram@gmail.com>'
 
-import os
-from calibre.ebooks.oeb.base import OPF_MIME, xml2str
-from calibre.ebooks.oeb.base import DirContainer, OEBError
 
 __all__ = ['OEBWriter']
 
@@ -61,7 +61,7 @@ class OEBWriter(object):
         if not os.path.isdir(path):
             os.mkdir(path)
         output = DirContainer(path, oeb.log)
-        for item in oeb.manifest.values():
+        for item in list(oeb.manifest.values()):
             output.write(item.href, str(item))
 
         if version == 1:
@@ -71,7 +71,7 @@ class OEBWriter(object):
         else:
             raise OEBError("Unrecognized OPF version %r" % self.version)
         pretty_print = self.pretty_print
-        for mime, (href, data) in metadata.items():
+        for mime, (href, data) in list(metadata.items()):
             if opfname and mime == OPF_MIME:
                 href = opfname
             output.write(href, xml2str(data, pretty_print=pretty_print))

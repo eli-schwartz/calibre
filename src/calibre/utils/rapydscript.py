@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import atexit
 import errno
 import glob
@@ -14,6 +11,7 @@ import subprocess
 import sys
 from functools import partial
 from io import BytesIO
+from lzma.xz import compress, decompress
 from Queue import Empty, Queue
 from threading import Thread, local
 
@@ -22,7 +20,6 @@ from calibre.constants import __appname__, __version__, cache_dir
 from calibre.utils.filenames import atomic_rename
 from calibre.utils.terminal import ANSIStream
 from duktape import Context, JSError, to_python
-from lzma.xz import compress, decompress
 
 
 COMPILER_PATH = 'rapydscript/compiler.js.xz'
@@ -107,7 +104,7 @@ def compile_pyj(data, filename='<stdin>', beautify=True, private_scope=True, lib
         'private_scope':private_scope,
         'omit_baselib': omit_baselib,
         'libdir': libdir or default_lib_dir(),
-        'basedir': os.getcwdu() if not filename or filename == '<stdin>' else os.path.dirname(filename),
+        'basedir': os.getcwd() if not filename or filename == '<stdin>' else os.path.dirname(filename),
         'filename': filename,
     }
     c.g.rs_source_code = data

@@ -1,24 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import shutil
+import time
+from functools import partial
+from threading import Thread
+
+from calibre.ebooks.metadata.opf2 import metadata_to_opf
+from calibre.gui2.threaded_jobs import ThreadedJob
+from calibre.ptempfile import PersistentTemporaryDirectory, PersistentTemporaryFile
+from calibre.utils.ipc.simple_worker import WorkerError, fork_job
+from PyQt5.Qt import QDialog, QDialogButtonBox, QGridLayout, QIcon, QLabel, Qt
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, time, shutil
-from functools import partial
-from threading import Thread
 
-from PyQt5.Qt import (QIcon, QDialog,
-        QDialogButtonBox, QLabel, QGridLayout, Qt)
 
-from calibre.gui2.threaded_jobs import ThreadedJob
-from calibre.ebooks.metadata.opf2 import metadata_to_opf
-from calibre.utils.ipc.simple_worker import fork_job, WorkerError
-from calibre.ptempfile import (PersistentTemporaryDirectory,
-        PersistentTemporaryFile)
 
 # Start download {{{
 
@@ -244,7 +243,7 @@ def download(all_ids, tf, db, do_identify, covers, ensure_fields,
                 title_map[i] = metadata[i].title
                 lm_map[i] = metadata[i].last_modified
             metadata = {i:metadata_to_opf(mi, default_lang='und') for i, mi in
-                    metadata.iteritems()}
+                    metadata.items()}
             try:
                 ret = fork_job('calibre.ebooks.metadata.sources.worker', 'main',
                         (do_identify, covers, metadata, ensure_fields, tdir),

@@ -1,6 +1,58 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import collections
+import errno
+import gc
+import os
+import re
+import sys
+import textwrap
+import time
+from collections import OrderedDict
+from io import BytesIO
+from queue import Empty, Queue
+from threading import Thread
+
+import apsw
+from calibre import detect_ncpus, force_unicode, prints
+from calibre.constants import (
+	DEBUG, __appname__, config_dir, filesystem_encoding, isosx, iswindows
+)
+from calibre.customize.ui import available_store_plugins, interface_actions
+from calibre.db.legacy import LibraryDatabase
+from calibre.gui2 import (
+	Dispatcher, GetMetadata, config, error_dialog, gprefs, info_dialog,
+	max_available_height, open_url, question_dialog, warning_dialog
+)
+from calibre.gui2.auto_add import AutoAdder
+from calibre.gui2.changes import handle_changes
+from calibre.gui2.cover_flow import CoverFlowMixin
+from calibre.gui2.dbus_export.widgets import factory
+from calibre.gui2.device import DeviceMixin
+from calibre.gui2.dialogs.message_box import JobError
+from calibre.gui2.ebook_download import EbookDownloadMixin
+from calibre.gui2.email import EmailMixin
+from calibre.gui2.init import LayoutMixin, LibraryViewMixin
+from calibre.gui2.job_indicator import Pointer
+from calibre.gui2.jobs import JobManager, JobsButton, JobsDialog
+from calibre.gui2.keyboard import Manager
+from calibre.gui2.layout import MainWindowMixin
+from calibre.gui2.main_window import MainWindow
+from calibre.gui2.open_with import register_keyboard_shortcuts
+from calibre.gui2.proceed import ProceedQuestion
+from calibre.gui2.search_box import SavedSearchBoxMixin, SearchBoxMixin
+from calibre.gui2.search_restriction_mixin import SearchRestrictionMixin
+from calibre.gui2.tag_browser.ui import TagBrowserMixin
+from calibre.gui2.update import UpdateMixin
+from calibre.gui2.widgets import ProgressIndicator
+from calibre.library import current_library_name
+from calibre.srv.library_broker import GuiLibraryBroker
+from calibre.utils.config import dynamic, prefs
+from calibre.utils.ipc.pool import Pool
+from PyQt5.Qt import (
+	QAction, QApplication, QDialog, QFont, QIcon, QMenu,
+	QSystemTrayIcon, Qt, QTimer, QUrl, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
@@ -9,50 +61,8 @@ __docformat__ = 'restructuredtext en'
 
 '''The main GUI'''
 
-import collections, os, sys, textwrap, time, gc, errno, re
-from Queue import Queue, Empty
-from threading import Thread
-from collections import OrderedDict
-from io import BytesIO
 
-import apsw
-from PyQt5.Qt import (
-    Qt, QTimer, QAction, QMenu, QIcon, pyqtSignal, QUrl, QFont, QDialog,
-    QApplication, QSystemTrayIcon)
 
-from calibre import prints, force_unicode, detect_ncpus
-from calibre.constants import (
-        __appname__, isosx, iswindows, filesystem_encoding, DEBUG, config_dir)
-from calibre.utils.config import prefs, dynamic
-from calibre.utils.ipc.pool import Pool
-from calibre.db.legacy import LibraryDatabase
-from calibre.customize.ui import interface_actions, available_store_plugins
-from calibre.gui2 import (error_dialog, GetMetadata, open_url,
-        gprefs, max_available_height, config, info_dialog, Dispatcher,
-        question_dialog, warning_dialog)
-from calibre.gui2.cover_flow import CoverFlowMixin
-from calibre.gui2.changes import handle_changes
-from calibre.gui2.widgets import ProgressIndicator
-from calibre.gui2.update import UpdateMixin
-from calibre.gui2.main_window import MainWindow
-from calibre.gui2.layout import MainWindowMixin
-from calibre.gui2.device import DeviceMixin
-from calibre.gui2.email import EmailMixin
-from calibre.gui2.ebook_download import EbookDownloadMixin
-from calibre.gui2.jobs import JobManager, JobsDialog, JobsButton
-from calibre.gui2.init import LibraryViewMixin, LayoutMixin
-from calibre.gui2.search_box import SearchBoxMixin, SavedSearchBoxMixin
-from calibre.gui2.search_restriction_mixin import SearchRestrictionMixin
-from calibre.gui2.tag_browser.ui import TagBrowserMixin
-from calibre.gui2.keyboard import Manager
-from calibre.gui2.auto_add import AutoAdder
-from calibre.gui2.proceed import ProceedQuestion
-from calibre.gui2.dialogs.message_box import JobError
-from calibre.gui2.job_indicator import Pointer
-from calibre.gui2.dbus_export.widgets import factory
-from calibre.gui2.open_with import register_keyboard_shortcuts
-from calibre.library import current_library_name
-from calibre.srv.library_broker import GuiLibraryBroker
 
 
 class Listener(Thread):  # {{{
@@ -234,7 +244,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
         self.check_messages_timer.timeout.connect(self.another_instance_wants_to_talk)
         self.check_messages_timer.start(1000)
 
-        for ac in self.iactions.values():
+        for ac in list(self.iactions.values()):
             try:
                 ac.do_genesis()
             except Exception:
@@ -245,7 +255,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
                     raise
         self.donate_action = QAction(QIcon(I('donate.png')),
                 _('&Donate to support calibre'), self)
-        for st in self.istores.values():
+        for st in list(self.istores.values()):
             st.do_genesis()
         MainWindowMixin.init_main_window_mixin(self, db)
 
@@ -390,7 +400,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
 
         self.build_context_menus()
 
-        for ac in self.iactions.values():
+        for ac in list(self.iactions.values()):
             try:
                 ac.gui_layout_complete()
             except:
@@ -408,7 +418,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
         self.bars_manager.start_animation()
         self.set_window_title()
 
-        for ac in self.iactions.values():
+        for ac in list(self.iactions.values()):
             try:
                 ac.initialization_complete()
             except:
@@ -603,7 +613,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
         if self.content_server is not None and \
                 self.content_server.exception is not None:
             error_dialog(self, _('Failed to start Content server'),
-                         unicode(self.content_server.exception)).exec_()
+                         str(self.content_server.exception)).exec_()
 
     @property
     def current_db(self):
@@ -663,7 +673,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
                 import traceback
                 traceback.print_exc()
         else:
-            print msg
+            print(msg)
 
     def current_view(self):
         '''Convenience method that returns the currently visible view '''
@@ -736,7 +746,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
             if db.prefs['virtual_lib_on_startup']:
                 self.apply_virtual_library(db.prefs['virtual_lib_on_startup'])
             self.rebuild_vl_tabs()
-            for action in self.iactions.values():
+            for action in list(self.iactions.values()):
                 action.library_changed(db)
             self.library_broker.gui_library_changed(db, olddb)
             if self.device_connected:
@@ -763,7 +773,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
             font.setBold(True)
             font.setItalic(True)
         self.virtual_library.setFont(font)
-        title = u'{0} - || {1}{2} ||'.format(
+        title = '{0} - || {1}{2} ||'.format(
                 __appname__, self.iactions['Choose Library'].library_name(), restrictions)
         self.setWindowTitle(title)
 
@@ -777,7 +787,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
         for x in ('tb', 'cb'):
             splitter = getattr(self, x+'_splitter')
             splitter.button.setEnabled(location == 'library')
-        for action in self.iactions.values():
+        for action in list(self.iactions.values()):
             action.location_selected(location)
         if location == 'library':
             self.virtual_library_menu.setEnabled(True)
@@ -886,7 +896,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
             pass
         if not minz:
             self.job_error_dialog.show_error(dialog_title,
-                    _('<b>Failed</b>')+': '+unicode(job.description),
+                    _('<b>Failed</b>')+': '+str(job.description),
                     det_msg=job.details, retry_func=retry_func)
 
     def read_settings(self):
@@ -970,7 +980,7 @@ class Main(MainWindow, MainWindowMixin, DeviceMixin, EmailMixin,  # {{{
             db.new_api.set_pref('field_metadata', db.field_metadata.all_metadata())
             db.commit_dirty_cache()
             db.prefs.write_serialized(prefs['library_path'])
-        for action in self.iactions.values():
+        for action in list(self.iactions.values()):
             if not action.shutting_down():
                 return
         if write_settings:

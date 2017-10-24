@@ -1,20 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
-store_version = 7  # Needed for dynamic plugin loading
-
-__license__ = 'GPL 3'
-__copyright__ = '2011-2015, Tomasz Długosz <tomek3d@gmail.com>'
-__docformat__ = 'restructuredtext en'
-
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from base64 import b64encode
 from contextlib import closing
-
-from lxml import html
-
-from PyQt5.Qt import QUrl
 
 from calibre import browser, url_slash_cleaner
 from calibre.gui2 import open_url
@@ -22,6 +11,19 @@ from calibre.gui2.store import StorePlugin
 from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.gui2.store.search_result import SearchResult
 from calibre.gui2.store.web_store_dialog import WebStoreDialog
+from lxml import html
+from PyQt5.Qt import QUrl
+
+
+store_version = 7  # Needed for dynamic plugin loading
+
+__license__ = 'GPL 3'
+__copyright__ = '2011-2015, Tomasz Długosz <tomek3d@gmail.com>'
+__docformat__ = 'restructuredtext en'
+
+
+
+
 
 
 class EmpikStore(BasicStoreConfig, StorePlugin):
@@ -47,7 +49,7 @@ class EmpikStore(BasicStoreConfig, StorePlugin):
 
     def search(self, query, max_results=10, timeout=60):
         url = 'http://www.empik.com/szukaj/produkt?c=ebooki-ebooki&q=' + \
-            urllib.quote(query) + '&qtype=basicForm&start=1&catalogType=pl&searchCategory=3501&format=epub&format=mobi&format=pdf&resultsPP=' + str(max_results)
+            urllib.parse.quote(query) + '&qtype=basicForm&start=1&catalogType=pl&searchCategory=3501&format=epub&format=mobi&format=pdf&resultsPP=' + str(max_results)
 
         br = browser()
 
@@ -90,4 +92,3 @@ class EmpikStore(BasicStoreConfig, StorePlugin):
                 s.drm = SearchResult.DRM_LOCKED if drm else SearchResult.DRM_UNLOCKED
 
                 yield s
-

@@ -1,17 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+
+from struct import calcsize, pack, unpack_from
+
+from calibre.utils.fonts.sfnt import DateTimeProperty, FixedProperty, UnknownTable
+from calibre.utils.fonts.sfnt.errors import UnsupportedFont
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from itertools import izip
-from struct import unpack_from, pack, calcsize
 
-from calibre.utils.fonts.sfnt import UnknownTable, DateTimeProperty, FixedProperty
-from calibre.utils.fonts.sfnt.errors import UnsupportedFont
 
 
 class HeadTable(UnknownTable):
@@ -47,7 +46,7 @@ class HeadTable(UnknownTable):
         self._fmt = ('>%s'%(''.join(field_types[1::2]))).encode('ascii')
         self._fields = field_types[0::2]
 
-        for f, val in izip(self._fields, unpack_from(self._fmt, self.raw)):
+        for f, val in zip(self._fields, unpack_from(self._fmt, self.raw)):
             setattr(self, f, val)
 
     def update(self):
@@ -85,7 +84,7 @@ class HorizontalHeader(UnknownTable):
         self._fmt = ('>%s'%(''.join(field_types[1::2]))).encode('ascii')
         self._fields = field_types[0::2]
 
-        for f, val in izip(self._fields, unpack_from(self._fmt, self.raw)):
+        for f, val in zip(self._fields, unpack_from(self._fmt, self.raw)):
             setattr(self, f, val)
 
         raw = hmtx.raw
@@ -149,7 +148,7 @@ class OS2Table(UnknownTable):
         self._fmt = ('>%s'%(''.join(field_types[1::2]))).encode('ascii')
         self._fields = field_types[0::2]
 
-        for f, val in izip(self._fields, unpack_from(self._fmt, self.raw)):
+        for f, val in zip(self._fields, unpack_from(self._fmt, self.raw)):
             setattr(self, f, val)
 
     def zero_fstype(self):
@@ -168,4 +167,3 @@ class PostTable(UnknownTable):
             return
         (self._version, self._italic_angle, self.underline_position,
          self.underline_thickness) = unpack_from(b'>llhh', self.raw)
-

@@ -2,14 +2,12 @@ __license__   = 'GPL v3'
 
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from PyQt5.Qt import (
-    Qt, QDialog, QIcon, QListWidgetItem)
-
-from calibre.gui2.dialogs.tag_categories_ui import Ui_TagCategories
-from calibre.gui2.dialogs.confirm_delete import confirm
-from calibre.gui2 import error_dialog
 from calibre.constants import islinux
+from calibre.gui2 import error_dialog
+from calibre.gui2.dialogs.confirm_delete import confirm
+from calibre.gui2.dialogs.tag_categories_ui import Ui_TagCategories
 from calibre.utils.icu import sort_key, strcmp
+from PyQt5.Qt import QDialog, QIcon, QListWidgetItem, Qt
 
 
 class Item(object):
@@ -68,7 +66,7 @@ class TagCategories(QDialog, Ui_TagCategories):
                           ]
         category_names  = ['', _('Authors'), ngettext('Series', 'Series', 2), _('Publishers'), _('Tags')]
 
-        for key,cc in self.db.custom_field_metadata().iteritems():
+        for key,cc in self.db.custom_field_metadata().items():
             if cc['datatype'] in ['text', 'series', 'enumeration']:
                 self.category_labels.append(key)
                 self.category_icons.append(cc_icon)
@@ -197,7 +195,7 @@ class TagCategories(QDialog, Ui_TagCategories):
 
     def add_category(self):
         self.save_category()
-        cat_name = unicode(self.input_box.text()).strip()
+        cat_name = str(self.input_box.text()).strip()
         if cat_name == '':
             return False
         comps = [c.strip() for c in cat_name.split('.') if c.strip()]
@@ -207,7 +205,7 @@ class TagCategories(QDialog, Ui_TagCategories):
                       'multiple periods in a row or spaces before '
                       'or after periods.')).exec_()
             return False
-        for c in sorted(self.categories.keys(), key=sort_key):
+        for c in sorted(list(self.categories.keys()), key=sort_key):
             if strcmp(c, cat_name) == 0 or \
                     (icu_lower(cat_name).startswith(icu_lower(c) + '.') and
                      not cat_name.startswith(c + '.')):
@@ -226,7 +224,7 @@ class TagCategories(QDialog, Ui_TagCategories):
 
     def rename_category(self):
         self.save_category()
-        cat_name = unicode(self.input_box.text()).strip()
+        cat_name = str(self.input_box.text()).strip()
         if cat_name == '':
             return False
         if not self.current_cat_name:
@@ -267,7 +265,7 @@ class TagCategories(QDialog, Ui_TagCategories):
         self.save_category()
         s = self.category_box.itemText(idx)
         if s:
-            self.current_cat_name = unicode(s)
+            self.current_cat_name = str(s)
         else:
             self.current_cat_name  = None
         self.fill_applied_items()
@@ -282,7 +280,7 @@ class TagCategories(QDialog, Ui_TagCategories):
 
     def accept(self):
         self.save_category()
-        for cat in sorted(self.categories.keys(), key=sort_key):
+        for cat in sorted(list(self.categories.keys()), key=sort_key):
             components = cat.split('.')
             for i in range(0,len(components)):
                 c = '.'.join(components[0:i+1])
@@ -301,5 +299,5 @@ class TagCategories(QDialog, Ui_TagCategories):
     def populate_category_list(self):
         self.category_box.blockSignals(True)
         self.category_box.clear()
-        self.category_box.addItems(sorted(self.categories.keys(), key=sort_key))
+        self.category_box.addItems(sorted(list(self.categories.keys()), key=sort_key))
         self.category_box.blockSignals(False)

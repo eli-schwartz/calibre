@@ -1,12 +1,9 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 # License: GPLv3 Copyright: 2011, Kovid Goyal <kovid at kovidgoyal.net>
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import hashlib
 import re
 import time
-from Queue import Empty, Queue
+from queue import Empty, Queue
 
 from calibre import as_unicode
 from calibre.ebooks.chardet import xml_to_unicode
@@ -15,6 +12,7 @@ from calibre.ebooks.metadata.book.base import Metadata
 from calibre.ebooks.metadata.sources.base import Source
 from calibre.utils.cleantext import clean_ascii_chars
 from calibre.utils.localization import canonicalize_lang
+
 
 NAMESPACES = {
     'openSearch': 'http://a9.com/-/spec/opensearchrss/1.0/',
@@ -196,7 +194,7 @@ class GoogleBooks(Source):
     # }}}
 
     def create_query(self, log, title=None, authors=None, identifiers={}):  # {{{
-        from urllib import urlencode
+        from urllib.parse import urlencode
         BASE_URL = 'https://books.google.com/books/feeds/volumes?'
         isbn = check_isbn(identifiers.get('isbn', None))
         q = ''
@@ -214,7 +212,7 @@ class GoogleBooks(Source):
             if author_tokens:
                 q += ('+' if q else '') + build_term('author', author_tokens)
 
-        if isinstance(q, unicode):
+        if isinstance(q, str):
             q = q.encode('utf-8')
         if not q:
             return None

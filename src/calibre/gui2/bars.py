@@ -1,20 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import sip
+from calibre.constants import isosx
+from calibre.gui2 import config, gprefs, native_menubar_defaults
+from calibre.gui2.throbber import ThrobbingButton
+from PyQt5.Qt import (
+	QAction, QEasingCurve, QMenu, QObject, QPainter, QPropertyAnimation, QSize,
+	Qt, QTimer, QToolBar, QToolButton, QWidget, pyqtProperty, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sip
-from PyQt5.Qt import (
-    Qt, QAction, QMenu, QObject, QToolBar, QToolButton, QSize, pyqtSignal,
-    QTimer, QPropertyAnimation, QEasingCurve, pyqtProperty, QPainter, QWidget)
 
-from calibre.constants import isosx
-from calibre.gui2 import gprefs, native_menubar_defaults, config
-from calibre.gui2.throbber import ThrobbingButton
 
 
 class RevealBar(QWidget):  # {{{
@@ -175,7 +174,7 @@ class ToolBar(QToolBar):  # {{{
     def check_iactions_for_drag(self, event, md, func):
         if self.added_actions:
             pos = event.pos()
-            for iac in self.gui.iactions.itervalues():
+            for iac in self.gui.iactions.values():
                 if iac.accepts_drops:
                     aa = iac.qaction
                     w = self.widgetForAction(aa)
@@ -240,7 +239,7 @@ class ToolBar(QToolBar):  # {{{
 
         mime = 'application/calibre+from_device'
         if data.hasFormat(mime):
-            paths = [unicode(u.toLocalFile()) for u in data.urls()]
+            paths = [str(u.toLocalFile()) for u in data.urls()]
             if paths:
                 self.gui.iactions['Add Books'].add_books_from_device(
                         self.gui.current_view(), paths=paths)

@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import errno
 import os
@@ -13,16 +10,16 @@ import tempfile
 from io import BytesIO
 from threading import Thread
 
-# We use explicit module imports so tracebacks when importing are more useful
-from PyQt5.QtCore import QBuffer, QByteArray, Qt
-from PyQt5.QtGui import QColor, QImage, QImageReader, QImageWriter, QPixmap, QTransform
-
 from calibre import fit_image, force_unicode
 from calibre.constants import iswindows, plugins
 from calibre.ptempfile import TemporaryDirectory
 from calibre.utils.config_base import tweaks
 from calibre.utils.filenames import atomic_rename
 from calibre.utils.imghdr import what
+# We use explicit module imports so tracebacks when importing are more useful
+from PyQt5.QtCore import QBuffer, QByteArray, Qt
+from PyQt5.QtGui import QColor, QImage, QImageReader, QImageWriter, QPixmap, QTransform
+
 
 # Utilities {{{
 imageops, imageops_err = plugins['imageops']
@@ -436,7 +433,7 @@ def quantize_image(img, max_colors=256, dither=True, palette=''):
     img = image_from_data(img)
     if img.hasAlphaChannel():
         img = blend_image(img)
-    if palette and isinstance(palette, basestring):
+    if palette and isinstance(palette, str):
         palette = palette.split()
     return imageops.quantize(img, max_colors, dither, [QColor(x).rgb() for x in palette])
 

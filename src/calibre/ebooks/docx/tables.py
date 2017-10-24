@@ -1,15 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.ebooks.docx.block_styles import (
+	ParagraphStyle, binary_property, border_props,
+	border_to_css, inherit, read_border, read_shd as rs
+)
+from calibre.ebooks.docx.char_styles import RunStyle
+from lxml.html.builder import TABLE, TD, TR
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from lxml.html.builder import TABLE, TR, TD
 
-from calibre.ebooks.docx.block_styles import inherit, read_shd as rs, read_border, binary_property, border_props, ParagraphStyle, border_to_css
-from calibre.ebooks.docx.char_styles import RunStyle
 
 # Read from XML {{{
 read_shd = rs
@@ -85,7 +86,7 @@ def read_spacing(parent, dest, XPath, get):
 def read_float(parent, dest, XPath, get):
     ans = inherit
     for x in XPath('./w:tblpPr')(parent):
-        ans = {k.rpartition('}')[-1]: v for k, v in x.attrib.iteritems()}
+        ans = {k.rpartition('}')[-1]: v for k, v in x.attrib.items()}
     setattr(dest, 'float', ans)
 
 
@@ -571,7 +572,7 @@ class Table(object):
             return
         # Handle vMerge
         max_col_num = max(len(r) for r in self.cell_map)
-        for c in xrange(max_col_num):
+        for c in range(max_col_num):
             cells = [row[c] if c < len(row) else None for row in self.cell_map]
             runs = [[]]
             for cell in cells:
@@ -618,7 +619,7 @@ class Table(object):
     def __iter__(self):
         for p in self.paragraphs:
             yield p
-        for t in self.sub_tables.itervalues():
+        for t in self.sub_tables.values():
             for p in t:
                 yield p
 
@@ -665,7 +666,7 @@ class Table(object):
         table_style = self.table_style.css
         if table_style:
             table.set('class', self.styles.register(table_style, 'table'))
-        for elem, style in style_map.iteritems():
+        for elem, style in style_map.items():
             css = style.css
             if css:
                 elem.set('class', self.styles.register(css, elem.tag))
@@ -686,7 +687,7 @@ class Tables(object):
         self.sub_tables |= set(self.tables[-1].sub_tables)
 
     def apply_markup(self, object_map, page_map):
-        rmap = {v:k for k, v in object_map.iteritems()}
+        rmap = {v:k for k, v in object_map.items()}
         for table in self.tables:
             table.apply_markup(rmap, page_map[table.tbl])
 
@@ -699,4 +700,3 @@ class Tables(object):
         table = self.para_map.get(p, None)
         if table is not None:
             return table.style_map.get(p, (None, None))[1]
-

@@ -1,11 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, struct
+import struct
+import sys
 
 from calibre.utils.wmf import create_bmp_from_dib, to_png
 
@@ -224,4 +224,3 @@ if __name__ == '__main__':
     wmf(open(sys.argv[-1], 'rb'))
     open('/t/test.bmp', 'wb').write(wmf.bitmaps[0])
     open('/t/test.png', 'wb').write(wmf.to_png())
-

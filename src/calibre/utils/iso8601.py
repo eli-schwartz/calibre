@@ -1,14 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
 from datetime import datetime
 
-from dateutil.tz import tzlocal, tzutc, tzoffset
-
 from calibre.constants import plugins
+from dateutil.tz import tzlocal, tzoffset, tzutc
+
+
 speedup, err = plugins['speedup']
 if not speedup:
     raise RuntimeError(err)
@@ -63,4 +61,4 @@ def parse_iso8601(date_string, assume_utc=False, as_utc=True):
 
 if __name__ == '__main__':
     import sys
-    print(parse_iso8601(sys.argv[-1]))
+    print((parse_iso8601(sys.argv[-1])))

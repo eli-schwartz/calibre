@@ -10,7 +10,7 @@ __docformat__ = 'restructuredtext en'
 
 import os
 import re
-import StringIO
+import io
 from copy import deepcopy
 
 from calibre import my_unichr, prepare_string_for_xml
@@ -219,7 +219,7 @@ class PML_HTMLizer(object):
         return html
 
     def cleanup_html_remove_redundant(self, html):
-        for key in self.STATES_TAGS.keys():
+        for key in list(self.STATES_TAGS.keys()):
             open, close = self.STATES_TAGS[key]
             if key in self.STATES_VALUE_REQ:
                 html = re.sub(r'(?u)%s\s*%s' % (open % '.*?', close), '', html)
@@ -229,19 +229,19 @@ class PML_HTMLizer(object):
         return html
 
     def start_line(self):
-        start = u''
+        start = ''
 
         state = deepcopy(self.state)
         div = []
         span = []
         other = []
 
-        for key, val in state.items():
+        for key, val in list(state.items()):
             if key in self.NEW_LINE_EXCHANGE_STATES and val[0]:
                 state[self.NEW_LINE_EXCHANGE_STATES[key]] = val
                 state[key] = [False, '']
 
-        for key, val in state.items():
+        for key, val in list(state.items()):
             if val[0]:
                 if key in self.DIV_STATES:
                     div.append((key, val[1]))
@@ -258,16 +258,16 @@ class PML_HTMLizer(object):
             else:
                 start += self.STATES_TAGS[key][0]
 
-        return u'<p>%s' % start
+        return '<p>%s' % start
 
     def end_line(self):
-        end = u''
+        end = ''
 
         div = []
         span = []
         other = []
 
-        for key, val in self.state.items():
+        for key, val in list(self.state.items()):
             if val[0]:
                 if key in self.DIV_STATES:
                     div.append(key)
@@ -281,10 +281,10 @@ class PML_HTMLizer(object):
             else:
                 end += self.STATES_TAGS[key][1]
 
-        return u'%s</p>' % end
+        return '%s</p>' % end
 
     def process_code(self, code, stream, pre=''):
-        text = u''
+        text = ''
 
         code = self.CODE_STATES.get(code, None)
         if not code:
@@ -309,7 +309,7 @@ class PML_HTMLizer(object):
         return text
 
     def process_code_simple(self, code, stream):
-        text = u''
+        text = ''
 
         if self.state[code][0]:
             if code in self.STATES_CLOSE_VALUE_REQ:
@@ -330,7 +330,7 @@ class PML_HTMLizer(object):
         return text
 
     def process_code_div(self, code, stream):
-        text = u''
+        text = ''
 
         # Close code.
         if self.state[code][0]:
@@ -384,7 +384,7 @@ class PML_HTMLizer(object):
         return text
 
     def process_code_span(self, code, stream):
-        text = u''
+        text = ''
 
         # Close code.
         if self.state[code][0]:
@@ -422,7 +422,7 @@ class PML_HTMLizer(object):
         return text
 
     def process_code_block(self, code, stream, pre=''):
-        text = u''
+        text = ''
 
         # Close all spans
         for c in self.SPAN_STATES:
@@ -467,7 +467,7 @@ class PML_HTMLizer(object):
         return text
 
     def code_value(self, stream):
-        value = u''
+        value = ''
         # state 0 is before =
         # state 1 is before the first "
         # state 2 is before the second "
@@ -506,7 +506,7 @@ class PML_HTMLizer(object):
             # Unable to complete the sequence to reterieve the value. Reset
             # the stream to the location it started.
             stream.seek(loc)
-            value = u''
+            value = ''
 
         return value.strip()
 
@@ -559,12 +559,12 @@ class PML_HTMLizer(object):
                 indent_state['et'] = False
 
             # Must use StringIO, cStringIO does not support unicode
-            line = StringIO.StringIO(line)
+            line = io.StringIO(line)
             parsed.append(self.start_line())
 
             c = line.read(1)
             while c != '':
-                text = u''
+                text = ''
 
                 if c == '\\':
                     c = line.read(1)
@@ -672,10 +672,10 @@ class PML_HTMLizer(object):
                     indent_state['T'] = False
                     adv_indent_val = ''
 
-                output.append(u''.join(parsed))
+                output.append(''.join(parsed))
             line.close()
 
-        output = self.cleanup_html(u'\n'.join(output))
+        output = self.cleanup_html('\n'.join(output))
 
         return output
 
@@ -699,18 +699,18 @@ class PML_HTMLizer(object):
         t_l3 = None
 
         for level, (href, id, text) in self.toc:
-            if level == u'0':
+            if level == '0':
                 t_l0 = n_toc.add_item(href, id, text)
                 t_l1 = None
                 t_l2 = None
                 t_l3 = None
-            elif level == u'1':
+            elif level == '1':
                 if t_l0 is None:
                     t_l0 = n_toc
                 t_l1 = t_l0.add_item(href, id, text)
                 t_l2 = None
                 t_l3 = None
-            elif level == u'2':
+            elif level == '2':
                 if t_l1 is None:
                     if t_l0 is None:
                         t_l1 = n_toc
@@ -718,7 +718,7 @@ class PML_HTMLizer(object):
                         t_l1 = t_l0
                 t_l2 = t_l1.add_item(href, id, text)
                 t_l3 = None
-            elif level == u'3':
+            elif level == '3':
                 if t_l2 is None:
                     if t_l1 is None:
                         if t_l0 is None:

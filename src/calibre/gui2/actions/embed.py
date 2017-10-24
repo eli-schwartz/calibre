@@ -1,18 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
-
 from functools import partial
-
-from PyQt5.Qt import QTimer, QProgressDialog, Qt
 
 from calibre import force_unicode
 from calibre.gui2 import gprefs
 from calibre.gui2.actions import InterfaceAction
+from PyQt5.Qt import QProgressDialog, Qt, QTimer
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 
 class EmbedAction(InterfaceAction):

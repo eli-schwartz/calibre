@@ -1,24 +1,27 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import errno
+import os
+import re
+import traceback
+
+from calibre import prints, sanitize_file_name_unicode, strftime
+from calibre.constants import DEBUG, preferred_encoding
+from calibre.db.errors import NoSuchFormat
+from calibre.db.lazy import FormatsList
+from calibre.ebooks.metadata import fmt_sidx, title_sort
+from calibre.utils.config import Config, StringConfig, tweaks
+from calibre.utils.date import as_local_time
+from calibre.utils.filenames import (
+	ascii_filename, shorten_components_to, supports_long_names
+)
+from calibre.utils.formatter import TemplateFormatter
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, traceback, re, errno
 
-from calibre.constants import DEBUG
-from calibre.db.errors import NoSuchFormat
-from calibre.utils.config import Config, StringConfig, tweaks
-from calibre.utils.formatter import TemplateFormatter
-from calibre.utils.filenames import shorten_components_to, supports_long_names, ascii_filename
-from calibre.constants import preferred_encoding
-from calibre.ebooks.metadata import fmt_sidx
-from calibre.ebooks.metadata import title_sort
-from calibre.utils.date import as_local_time
-from calibre import strftime, prints, sanitize_file_name_unicode
-from calibre.db.lazy import FormatsList
 
 plugboard_any_device_value = 'any device'
 plugboard_any_format_value = 'any format'
@@ -133,7 +136,7 @@ def preprocess_template(template):
     template = template.replace('//', '/')
     template = template.replace('{author}', '{authors}')
     template = template.replace('{tag}', '{tags}')
-    if not isinstance(template, unicode):
+    if not isinstance(template, str):
         template = template.decode(preferred_encoding, 'replace')
     return template
 
@@ -235,7 +238,7 @@ def get_components(template, mi, id, timefmt='%b %Y', length=250,
                         divide_by=2.0)
             elif cm['datatype'] in ['int', 'float']:
                 if format_args[key] != 0:
-                    format_args[key] = unicode(format_args[key])
+                    format_args[key] = str(format_args[key])
                 else:
                     format_args[key] = ''
     if safe_format:
@@ -282,7 +285,7 @@ def get_path_components(opts, mi, book_id, path_length):
             to_lowercase=opts.to_lowercase,
             replace_whitespace=opts.replace_whitespace, safe_format=False,
             last_has_extension=False, single_dir=opts.single_dir)
-    except Exception, e:
+    except Exception as e:
         raise ValueError(_('Failed to calculate path for '
             'save to disk. Template: %(templ)s\n'
             'Error: %(err)s')%dict(templ=opts.template, err=e))

@@ -1,7 +1,9 @@
-import sys, os
+import os
+import sys
 
 from calibre.ebooks.rtf2xml import copy
 from calibre.ptempfile import better_mktemp
+
 
 """
 States.
@@ -232,7 +234,7 @@ class Inline:
             # nothing to add
             return
         the_dict = self.__inline_list[-1]
-        the_keys = the_dict.keys()
+        the_keys = list(the_dict.keys())
         # always close out
         if self.__place == 'in_list':
             if 'contains_inline' in the_keys and the_dict['contains_inline'] == 1\
@@ -302,13 +304,13 @@ class Inline:
             if len(inline_list) <= 0:
                 if self.__run_level > 3:
                     msg = 'self.__inline_list is %s\n' % self.__inline_list
-                    raise self.__bug_handler, msg
+                    raise self.__bug_handler(msg)
                 self.__write_obj.write('error\n')
                 self.__groups_in_waiting[0] = 0
                 return
             for the_dict in inline_list:
                 if the_dict['contains_inline']:
-                    the_keys = the_dict.keys()
+                    the_keys = list(the_dict.keys())
                     if 'font-style' in the_keys:
                         face = the_dict['font-style']
                         self.__write_obj.write('mi<mk<font______<%s\n' % face)
@@ -343,7 +345,7 @@ class Inline:
         for the_dict in inline_list:
             contains_info = the_dict.get('contains_inline')
             if contains_info:
-                the_keys = the_dict.keys()
+                the_keys = list(the_dict.keys())
                 if 'font-style' in the_keys:
                     self.__write_obj.write('mi<mk<font-end__\n')
                 if 'caps' in the_keys:
@@ -365,7 +367,7 @@ class Inline:
         for the_dict in self.__inline_list:
             contains_info = the_dict.get('contains_inline')
             if contains_info :
-                the_keys = the_dict.keys()
+                the_keys = list(the_dict.keys())
                 if 'font-style' in the_keys:
                     face = the_dict['font-style']
                     self.__write_obj.write('mi<mk<font______<%s\n' % face)

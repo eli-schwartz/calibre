@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
+import cgi
 import os
 import re
-import cgi
 import subprocess
 from os import path
 
 from docutils import nodes
-
 from sphinx import addnodes
 from sphinx.builders.html import StandaloneHTMLBuilder
+
 
 _idpattern = re.compile(
     r'(?P<title>.+) (\((?P<id>[\w\.]+)( (?P<descr>\w+))?\))$')
@@ -154,7 +154,7 @@ class QtHelpBuilder(StandaloneHTMLBuilder):
                                                   prune_toctrees=False)
         istoctree = lambda node: (
                         isinstance(node, addnodes.compact_paragraph)
-                            and node.has_key('toctree'))
+                            and 'toctree' in node)
         sections = []
         for node in tocdoc.traverse(istoctree):
             sections.extend(self.write_toc(node))

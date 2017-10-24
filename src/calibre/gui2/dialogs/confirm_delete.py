@@ -3,13 +3,12 @@ __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import (
-    QDialog, Qt, QIcon, QVBoxLayout, QHBoxLayout, QLabel, QCheckBox, QDialogButtonBox
-)
-
 from calibre import confirm_config_name
 from calibre.gui2 import dynamic
 from calibre.gui2.dialogs.message_box import Icon
+from PyQt5.Qt import (
+	QCheckBox, QDialog, QDialogButtonBox, QHBoxLayout, QIcon, QLabel, Qt, QVBoxLayout
+)
 
 
 class Dialog(QDialog):

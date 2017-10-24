@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
 """html2text: Turn HTML into equivalent Markdown-structured text."""
@@ -14,8 +13,14 @@ __contributors__ = ["Martin 'Joey' Schulze", "Ricardo Reyes", "Kevin Jay North"]
 # TODO:
 #   Support decoded entities with unifiable.
 
-import re, sys, urllib, htmlentitydefs, codecs
+import codecs
+import html.entities
+import re
 import sgmllib
+import sys
+import urllib.request, urllib.parse, urllib.error
+
+
 sgmllib.charref = re.compile('&#([xX]?[0-9a-fA-F]+)[^0-9a-fA-F]')
 
 try:
@@ -43,9 +48,9 @@ def name2cp(k):
     if k == 'apos':
         return ord("'")
     if hasattr(htmlentitydefs, "name2codepoint"):  # requires Python 2.3
-        return htmlentitydefs.name2codepoint[k]
+        return html.entities.name2codepoint[k]
     else:
-        k = htmlentitydefs.entitydefs[k]
+        k = html.entities.entitydefs[k]
         if k.startswith("&#") and k.endswith(";"):
             return int(k[2:-1])  # not in latin-1
         return ord(codecs.latin_1_decode(k)[0])
@@ -61,7 +66,7 @@ unifiable = {'rsquo':"'", 'lsquo':"'", 'rdquo':'"', 'ldquo':'"',
 
 unifiable_n = {}
 
-for k in unifiable.keys():
+for k in list(unifiable.keys()):
     unifiable_n[name2cp(k)] = unifiable[k]
 
 
@@ -71,14 +76,14 @@ def charref(name):
     else:
         c = int(name)
 
-    if not UNICODE_SNOB and c in unifiable_n.keys():
+    if not UNICODE_SNOB and c in list(unifiable_n.keys()):
         return unifiable_n[c]
     else:
-        return unichr(c)
+        return chr(c)
 
 
 def entityref(c):
-    if not UNICODE_SNOB and c in unifiable.keys():
+    if not UNICODE_SNOB and c in list(unifiable.keys()):
         return unifiable[c]
     else:
         try:
@@ -86,7 +91,7 @@ def entityref(c):
         except KeyError:
             return "&" + c
         else:
-            return unichr(name2cp(c))
+            return chr(name2cp(c))
 
 
 def replaceEntities(s):
@@ -168,7 +173,7 @@ class _html2text(sgmllib.SGMLParser):
             self.out = self.outtextf
         else:
             self.out = out
-        self.outtext = u''
+        self.outtext = ''
         self.quiet = 0
         self.p_p = 0
         self.outcount = 0
@@ -261,7 +266,7 @@ class _html2text(sgmllib.SGMLParser):
 
                 self.abbr_title = None
                 self.abbr_data = ''
-                if attrs.has_key('title'):  # noqa
+                if 'title' in attrs:  # noqa
                     self.abbr_title = attrs['title']
             else:
                 if self.abbr_title is not None:
@@ -275,7 +280,7 @@ class _html2text(sgmllib.SGMLParser):
                 for (x, y) in attrs:
                     attrsD[x] = y
                 attrs = attrsD
-                if attrs.has_key('href') and not (SKIP_INTERNAL_LINKS and attrs['href'].startswith('#')):  # noqa
+                if 'href' in attrs and not (SKIP_INTERNAL_LINKS and attrs['href'].startswith('#')):  # noqa
                     self.astack.append(attrs)
                     self.o("[")
                 else:
@@ -285,7 +290,7 @@ class _html2text(sgmllib.SGMLParser):
                     a = self.astack.pop()
                     if a:
                         title = ''
-                        if a.has_key('title'):  # noqa
+                        if 'title' in a:  # noqa
                             title = ' "%s"' % a['title']
                         self.o('](%s%s)' % (a['href'], title))
 
@@ -294,12 +299,12 @@ class _html2text(sgmllib.SGMLParser):
             for (x, y) in attrs:
                 attrsD[x] = y
             attrs = attrsD
-            if attrs.has_key('src'):  # noqa
+            if 'src' in attrs:  # noqa
                 alt = attrs.get('alt', '')
                 self.o("![")
                 self.o(alt)
                 title = ''
-                if attrs.has_key('title'):  # noqa
+                if 'title' in attrs:  # noqa
                     title = ' "%s"' % attrs['title']
                 self.o('](%s%s)' % (attrs['src'], title))
 
@@ -404,7 +409,7 @@ class _html2text(sgmllib.SGMLParser):
                 self.space = 0
 
             if self.abbr_list and force == "end":
-                for abbr, definition in self.abbr_list.items():
+                for abbr, definition in list(self.abbr_list.items()):
                     self.out("  *[" + abbr + "]: " + definition + "\n")
 
             self.p_p = 0
@@ -441,7 +446,7 @@ if __name__ == "__main__":
         arg = sys.argv[1]
         if arg.startswith('http://') or arg.startswith('https://'):
             baseurl = arg
-            j = urllib.urlopen(baseurl)
+            j = urllib.request.urlopen(baseurl)
             try:
                 from feedparser import _getCharacterEncoding as enc
                 enc
@@ -461,4 +466,3 @@ if __name__ == "__main__":
     else:
         data = sys.stdin.read().decode('utf8')
     wrapwrite(html2text(data, baseurl))
-

@@ -1,27 +1,29 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+import sys
+import time
+from collections import namedtuple
+from functools import partial
+
+from calibre.ebooks.oeb.polish.container import get_container
+from calibre.ebooks.oeb.polish.cover import set_cover
+from calibre.ebooks.oeb.polish.css import remove_unused_css
+from calibre.ebooks.oeb.polish.embed import embed_all_fonts
+from calibre.ebooks.oeb.polish.images import compress_images
+from calibre.ebooks.oeb.polish.jacket import (
+	add_or_replace_jacket, find_existing_jacket, remove_jacket, replace_jacket
+)
+from calibre.ebooks.oeb.polish.replace import smarten_punctuation
+from calibre.ebooks.oeb.polish.stats import StatsCollector
+from calibre.ebooks.oeb.polish.subset import subset_all_fonts
+from calibre.utils.logging import Log
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re, sys, time
-from collections import namedtuple
-from functools import partial
 
-from calibre.ebooks.oeb.polish.container import get_container
-from calibre.ebooks.oeb.polish.stats import StatsCollector
-from calibre.ebooks.oeb.polish.subset import subset_all_fonts
-from calibre.ebooks.oeb.polish.images import compress_images
-from calibre.ebooks.oeb.polish.embed import embed_all_fonts
-from calibre.ebooks.oeb.polish.cover import set_cover
-from calibre.ebooks.oeb.polish.replace import smarten_punctuation
-from calibre.ebooks.oeb.polish.jacket import (
-    replace_jacket, add_or_replace_jacket, find_existing_jacket, remove_jacket)
-from calibre.ebooks.oeb.polish.css import remove_unused_css
-from calibre.utils.logging import Log
 
 ALL_OPTS = {
     'embed': False,
@@ -125,7 +127,7 @@ def hfix(name, raw):
     return raw
 
 
-CLI_HELP = {x:hfix(x, re.sub('<.*?>', '', y)) for x, y in HELP.iteritems()}
+CLI_HELP = {x:hfix(x, re.sub('<.*?>', '', y)) for x, y in HELP.items()}
 # }}}
 
 
@@ -222,7 +224,7 @@ def polish_one(ebook, opts, report, customization=None):
 
 def polish(file_map, opts, log, report):
     st = time.time()
-    for inbook, outbook in file_map.iteritems():
+    for inbook, outbook in file_map.items():
         report(_('## Polishing: %s')%(inbook.rpartition('.')[-1].upper()))
         ebook = get_container(inbook, log)
         polish_one(ebook, opts, report)
@@ -243,7 +245,7 @@ def gui_polish(data):
     file_map = {x:x for x in files}
     opts = ALL_OPTS.copy()
     opts.update(data)
-    O = namedtuple('Options', ' '.join(ALL_OPTS.iterkeys()))
+    O = namedtuple('Options', ' '.join(iter(ALL_OPTS.keys())))
     opts = O(**opts)
     log = Log(level=Log.DEBUG)
     report = []
@@ -258,7 +260,7 @@ def gui_polish(data):
 def tweak_polish(container, actions, customization=None):
     opts = ALL_OPTS.copy()
     opts.update(actions)
-    O = namedtuple('Options', ' '.join(ALL_OPTS.iterkeys()))
+    O = namedtuple('Options', ' '.join(iter(ALL_OPTS.keys())))
     opts = O(**opts)
     report = []
     changed = polish_one(container, opts, report.append, customization=customization)
@@ -310,13 +312,13 @@ def main(args=None):
         inbook, outbook = args
 
     popts = ALL_OPTS.copy()
-    for k, v in popts.iteritems():
+    for k, v in popts.items():
         popts[k] = getattr(opts, k, None)
 
-    O = namedtuple('Options', ' '.join(popts.iterkeys()))
+    O = namedtuple('Options', ' '.join(iter(popts.keys())))
     popts = O(**popts)
     report = []
-    if not tuple(filter(None, (getattr(popts, name) for name in ALL_OPTS))):
+    if not tuple([_f for _f in (getattr(popts, name) for name in ALL_OPTS) if _f]):
         parser.print_help()
         log.error(_('You must specify at least one action to perform'))
         raise SystemExit(1)

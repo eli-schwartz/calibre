@@ -7,4 +7,3 @@ __docformat__ = 'restructuredtext en'
 
 class zTXTError(Exception):
     pass
-

@@ -11,10 +11,13 @@ __docformat__ = 'restructuredtext en'
 import re
 
 from calibre.ebooks.metadata import MetaInformation
-from calibre.ebooks.pdb.header import PdbHeaderReader
-from calibre.ebooks.metadata.ereader import get_metadata as get_eReader
-from calibre.ebooks.metadata.plucker import get_metadata as get_plucker
+from calibre.ebooks.metadata.ereader import (
+	get_metadata as get_eReader, set_metadata as set_eReader
+)
 from calibre.ebooks.metadata.haodoo import get_metadata as get_Haodoo
+from calibre.ebooks.metadata.plucker import get_metadata as get_plucker
+from calibre.ebooks.pdb.header import PdbHeaderReader
+
 
 MREADER = {
     'PNPdPPrs' : get_eReader,
@@ -24,7 +27,6 @@ MREADER = {
     'BOOKMTIU' : get_Haodoo,
 }
 
-from calibre.ebooks.metadata.ereader import set_metadata as set_eReader
 
 MWRITER = {
     'PNPdPPrs' : set_eReader,
@@ -59,4 +61,3 @@ def set_metadata(stream, mi):
 
     stream.seek(0)
     stream.write('%s\x00' % re.sub('[^-A-Za-z0-9 ]+', '_', mi.title).ljust(31, '\x00')[:31].encode('ascii', 'replace'))
-

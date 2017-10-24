@@ -1,26 +1,27 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
-
-__license__ = 'GPL 3'
-__copyright__ = '2011, John Schember <john@nachtimwald.com>'
-__docformat__ = 'restructuredtext en'
-
 import os
 from threading import Lock
-
-from PyQt5.Qt import (QUrl, QCoreApplication)
 
 from calibre.constants import cache_dir
 from calibre.gui2 import open_url
 from calibre.gui2.store import StorePlugin
 from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.gui2.store.search_result import SearchResult
-from calibre.gui2.store.web_store_dialog import WebStoreDialog
-from calibre.gui2.store.stores.mobileread.models import SearchFilter
 from calibre.gui2.store.stores.mobileread.cache_progress_dialog import CacheProgressDialog
 from calibre.gui2.store.stores.mobileread.cache_update_thread import CacheUpdateThread
+from calibre.gui2.store.stores.mobileread.models import SearchFilter
 from calibre.gui2.store.stores.mobileread.store_dialog import MobileReadStoreDialog
+from calibre.gui2.store.web_store_dialog import WebStoreDialog
+from PyQt5.Qt import QCoreApplication, QUrl
+
+
+__license__ = 'GPL 3'
+__copyright__ = '2011, John Schember <john@nachtimwald.com>'
+__docformat__ = 'restructuredtext en'
+
+
+
 
 
 class MobileReadStore(BasicStoreConfig, StorePlugin):

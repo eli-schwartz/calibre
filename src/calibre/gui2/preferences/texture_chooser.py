@@ -1,20 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import glob, os, string, shutil
+import glob
+import os
+import shutil
+import string
 from functools import partial
-from PyQt5.Qt import (
-    QDialog, QVBoxLayout, QListWidget, QListWidgetItem, Qt, QIcon,
-    QApplication, QSize, QDialogButtonBox, QTimer, QLabel)
 
 from calibre.constants import config_dir
 from calibre.gui2 import choose_files, error_dialog
 from calibre.utils.icu import sort_key
+from PyQt5.Qt import (
+	QApplication, QDialog, QDialogButtonBox, QIcon, QLabel,
+	QListWidget, QListWidgetItem, QSize, Qt, QTimer, QVBoxLayout
+)
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
 
 
 def texture_dir():
@@ -80,11 +83,11 @@ class TextureChooser(QDialog):
 
         images.sort(key=lambda x:sort_key(x['name']))
 
-        map(self.create_item, images)
+        list(map(self.create_item, images))
         self.update_remove_state()
 
         if initial:
-            existing = {unicode(i.data(Qt.UserRole) or ''):i for i in (self.images.item(c) for c in xrange(self.images.count()))}
+            existing = {str(i.data(Qt.UserRole) or ''):i for i in (self.images.item(c) for c in range(self.images.count()))}
             item = existing.get(initial, None)
             if item is not None:
                 item.setSelected(True)
@@ -115,7 +118,7 @@ class TextureChooser(QDialog):
         path = path[0]
         fname = os.path.basename(path)
         name = fname.rpartition('.')[0]
-        existing = {unicode(i.data(Qt.UserRole) or ''):i for i in (self.images.item(c) for c in xrange(self.images.count()))}
+        existing = {str(i.data(Qt.UserRole) or ''):i for i in (self.images.item(c) for c in range(self.images.count()))}
         dest = os.path.join(self.tdir, fname)
         with open(path, 'rb') as s, open(dest, 'wb') as f:
             shutil.copyfileobj(s, f)
@@ -134,7 +137,7 @@ class TextureChooser(QDialog):
     @property
     def selected_fname(self):
         try:
-            return unicode(self.selected_item.data(Qt.UserRole) or '')
+            return str(self.selected_item.data(Qt.UserRole) or '')
         except (AttributeError, TypeError):
             pass
 
@@ -144,7 +147,7 @@ class TextureChooser(QDialog):
         if self.selected_fname.startswith(':'):
             return error_dialog(self, _('Cannot remove'),
                                 _('Cannot remove builtin textures'), show=True)
-        os.remove(unicode(self.selected_item.data(Qt.UserRole+1) or ''))
+        os.remove(str(self.selected_item.data(Qt.UserRole+1) or ''))
         self.images.takeItem(self.images.row(self.selected_item))
 
 
@@ -152,4 +155,4 @@ if __name__ == '__main__':
     app = QApplication([])  # noqa
     d = TextureChooser()
     d.exec_()
-    print (d.texture)
+    print((d.texture))

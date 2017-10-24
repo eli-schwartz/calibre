@@ -1,26 +1,24 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from threading import Thread
+
+from calibre import fit_image, force_unicode, human_readable
+from calibre.ebooks.oeb.polish.main import CUSTOMIZATION
+from calibre.gui2 import empty_index
+from calibre.gui2.tweak_book import current_container, set_current_container, tprefs
+from calibre.gui2.tweak_book.widgets import Dialog
+from calibre.utils.icu import numeric_sort_key
+from PyQt5.Qt import (
+	QCheckBox, QDialog, QDialogButtonBox, QHBoxLayout, QIcon, QLabel,
+	QListWidget, QListWidgetItem, QPen, QPixmap, QProgressBar, QSize, QSpinBox,
+	QStyle, QStyledItemDelegate, Qt, QTextBrowser, QVBoxLayout, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from threading import Thread
 
-from PyQt5.Qt import (
-    QTextBrowser, QVBoxLayout, QDialog, QDialogButtonBox, QIcon, QLabel,
-    QCheckBox, Qt, QListWidgetItem, QHBoxLayout, QListWidget, QPixmap,
-    QSpinBox, QStyledItemDelegate, QSize, QStyle, QPen,
-    QProgressBar, pyqtSignal
-)
 
-from calibre import human_readable, fit_image, force_unicode
-from calibre.ebooks.oeb.polish.main import CUSTOMIZATION
-from calibre.gui2 import empty_index
-from calibre.gui2.tweak_book import tprefs, current_container, set_current_container
-from calibre.gui2.tweak_book.widgets import Dialog
-from calibre.utils.icu import numeric_sort_key
 
 
 class Abort(Exception):

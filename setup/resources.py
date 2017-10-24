@@ -1,17 +1,28 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import pickle
+import errno
+import glob
+import hashlib
+import json
+import marshal
+import os
+import re
+import shutil
+import sys
+import time
+import zipfile
+from itertools import chain
+from zlib import compress
+
+from setup import Command, __appname__, basenames, download_securely
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, cPickle, re, shutil, marshal, zipfile, glob, time, sys, hashlib, json, errno
-from zlib import compress
-from itertools import chain
 is_ci = os.environ.get('CI', '').lower() == 'true'
 
-from setup import Command, basenames, __appname__, download_securely
 
 
 def get_opts_from_parser(parser):
@@ -55,7 +66,7 @@ class Coffee(Command):  # {{{
         from pygments.lexers import JavascriptLexer
         from pygments.formatters import TerminalFormatter
         from pygments import highlight
-        print highlight(raw, JavascriptLexer(), TerminalFormatter())
+        print(highlight(raw, JavascriptLexer(), TerminalFormatter()))
 
     def do_coffee_compile(self, opts, timestamp=False, ignore_errors=False):
         from calibre.utils.serve_coffee import compile_coffeescript
@@ -89,23 +100,23 @@ class Coffee(Command):  # {{{
         updated = {}
         for arcname in todo:
             name = arcname.rpartition('.')[0]
-            print ('\t%sCompiling %s'%(time.strftime('[%H:%M:%S] ') if
-                        timestamp else '', name))
+            print(('\t%sCompiling %s'%(time.strftime('[%H:%M:%S] ') if
+                        timestamp else '', name)))
             src, sig = src_files[arcname]
             js, errors = compile_coffeescript(open(src, 'rb').read(), filename=src)
             if errors:
-                print ('\n\tCompilation of %s failed'%name)
+                print(('\n\tCompilation of %s failed'%name))
                 for line in errors:
-                    print >>sys.stderr, line
+                    print(line, file=sys.stderr)
                 if ignore_errors:
-                    js = u'# Compilation from coffeescript failed'
+                    js = '# Compilation from coffeescript failed'
                 else:
                     raise SystemExit(1)
             else:
                 if opts.show_js:
                     self.show_js(js)
-                    print ('#'*80)
-                    print ('#'*80)
+                    print(('#'*80))
+                    print(('#'*80))
             zi = zipfile.ZipInfo()
             zi.filename = arcname
             zi.date_time = time.localtime()[:6]
@@ -113,7 +124,7 @@ class Coffee(Command):  # {{{
         if updated:
             hashes = {}
             with zipfile.ZipFile(dest, 'w', zipfile.ZIP_STORED) as zf:
-                for raw, zi, sig in sorted(chain(updated.itervalues(), existing.itervalues()), key=lambda x: x[1].filename):
+                for raw, zi, sig in sorted(chain(iter(updated.values()), iter(existing.values())), key=lambda x: x[1].filename):
                     zf.writestr(zi, raw)
                     hashes[zi.filename] = sig
                 zf.comment = json.dumps(hashes)
@@ -172,9 +183,9 @@ class Kakasi(Command):  # {{{
                 continue
             if re.match(r"^$",line):
                 continue
-            pair = re.sub(r'\\u([0-9a-fA-F]{4})', lambda x:unichr(int(x.group(1),16)), line)
+            pair = re.sub(r'\\u([0-9a-fA-F]{4})', lambda x:chr(int(x.group(1),16)), line)
             dic[pair[0]] = pair[1]
-        cPickle.dump(dic, open(dst, 'wb'), protocol=-1)  # pickle
+        pickle.dump(dic, open(dst, 'wb'), protocol=-1)  # pickle
 
     def mkkanadict(self, src, dst):
         dic = {}
@@ -186,7 +197,7 @@ class Kakasi(Command):  # {{{
                 continue
             (alpha, kana) = line.split(' ')
             dic[kana] = alpha
-        cPickle.dump(dic, open(dst, 'wb'), protocol=-1)  # pickle
+        pickle.dump(dic, open(dst, 'wb'), protocol=-1)  # pickle
 
     def parsekdict(self, line):
         line = line.decode("utf-8").strip()
@@ -216,9 +227,9 @@ class Kakasi(Command):  # {{{
     def kanwaout(self, out):
         with open(out, 'wb') as f:
             dic = {}
-            for k, v in self.records.iteritems():
+            for k, v in self.records.items():
                 dic[k] = compress(marshal.dumps(v))
-            cPickle.dump(dic, f, -1)
+            pickle.dump(dic, f, -1)
 
     def clean(self):
         kakasi = self.j(self.RESOURCES, 'localization', 'pykakasi')
@@ -295,7 +306,7 @@ class Resources(Command):  # {{{
         if self.newer(dest, self.j(self.SRC, 'calibre', 'linux.py')):
             self.info('\tCreating scripts.pickle')
             f = open(dest, 'wb')
-            cPickle.dump(scripts, f, -1)
+            pickle.dump(scripts, f, -1)
 
         from calibre.web.feeds.recipes.collection import \
                 serialize_builtin_recipes, iterate_over_builtin_recipe_files
@@ -350,14 +361,14 @@ class Resources(Command):  # {{{
                     complete[(inf, ouf)] = [x+' 'for x in
                             get_opts_from_parser(p)]
 
-            cPickle.dump(complete, open(dest, 'wb'), -1)
+            pickle.dump(complete, open(dest, 'wb'), -1)
 
         self.info('\tCreating template-functions.json')
         dest = self.j(self.RESOURCES, 'template-functions.json')
         function_dict = {}
         import inspect
         from calibre.utils.formatter_functions import formatter_functions
-        for obj in formatter_functions().get_builtins().values():
+        for obj in list(formatter_functions().get_builtins().values()):
             eval_func = inspect.getmembers(obj,
                     lambda x: inspect.ismethod(x) and x.__name__ == 'evaluate')
             try:
@@ -378,7 +389,7 @@ class Resources(Command):  # {{{
                 src = ''.join(inspect.getsourcelines(func)[0][1:])
             except Exception:
                 continue
-            src = src.replace('def ' + func.func_name, 'def replace')
+            src = src.replace('def ' + func.__name__, 'def replace')
             imports = ['from %s import %s' % (x.__module__, x.__name__) for x in func.imports]
             if imports:
                 src = '\n'.join(imports) + '\n\n' + src
@@ -386,8 +397,8 @@ class Resources(Command):  # {{{
         json.dump(function_dict, open(dest, 'wb'), indent=4)
         self.info('\tCreating user-manual-translation-stats.json')
         d = {}
-        for lc, stats in json.load(open(self.j(self.d(self.SRC), 'manual', 'locale', 'completed.json'))).iteritems():
-            total = sum(stats.itervalues())
+        for lc, stats in json.load(open(self.j(self.d(self.SRC), 'manual', 'locale', 'completed.json'))).items():
+            total = sum(stats.values())
             d[lc] = stats['translated'] / float(total)
         json.dump(d, open(self.j(self.RESOURCES, 'user-manual-translation-stats.json'), 'wb'), indent=4)
 

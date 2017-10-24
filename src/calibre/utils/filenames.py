@@ -3,12 +3,14 @@ Make strings safe for use as ASCII filenames, while trying to preserve as much
 meaning as possible.
 '''
 
-import os, errno, time, shutil
+import errno
+import os
+import shutil
+import time
 from math import ceil
 
-from calibre import sanitize_file_name, isbytestring, force_unicode, prints
-from calibre.constants import (preferred_encoding, iswindows,
-        filesystem_encoding)
+from calibre import force_unicode, isbytestring, prints, sanitize_file_name
+from calibre.constants import filesystem_encoding, iswindows, preferred_encoding
 from calibre.utils.localization import get_udc
 
 
@@ -17,7 +19,7 @@ def ascii_text(orig):
     try:
         ascii = udc.decode(orig)
     except:
-        if isinstance(orig, unicode):
+        if isinstance(orig, str):
             orig = orig.encode('ascii', 'replace')
         ascii = orig.decode(preferred_encoding,
                 'replace').encode('ascii', 'replace')
@@ -287,7 +289,7 @@ def windows_hardlink(src, dest):
     try:
         win32file.CreateHardLink(dest, src)
     except pywintypes.error as e:
-        msg = u'Creating hardlink from %s to %s failed: %%s' % (src, dest)
+        msg = 'Creating hardlink from %s to %s failed: %%s' % (src, dest)
         raise OSError(msg % e)
     src_size = os.path.getsize(src)
     # We open and close dest, to ensure its directory entry is updated
@@ -304,7 +306,7 @@ def windows_hardlink(src, dest):
 
     sz = windows_get_size(dest)
     if sz != src_size:
-        msg = u'Creating hardlink from %s to %s failed: %%s' % (src, dest)
+        msg = 'Creating hardlink from %s to %s failed: %%s' % (src, dest)
         raise OSError(msg % ('hardlink size: %d not the same as source size' % sz))
 
 
@@ -313,11 +315,11 @@ def windows_fast_hardlink(src, dest):
     try:
         win32file.CreateHardLink(dest, src)
     except pywintypes.error as e:
-        msg = u'Creating hardlink from %s to %s failed: %%s' % (src, dest)
+        msg = 'Creating hardlink from %s to %s failed: %%s' % (src, dest)
         raise OSError(msg % e)
     ssz, dsz = windows_get_size(src), windows_get_size(dest)
     if ssz != dsz:
-        msg = u'Creating hardlink from %s to %s failed: %%s' % (src, dest)
+        msg = 'Creating hardlink from %s to %s failed: %%s' % (src, dest)
         raise OSError(msg % ('hardlink size: %d not the same as source size: %s' % (dsz, ssz)))
 
 
@@ -359,7 +361,7 @@ class WindowsAtomicFolderMove(object):
         names = os.listdir(path)
         name_to_fileid = {x:windows_get_fileid(os.path.join(path, x)) for x in names}
         fileid_to_names = defaultdict(set)
-        for name, fileid in name_to_fileid.iteritems():
+        for name, fileid in name_to_fileid.items():
             fileid_to_names[fileid].add(name)
 
         for x in names:
@@ -409,16 +411,16 @@ class WindowsAtomicFolderMove(object):
     def copy_path_to(self, path, dest):
         import win32file
         handle = None
-        for p, h in self.handle_map.iteritems():
+        for p, h in self.handle_map.items():
             if samefile_windows(path, p):
                 handle = h
                 break
         if handle is None:
             if os.path.exists(path):
-                raise ValueError(u'The file %r did not exist when this move'
+                raise ValueError('The file %r did not exist when this move'
                         ' operation was started'%path)
             else:
-                raise ValueError(u'The file %r does not exist'%path)
+                raise ValueError('The file %r does not exist'%path)
         try:
             windows_hardlink(path, dest)
             return
@@ -430,7 +432,7 @@ class WindowsAtomicFolderMove(object):
             while True:
                 hr, raw = win32file.ReadFile(handle, 1024*1024)
                 if hr != 0:
-                    raise IOError(hr, u'Error while reading from %r'%path)
+                    raise IOError(hr, 'Error while reading from %r'%path)
                 if not raw:
                     break
                 f.write(raw)
@@ -438,26 +440,26 @@ class WindowsAtomicFolderMove(object):
     def release_file(self, path):
         ' Release the lock on the file pointed to by path. Will also release the lock on any hardlinks to path '
         key = None
-        for p, h in self.handle_map.iteritems():
+        for p, h in self.handle_map.items():
             if samefile_windows(path, p):
                 key = (p, h)
                 break
         if key is not None:
             import win32file
             win32file.CloseHandle(key[1])
-            remove = [f for f, h in self.handle_map.iteritems() if h is key[1]]
+            remove = [f for f, h in self.handle_map.items() if h is key[1]]
             for x in remove:
                 self.handle_map.pop(x)
 
     def close_handles(self):
         import win32file
-        for h in self.handle_map.itervalues():
+        for h in self.handle_map.values():
             win32file.CloseHandle(h)
         self.handle_map = {}
 
     def delete_originals(self):
         import win32file
-        for path in self.handle_map.iterkeys():
+        for path in self.handle_map.keys():
             win32file.DeleteFile(path)
         self.close_handles()
 
@@ -482,7 +484,7 @@ def atomic_rename(oldpath, newpath):
     or may not exist. If it exists, it is replaced. '''
     if iswindows:
         import win32file
-        for i in xrange(10):
+        for i in range(10):
             try:
                 win32file.MoveFileEx(oldpath, newpath, win32file.MOVEFILE_REPLACE_EXISTING|win32file.MOVEFILE_WRITE_THROUGH)
                 break
@@ -531,10 +533,10 @@ if iswindows:
     def expanduser(path):
         if isinstance(path, bytes):
             path = path.decode(filesystem_encoding)
-        if path[:1] != u'~':
+        if path[:1] != '~':
             return path
         i, n = 1, len(path)
-        while i < n and path[i] not in u'/\\':
+        while i < n and path[i] not in '/\\':
             i += 1
         from win32com.shell import shell, shellcon
         userhome = shell.SHGetFolderPath(0, shellcon.CSIDL_PROFILE, None, 0)

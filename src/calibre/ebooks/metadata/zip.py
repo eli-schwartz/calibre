@@ -1,12 +1,14 @@
-from __future__ import with_statement
+import os
+
+from calibre import CurrentDir
+from calibre.ptempfile import TemporaryDirectory
+from calibre.utils.zipfile import ZipFile
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os
 
-from calibre.utils.zipfile import ZipFile
-from calibre.ptempfile import TemporaryDirectory
-from calibre import CurrentDir
 
 
 def get_metadata(stream):
@@ -47,7 +49,7 @@ def zip_opf_metadata(opfpath, zf):
     from calibre.ebooks.metadata.opf2 import OPF
     if hasattr(opfpath, 'read'):
         f = opfpath
-        opfpath = getattr(f, 'name', os.getcwdu())
+        opfpath = getattr(f, 'name', os.getcwd())
     else:
         f = open(opfpath, 'rb')
     opf = OPF(f, os.path.dirname(opfpath))
@@ -65,4 +67,3 @@ def zip_opf_metadata(opfpath, zf):
             data = zf.read(covername)
             mi.cover_data = (fmt, data)
     return mi
-

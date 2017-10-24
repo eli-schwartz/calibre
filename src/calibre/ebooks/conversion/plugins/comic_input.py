@@ -1,4 +1,13 @@
-from __future__ import with_statement
+import codecs
+import os
+import shutil
+import textwrap
+
+from calibre import CurrentDir
+from calibre.customize.conversion import InputFormatPlugin, OptionRecommendation
+from calibre.ptempfile import PersistentTemporaryDirectory
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
@@ -7,11 +16,7 @@ __docformat__ = 'restructuredtext en'
 Based on ideas from comiclrf created by FangornUK.
 '''
 
-import shutil, textwrap, codecs, os
 
-from calibre.customize.conversion import InputFormatPlugin, OptionRecommendation
-from calibre import CurrentDir
-from calibre.ptempfile import PersistentTemporaryDirectory
 
 
 class ComicInput(InputFormatPlugin):
@@ -174,7 +179,7 @@ class ComicInput(InputFormatPlugin):
         comics = []
         for i, x in enumerate(comics_):
             title, fname = x
-            cdir = u'comic_%d'%(i+1) if len(comics_) > 1 else u'.'
+            cdir = 'comic_%d'%(i+1) if len(comics_) > 1 else '.'
             cdir = os.path.abspath(cdir)
             if not os.path.exists(cdir):
                 os.makedirs(cdir)
@@ -189,7 +194,7 @@ class ComicInput(InputFormatPlugin):
 
         mi  = MetaInformation(os.path.basename(stream.name).rpartition('.')[0],
             [_('Unknown')])
-        opf = OPFCreator(os.getcwdu(), mi)
+        opf = OPFCreator(os.getcwd(), mi)
         entries = []
 
         def href(x):
@@ -204,7 +209,7 @@ class ComicInput(InputFormatPlugin):
         opf.create_manifest(entries)
         spine = []
         for comic in comics:
-            spine.extend(map(href, comic[2]))
+            spine.extend(list(map(href, comic[2])))
         self._images = []
         for comic in comics:
             self._images.extend(comic[1])
@@ -228,14 +233,14 @@ class ComicInput(InputFormatPlugin):
                                 _('Page')+' %d'%(i+1), play_order=po)
                         po += 1
         opf.set_toc(toc)
-        m, n = open(u'metadata.opf', 'wb'), open('toc.ncx', 'wb')
-        opf.render(m, n, u'toc.ncx')
-        return os.path.abspath(u'metadata.opf')
+        m, n = open('metadata.opf', 'wb'), open('toc.ncx', 'wb')
+        opf.render(m, n, 'toc.ncx')
+        return os.path.abspath('metadata.opf')
 
     def create_wrappers(self, pages):
         from calibre.ebooks.oeb.base import XHTML_NS
         wrappers = []
-        WRAPPER = textwrap.dedent(u'''\
+        WRAPPER = textwrap.dedent('''\
         <html xmlns="%s">
             <head>
                 <meta charset="utf-8"/>
@@ -256,7 +261,7 @@ class ComicInput(InputFormatPlugin):
         dir = os.path.dirname(pages[0])
         for i, page in enumerate(pages):
             wrapper = WRAPPER%(XHTML_NS, i+1, os.path.basename(page), i+1)
-            page = os.path.join(dir, u'page_%d.xhtml'%(i+1))
+            page = os.path.join(dir, 'page_%d.xhtml'%(i+1))
             with open(page, 'wb') as f:
                 f.write(wrapper.encode('utf-8'))
             wrappers.append(page)

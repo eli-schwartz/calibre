@@ -1,15 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.gui2 import error_dialog
+from calibre.gui2.actions import InterfaceAction
+from calibre.gui2.dialogs.match_books import MatchBooks
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from calibre.gui2 import error_dialog
-from calibre.gui2.actions import InterfaceAction
-from calibre.gui2.dialogs.match_books import MatchBooks
 
 
 class MatchBookAction(InterfaceAction):

@@ -1,12 +1,13 @@
-from __future__ import with_statement
+from calibre.ebooks.lrf.comic.convert_from import PROFILES, config
+from calibre.gui2.dialogs.comicconf_ui import Ui_Dialog
+from PyQt5.Qt import QDialog
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
 
 ''''''
-from PyQt5.Qt import QDialog
-from calibre.gui2.dialogs.comicconf_ui import Ui_Dialog
-from calibre.ebooks.lrf.comic.convert_from import config, PROFILES
 
 
 def set_conversion_defaults(window):
@@ -54,7 +55,7 @@ class ComicConf(QDialog, Ui_Dialog):
             self.opt_author.setText(author)
         self.opt_colors.setValue(opts.colors)
         self.opt_profile.addItem(opts.profile)
-        for x in PROFILES.keys():
+        for x in list(PROFILES.keys()):
             if x != opts.profile:
                 self.opt_profile.addItem(x)
         self.opt_dont_normalize.setChecked(opts.dont_normalize)
@@ -81,9 +82,9 @@ class ComicConf(QDialog, Ui_Dialog):
             elif hasattr(g, 'value'):
                 val = g.value()
             elif hasattr(g, 'itemText'):
-                val = unicode(g.itemText(g.currentIndex()))
+                val = str(g.itemText(g.currentIndex()))
             elif hasattr(g, 'text'):
-                val = unicode(g.text())
+                val = str(g.text())
             else:
                 raise Exception('Bad coding')
             self.config.set(opt.name, val)

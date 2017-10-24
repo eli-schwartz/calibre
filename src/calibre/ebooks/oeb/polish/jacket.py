@@ -1,17 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.customize.ui import output_profiles
+from calibre.ebooks.conversion.config import load_defaults
+from calibre.ebooks.oeb.base import OPF, XPath
+from calibre.ebooks.oeb.polish.cover import find_cover_page
+from calibre.ebooks.oeb.transforms.jacket import referenced_images, render_jacket as render
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from calibre.customize.ui import output_profiles
-from calibre.ebooks.conversion.config import load_defaults
-from calibre.ebooks.oeb.base import XPath, OPF
-from calibre.ebooks.oeb.polish.cover import find_cover_page
-from calibre.ebooks.oeb.transforms.jacket import render_jacket as render, referenced_images
 
 
 def render_jacket(container, jacket):
@@ -98,7 +96,7 @@ def add_or_replace_jacket(container):
     if not found:
         # Insert new jacket into spine
         index = 0
-        sp = container.abspath_to_name(container.spine_items.next())
+        sp = container.abspath_to_name(next(container.spine_items))
         if sp == find_cover_page(container):
             index = 1
         itemref = container.opf.makeelement(OPF('itemref'),
@@ -106,4 +104,3 @@ def add_or_replace_jacket(container):
         container.insert_into_xml(container.opf_xpath('//opf:spine')[0], itemref,
                               index=index)
     return found
-

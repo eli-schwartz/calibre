@@ -1,25 +1,24 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
-
+from collections import OrderedDict, namedtuple
 from threading import Event
-from collections import namedtuple, OrderedDict
-
-from PyQt5.Qt import QObject, pyqtSignal, Qt
 
 from calibre import prepare_string_for_xml
-from calibre.ebooks.oeb.polish.container import OEB_STYLES, OEB_FONTS, name_to_href
+from calibre.ebooks.oeb.polish.container import OEB_FONTS, OEB_STYLES, name_to_href
 from calibre.ebooks.oeb.polish.parsing import parse
 from calibre.ebooks.oeb.polish.report import description_for_anchor
 from calibre.gui2 import is_gui_thread
 from calibre.gui2.tweak_book import current_container, editors
-from calibre.gui2.tweak_book.completion.utils import control, data, DataError
+from calibre.gui2.tweak_book.completion.utils import DataError, control, data
 from calibre.utils.ipc import eintr_retry_call
 from calibre.utils.matcher import Matcher
+from PyQt5.Qt import QObject, Qt, pyqtSignal
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 Request = namedtuple('Request', 'id type data query')
 
@@ -65,10 +64,10 @@ def get_data(data_conn, data_type, data=None):
     return result
 
 
-class Name(unicode):
+class Name(str):
 
     def __new__(self, name, mime_type, spine_names):
-        ans = unicode.__new__(self, name)
+        ans = str.__new__(self, name)
         ans.mime_type = mime_type
         ans.in_spine = name in spine_names
         return ans
@@ -78,23 +77,23 @@ class Name(unicode):
 def complete_names(names_data, data_conn):
     if not names_cache:
         mime_map, spine_names = get_data(data_conn, 'names_data')
-        names_cache[None] = all_names = frozenset(Name(name, mt, spine_names) for name, mt in mime_map.iteritems())
+        names_cache[None] = all_names = frozenset(Name(name, mt, spine_names) for name, mt in mime_map.items())
         names_cache['text_link'] = frozenset(n for n in all_names if n.in_spine)
         names_cache['stylesheet'] = frozenset(n for n in all_names if n.mime_type in OEB_STYLES)
         names_cache['image'] = frozenset(n for n in all_names if n.mime_type.startswith('image/'))
         names_cache['font'] = frozenset(n for n in all_names if n.mime_type in OEB_FONTS)
         names_cache['css_resource'] = names_cache['image'] | names_cache['font']
         names_cache['descriptions'] = d = {}
-        for x, desc in {'text_link':_('Text'), 'stylesheet':_('Stylesheet'), 'image':_('Image'), 'font':_('Font')}.iteritems():
+        for x, desc in {'text_link':_('Text'), 'stylesheet':_('Stylesheet'), 'image':_('Image'), 'font':_('Font')}.items():
             for n in names_cache[x]:
                 d[n] = desc
     names_type, base, root = names_data
     quote = (lambda x:x) if base.lower().endswith('.css') else prepare_string_for_xml
     names = names_cache.get(names_type, names_cache[None])
     nmap = {name:name_to_href(name, root, base, quote) for name in names}
-    items = frozenset(nmap.itervalues())
+    items = frozenset(iter(nmap.values()))
     d = names_cache['descriptions'].get
-    descriptions = {href:d(name) for name, href in nmap.iteritems()}
+    descriptions = {href:d(name) for name, href in nmap.items()}
     return items, descriptions, {}
 
 
@@ -179,5 +178,5 @@ class HandleDataRequest(QObject):
             del self.result, self.tb
 handle_data_request = HandleDataRequest()
 
-control_funcs = {name:func for name, func in globals().iteritems() if getattr(func, 'function_type', None) == 'control'}
-data_funcs = {name:func for name, func in globals().iteritems() if getattr(func, 'function_type', None) == 'data'}
+control_funcs = {name:func for name, func in globals().items() if getattr(func, 'function_type', None) == 'control'}
+data_funcs = {name:func for name, func in globals().items() if getattr(func, 'function_type', None) == 'data'}

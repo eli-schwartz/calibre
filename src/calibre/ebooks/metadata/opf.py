@@ -1,16 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-from lxml import etree
-
+from calibre.ebooks.metadata import MetaInformation
 from calibre.ebooks.metadata.opf2 import OPF, pretty_print
 from calibre.ebooks.metadata.opf3 import apply_metadata, read_metadata
-from calibre.ebooks.metadata.utils import parse_opf, normalize_languages, create_manifest_item, parse_opf_version
-from calibre.ebooks.metadata import MetaInformation
+from calibre.ebooks.metadata.utils import (
+	create_manifest_item, normalize_languages, parse_opf, parse_opf_version
+)
+from lxml import etree
 
 
 class DummyFile(object):
@@ -61,7 +58,7 @@ def set_metadata_opf2(root, cover_prefix, mi, opf_version,
     else:
         orig = opf.get_identifiers()
         orig.update(mi.get_identifiers())
-        opf.set_identifiers({k:v for k, v in orig.iteritems() if k and v})
+        opf.set_identifiers({k:v for k, v in orig.items() if k and v})
     if update_timestamp and mi.timestamp is not None:
         opf.timestamp = mi.timestamp
     raster_cover = opf.raster_cover

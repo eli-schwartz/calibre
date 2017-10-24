@@ -1,21 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import json, traceback
-
-from PyQt5.Qt import QDialogButtonBox
+import json
+import traceback
 
 from calibre.gui2 import error_dialog, warning_dialog
 from calibre.gui2.preferences import ConfigWidgetBase, test_widget
 from calibre.gui2.preferences.template_functions_ui import Ui_Form
 from calibre.gui2.widgets import PythonHighlighter
-from calibre.utils.formatter_functions import (formatter_functions,
-                        compile_user_function, compile_user_template_functions,
-                        load_user_template_functions)
+from calibre.utils.formatter_functions import (
+	compile_user_function, compile_user_template_functions,
+	formatter_functions, load_user_template_functions
+)
+from PyQt5.Qt import QDialogButtonBox
 
 
 class ConfigWidget(ConfigWidgetBase, Ui_Form):
@@ -133,7 +133,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
                     self.delete_button.setEnabled(True)
 
     def delete_button_clicked(self):
-        name = unicode(self.function_name.currentText())
+        name = str(self.function_name.currentText())
         if name in self.builtins:
             error_dialog(self.gui, _('Template functions'),
                          _('You cannot delete a built-in function'), show=True)
@@ -150,7 +150,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
 
     def create_button_clicked(self):
         self.changed_signal.emit()
-        name = unicode(self.function_name.currentText())
+        name = str(self.function_name.currentText())
         if name in self.funcs:
             error_dialog(self.gui, _('Template functions'),
                          _('Name %s already used')%(name,), show=True)
@@ -166,8 +166,8 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
             if not box.exec_():
                 return
         try:
-            prog = unicode(self.program.toPlainText())
-            cls = compile_user_function(name, unicode(self.documentation.toPlainText()),
+            prog = str(self.program.toPlainText())
+            cls = compile_user_function(name, str(self.documentation.toPlainText()),
                                         self.argument_count.value(), prog)
             self.funcs[name] = cls
             self.build_function_names_box(scroll_to=name)
@@ -184,7 +184,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         self.program.setReadOnly(False)
 
     def function_index_changed(self, txt):
-        txt = unicode(txt)
+        txt = str(txt)
         self.create_button.setEnabled(False)
         if not txt:
             self.argument_count.clear()
@@ -222,7 +222,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
     def commit(self):
         # formatter_functions().reset_to_builtins()
         pref_value = []
-        for name, cls in self.funcs.iteritems():
+        for name, cls in self.funcs.items():
             if name not in self.builtins:
                 pref_value.append((cls.name, cls.doc, cls.arg_count, cls.program_text))
         self.db.new_api.set_pref('user_template_functions', pref_value)

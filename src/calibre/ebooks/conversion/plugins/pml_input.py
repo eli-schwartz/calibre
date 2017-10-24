@@ -69,12 +69,12 @@ class PMLInput(InputFormatPlugin):
                 imgs = glob.glob(os.path.join(tdir, os.path.splitext(os.path.basename(stream.name))[0] + '_img', '*.png'))
         # No images in Dropbook location try generic images directory
         if not imgs:
-            imgs = glob.glob(os.path.join(os.path.join(tdir, u'images'), u'*.png'))
+            imgs = glob.glob(os.path.join(os.path.join(tdir, 'images'), '*.png'))
         if imgs:
-            os.makedirs(os.path.join(os.getcwdu(), u'images'))
+            os.makedirs(os.path.join(os.getcwd(), 'images'))
         for img in imgs:
             pimg_name = os.path.basename(img)
-            pimg_path = os.path.join(os.getcwdu(), 'images', pimg_name)
+            pimg_path = os.path.join(os.getcwd(), 'images', pimg_name)
 
             images.append('images/' + pimg_name)
 
@@ -95,14 +95,14 @@ class PMLInput(InputFormatPlugin):
 
         if file_ext == 'pmlz':
             log.debug('De-compressing content to temporary directory...')
-            with TemporaryDirectory(u'_unpmlz') as tdir:
+            with TemporaryDirectory('_unpmlz') as tdir:
                 zf = ZipFile(stream)
                 zf.extractall(tdir)
 
-                pmls = glob.glob(os.path.join(tdir, u'*.pml'))
+                pmls = glob.glob(os.path.join(tdir, '*.pml'))
                 for pml in pmls:
                     html_name = os.path.splitext(os.path.basename(pml))[0]+'.html'
-                    html_path = os.path.join(os.getcwdu(), html_name)
+                    html_path = os.path.join(os.getcwd(), html_name)
 
                     pages.append(html_name)
                     log.debug('Processing PML item %s...' % pml)
@@ -110,8 +110,8 @@ class PMLInput(InputFormatPlugin):
                     toc += ttoc
                 images = self.get_images(stream, tdir, True)
         else:
-            toc = self.process_pml(stream, u'index.html')
-            pages.append(u'index.html')
+            toc = self.process_pml(stream, 'index.html')
+            pages.append('index.html')
 
             if hasattr(stream, 'name'):
                 images = self.get_images(stream, os.path.abspath(os.path.dirname(stream.name)))
@@ -127,14 +127,14 @@ class PMLInput(InputFormatPlugin):
         log.debug('Reading metadata from input file...')
         mi = get_metadata(stream, 'pml')
         if 'images/cover.png' in images:
-            mi.cover = u'images/cover.png'
-        opf = OPFCreator(os.getcwdu(), mi)
+            mi.cover = 'images/cover.png'
+        opf = OPFCreator(os.getcwd(), mi)
         log.debug('Generating manifest...')
         opf.create_manifest(manifest_items)
         opf.create_spine(pages)
         opf.set_toc(toc)
-        with open(u'metadata.opf', 'wb') as opffile:
-            with open(u'toc.ncx', 'wb') as tocfile:
-                opf.render(opffile, tocfile, u'toc.ncx')
+        with open('metadata.opf', 'wb') as opffile:
+            with open('toc.ncx', 'wb') as tocfile:
+                opf.render(opffile, tocfile, 'toc.ncx')
 
-        return os.path.join(os.getcwdu(), u'metadata.opf')
+        return os.path.join(os.getcwd(), 'metadata.opf')

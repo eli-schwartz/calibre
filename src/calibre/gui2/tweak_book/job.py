@@ -1,19 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import time
+from functools import partial
+from threading import Thread
+
+from calibre.gui2 import Dispatcher
+from calibre.gui2.progress_indicator import ProgressIndicator
+from PyQt5.Qt import (
+	QApplication, QBrush, QCursor, QLabel, QPainter, QRect, Qt, QVBoxLayout, QWidget
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import time
-from threading import Thread
-from functools import partial
 
-from PyQt5.Qt import (QWidget, QVBoxLayout, QLabel, Qt, QPainter, QBrush, QRect, QApplication, QCursor)
 
-from calibre.gui2 import Dispatcher
-from calibre.gui2.progress_indicator import ProgressIndicator
 
 
 class LongJob(Thread):

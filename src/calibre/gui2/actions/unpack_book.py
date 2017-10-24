@@ -1,22 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, weakref, shutil
-
-from PyQt5.Qt import (QDialog, QVBoxLayout, QHBoxLayout, QRadioButton, QFrame,
-        QPushButton, QLabel, QGroupBox, QGridLayout, QIcon, QSize, QTimer)
+import os
+import shutil
+import weakref
 
 from calibre import as_unicode
 from calibre.constants import isosx
-from calibre.gui2 import error_dialog, question_dialog, open_local_file, gprefs
+from calibre.gui2 import error_dialog, gprefs, open_local_file, question_dialog
 from calibre.gui2.actions import InterfaceAction
-from calibre.ptempfile import (PersistentTemporaryDirectory,
-        PersistentTemporaryFile)
+from calibre.ptempfile import PersistentTemporaryDirectory, PersistentTemporaryFile
 from calibre.utils.config import prefs, tweaks
+from PyQt5.Qt import (
+	QDialog, QFrame, QGridLayout, QGroupBox, QHBoxLayout, QIcon,
+	QLabel, QPushButton, QRadioButton, QSize, QTimer, QVBoxLayout
+)
 
 
 class UnpackBook(QDialog):
@@ -34,7 +35,7 @@ class UnpackBook(QDialog):
             index_is_id=True))
 
         button = self.fmt_choice_buttons[0]
-        button_map = {unicode(x.text()):x for x in self.fmt_choice_buttons}
+        button_map = {str(x.text()):x for x in self.fmt_choice_buttons}
         of = prefs['output_format'].upper()
         df = tweaks.get('default_tweak_format', None)
         lf = gprefs.get('last_tweak_format', None)
@@ -281,7 +282,7 @@ class UnpackBook(QDialog):
     def current_format(self):
         for b in self.fmt_choice_buttons:
             if b.isChecked():
-                return unicode(b.text())
+                return str(b.text())
 
 
 class UnpackBookAction(InterfaceAction):

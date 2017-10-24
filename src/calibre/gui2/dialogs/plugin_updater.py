@@ -1,29 +1,33 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import datetime
+import re
+import traceback
+
+from calibre import browser, prints
+from calibre.constants import (
+	DEBUG, __appname__, __version__, isosx, iswindows, numeric_version
+)
+from calibre.customize.ui import (
+	NameConflict, add_plugin, disable_plugin, enable_plugin,
+	has_external_plugins, initialized_plugins, is_disabled, remove_plugin
+)
+from calibre.gui2 import error_dialog, gprefs, info_dialog, open_url, question_dialog
+from calibre.gui2.preferences.plugins import ConfigWidget
+from calibre.utils.date import UNDEFINED_DATE, format_date
+from calibre.utils.https import get_https_resource_securely
+from lxml import html
+from PyQt5.Qt import (
+	QAbstractItemView, QAbstractTableModel, QAction, QBrush, QComboBox, QDialog,
+	QDialogButtonBox, QFont, QFrame, QHBoxLayout, QIcon, QLabel, QLineEdit, QModelIndex,
+	QPixmap, QSize, QSortFilterProxyModel, Qt, QTableView, QTextEdit, QUrl, QVBoxLayout
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Grant Drake <grant.drake@gmail.com>'
 __docformat__ = 'restructuredtext en'
 
-import re, datetime, traceback
-from lxml import html
-from PyQt5.Qt import (Qt, QUrl, QFrame, QVBoxLayout, QLabel, QBrush, QTextEdit,
-                      QComboBox, QAbstractItemView, QHBoxLayout, QDialogButtonBox,
-                      QAbstractTableModel, QTableView, QModelIndex,
-                      QSortFilterProxyModel, QAction, QIcon, QDialog,
-                      QFont, QPixmap, QSize, QLineEdit)
 
-from calibre import browser, prints
-from calibre.constants import numeric_version, iswindows, isosx, DEBUG, __appname__, __version__
-from calibre.customize.ui import (
-    initialized_plugins, is_disabled, remove_plugin, add_plugin, enable_plugin, disable_plugin,
-    NameConflict, has_external_plugins)
-from calibre.gui2 import error_dialog, question_dialog, info_dialog, open_url, gprefs
-from calibre.gui2.preferences.plugins import ConfigWidget
-from calibre.utils.date import UNDEFINED_DATE, format_date
-from calibre.utils.https import get_https_resource_securely
 
 SERVER = 'https://code.calibre-ebook.com/plugins/'
 INDEX_URL = '%splugins.json.bz2' % SERVER
@@ -44,7 +48,7 @@ def get_plugin_updates_available(raise_error=False):
         return None
     display_plugins = read_available_plugins(raise_error=raise_error)
     if display_plugins:
-        update_plugins = filter(filter_upgradeable_plugins, display_plugins)
+        update_plugins = list(filter(filter_upgradeable_plugins, display_plugins))
         if len(update_plugins) > 0:
             return update_plugins
     return None
@@ -71,7 +75,7 @@ def read_available_plugins(raise_error=False):
             raise
         traceback.print_exc()
         return
-    for plugin in raw.itervalues():
+    for plugin in raw.values():
         try:
             display_plugin = DisplayPlugin(plugin)
             get_installed_plugin_status(display_plugin)
@@ -267,7 +271,7 @@ class DisplayPluginSortFilterModel(QSortFilterProxyModel):
         self.invalidateFilter()
 
     def set_filter_text(self, filter_text_value):
-        self.filter_text = icu_lower(unicode(filter_text_value))
+        self.filter_text = icu_lower(str(filter_text_value))
         self.invalidateFilter()
 
 
@@ -276,8 +280,8 @@ class DisplayPluginModel(QAbstractTableModel):
     def __init__(self, display_plugins):
         QAbstractTableModel.__init__(self)
         self.display_plugins = display_plugins
-        self.headers = map(unicode, [_('Plugin name'), _('Donate'), _('Status'), _('Installed'),
-                                      _('Available'), _('Released'), _('calibre'), _('Author')])
+        self.headers = list(map(str, [_('Plugin name'), _('Donate'), _('Status'), _('Installed'),
+                                      _('Available'), _('Released'), _('calibre'), _('Author')]))
 
     def rowCount(self, *args):
         return len(self.display_plugins)
@@ -588,7 +592,7 @@ class PluginUpdaterDialog(SizePersistedDialog):
 
     def _finished(self, *args):
         if self.model:
-            update_plugins = filter(filter_upgradeable_plugins, self.model.display_plugins)
+            update_plugins = list(filter(filter_upgradeable_plugins, self.model.display_plugins))
             self.gui.recalc_update_label(len(update_plugins))
 
     def _plugin_current_changed(self, current, previous):
@@ -726,7 +730,7 @@ class PluginUpdaterDialog(SizePersistedDialog):
                 plugin = add_plugin(zip_path)
             except NameConflict as e:
                 return error_dialog(self.gui, _('Already exists'),
-                        unicode(e), show=True)
+                        str(e), show=True)
             # Check for any toolbars to add to.
             widget = ConfigWidget(self.gui)
             widget.gui = self.gui
@@ -841,7 +845,7 @@ class PluginUpdaterDialog(SizePersistedDialog):
                     continue
                 if heading_node.text_content().lower().find('version history') != -1:
                     div_node = spoiler_node.xpath('div')[0]
-                    text = html.tostring(div_node, method='html', encoding=unicode)
+                    text = html.tostring(div_node, method='html', encoding=str)
                     return re.sub('<div\s.*?>', '<div>', text)
             except:
                 if DEBUG:

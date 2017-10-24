@@ -1,17 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import os, ctypes, errno, socket
+import ctypes
+import errno
+import os
+import socket
 from io import DEFAULT_BUFFER_SIZE
 from select import select
 
 from calibre.constants import islinux, isosx
 from calibre.srv.utils import eintr_retry_call
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
 
 
 def file_metadata(fileobj):

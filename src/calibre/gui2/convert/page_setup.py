@@ -1,16 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+from calibre.customize.ui import input_profiles, output_profiles
+from calibre.gui2.convert import Widget
+from calibre.gui2.convert.page_setup_ui import Ui_Form
+from PyQt5.Qt import QAbstractListModel, QModelIndex, Qt
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import Qt, QAbstractListModel, QModelIndex
 
-from calibre.gui2.convert.page_setup_ui import Ui_Form
-from calibre.gui2.convert import Widget
-from calibre.customize.ui import input_profiles, output_profiles
 
 
 class ProfileModel(QAbstractListModel):
@@ -62,13 +61,13 @@ class PageSetupWidget(Widget, Ui_Form):
             x.setMouseTracking(True)
             x.entered[(QModelIndex)].connect(self.show_desc)
         self.initialize_options(get_option, get_help, db, book_id)
-        it = unicode(self.opt_input_profile.toolTip())
+        it = str(self.opt_input_profile.toolTip())
         self.opt_input_profile.setToolTip('<p>'+it.replace('t.','t.\n<br>'))
-        it = unicode(self.opt_output_profile.toolTip())
+        it = str(self.opt_output_profile.toolTip())
         self.opt_output_profile.setToolTip('<p>'+it.replace('t.','ce.\n<br>'))
 
     def show_desc(self, index):
-        desc = unicode(index.model().data(index, Qt.StatusTipRole) or '')
+        desc = str(index.model().data(index, Qt.StatusTipRole) or '')
         self.profile_description.setText(desc)
 
     def connect_gui_obj_handler(self, g, slot):

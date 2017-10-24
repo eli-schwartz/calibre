@@ -1,20 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from functools import partial
+from struct import unpack_from
+
+from calibre.utils.fonts.sfnt import FixedProperty, UnknownTable
+from calibre.utils.fonts.sfnt.common import (
+	ExtensionSubstitution, FeatureListTable, LookupTable,
+	ScriptListTable, SimpleListTable, UnknownLookupSubTable
+)
+from calibre.utils.fonts.sfnt.errors import UnsupportedFont
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from struct import unpack_from
-from functools import partial
 
-from calibre.utils.fonts.sfnt import UnknownTable, FixedProperty
-from calibre.utils.fonts.sfnt.errors import UnsupportedFont
-from calibre.utils.fonts.sfnt.common import (ScriptListTable, FeatureListTable,
-        SimpleListTable, LookupTable, ExtensionSubstitution,
-        UnknownLookupSubTable)
 
 
 class SingleSubstitution(UnknownLookupSubTable):
@@ -32,7 +32,7 @@ class SingleSubstitution(UnknownLookupSubTable):
         gid_index_map = self.coverage.coverage_indices(glyph_ids)
         if self.format == 1:
             return {gid + self.delta for gid in gid_index_map}
-        return {self.substitutes[i] for i in gid_index_map.itervalues()}
+        return {self.substitutes[i] for i in gid_index_map.values()}
 
 
 class MultipleSubstitution(UnknownLookupSubTable):
@@ -45,7 +45,7 @@ class MultipleSubstitution(UnknownLookupSubTable):
     def all_substitutions(self, glyph_ids):
         gid_index_map = self.coverage.coverage_indices(glyph_ids)
         ans = set()
-        for index in gid_index_map.itervalues():
+        for index in gid_index_map.values():
             glyphs = set(self.coverage_to_subs_map[index])
             ans |= glyphs
         return ans
@@ -70,7 +70,7 @@ class LigatureSubstitution(UnknownLookupSubTable):
     def all_substitutions(self, glyph_ids):
         gid_index_map = self.coverage.coverage_indices(glyph_ids)
         ans = set()
-        for start_glyph_id, index in gid_index_map.iteritems():
+        for start_glyph_id, index in gid_index_map.items():
             for glyph_id, components in self.coverage_to_lig_map[index]:
                 components = (start_glyph_id,) + components
                 if set(components).issubset(glyph_ids):
@@ -129,7 +129,7 @@ class ReverseChainSingleSubstitution(UnknownLookupSubTable):
 
     def all_substitutions(self, glyph_ids):
         gid_index_map = self.coverage.coverage_indices(glyph_ids)
-        return {self.substitutes[i] for i in gid_index_map.itervalues()}
+        return {self.substitutes[i] for i in gid_index_map.values()}
 
 subtable_map = {
         1: SingleSubstitution,

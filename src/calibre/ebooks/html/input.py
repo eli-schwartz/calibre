@@ -1,6 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import errno as gerrno
+import os
+import re
+import sys
+from urllib.parse import urlparse, urlunparse
+
+from calibre import as_unicode, replace_entities, unicode_path
+from calibre.constants import iswindows
+from calibre.ebooks.chardet import detect_xml_encoding
+from calibre.ebooks.oeb.base import urlunquote
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
@@ -11,13 +20,7 @@ __docformat__ = 'restructuredtext en'
 Input plugin for HTML or OPF ebooks.
 '''
 
-import os, re, sys,  errno as gerrno
-from urlparse import urlparse, urlunparse
 
-from calibre.ebooks.oeb.base import urlunquote
-from calibre.ebooks.chardet import detect_xml_encoding
-from calibre.constants import iswindows
-from calibre import unicode_path, as_unicode, replace_entities
 
 
 class Link(object):
@@ -45,7 +48,7 @@ class Link(object):
         :param base: The base directory that relative URLs are with respect to.
                      Must be a unicode string.
         '''
-        assert isinstance(url, unicode) and isinstance(base, unicode)
+        assert isinstance(url, str) and isinstance(base, str)
         self.url         = url
         self.parsed_url  = urlparse(self.url)
         self.is_local    = self.parsed_url.scheme in ('', 'file')
@@ -64,7 +67,7 @@ class Link(object):
         return self.path == getattr(other, 'path', other)
 
     def __str__(self):
-        return u'Link: %s --> %s'%(self.url, self.path)
+        return 'Link: %s --> %s'%(self.url, self.path)
 
 
 class IgnoreFile(Exception):
@@ -144,7 +147,7 @@ class HTMLFile(object):
         return self.path == getattr(other, 'path', other)
 
     def __str__(self):
-        return u'HTMLFile:%d:%s:%s'%(self.level, 'b' if self.is_binary else 'a', self.path)
+        return 'HTMLFile:%d:%s:%s'%(self.level, 'b' if self.is_binary else 'a', self.path)
 
     def __repr__(self):
         return str(self)
@@ -188,7 +191,7 @@ def depth_first(root, flat, visited=set([])):
                         visited.add(hf)
 
 
-def traverse(path_to_html_file, max_levels=sys.maxint, verbose=0, encoding=None):
+def traverse(path_to_html_file, max_levels=sys.maxsize, verbose=0, encoding=None):
     '''
     Recursively traverse all links in the HTML file.
 
@@ -220,7 +223,7 @@ def traverse(path_to_html_file, max_levels=sys.maxint, verbose=0, encoding=None)
                 except IgnoreFile as err:
                     rejects.append(link)
                     if not err.doesnt_exist or verbose > 1:
-                        print repr(err)
+                        print(repr(err))
             for link in rejects:
                 hf.links.remove(link)
 
@@ -247,6 +250,3 @@ def get_filelist(htmlfile, dir, opts, log):
         for f in filelist:
             log.debug('\t\t', f)
     return filelist
-
-
-

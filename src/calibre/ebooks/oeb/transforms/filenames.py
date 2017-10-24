@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -6,11 +5,10 @@ __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
 import posixpath
-from urlparse import urldefrag, urlparse
-
-from lxml import etree
+from urllib.parse import urldefrag, urlparse
 
 from calibre.ebooks.oeb.base import rewrite_links, urlnormalize
+from lxml import etree
 
 
 class RenameFiles(object):  # {{{
@@ -38,7 +36,7 @@ class RenameFiles(object):  # {{{
                 cssutils.replaceUrls(item.data, self.url_replacer)
 
         if self.oeb.guide:
-            for ref in self.oeb.guide.values():
+            for ref in list(self.oeb.guide.values()):
                 href = urlnormalize(ref.href)
                 href, frag = urldefrag(href)
                 replacement = self.rename_map.get(href, None)
@@ -184,4 +182,3 @@ class FlatFilenames(object):  # {{{
             renamer = RenameFiles(self.rename_map, self.renamed_items_map)
             renamer(oeb, opts)
 # }}}
-

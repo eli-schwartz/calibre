@@ -1,24 +1,25 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-import httplib, os, weakref, socket
+import http.client
+import os
+import socket
+import weakref
 from base64 import standard_b64encode
 from collections import deque
 from hashlib import sha1
-from Queue import Queue, Empty
-from struct import unpack_from, pack, error as struct_error
+from queue import Empty, Queue
+from struct import error as struct_error, pack, unpack_from
 from threading import Lock
 
 from calibre import as_unicode
 from calibre.constants import plugins
-from calibre.srv.loop import ServerLoop, HandleInterrupt, WRITE, READ, RDWR, Connection
 from calibre.srv.http_response import HTTPConnection, create_http_handler
+from calibre.srv.loop import RDWR, READ, WRITE, Connection, HandleInterrupt, ServerLoop
 from calibre.srv.utils import DESIRED_SEND_BUFFER_SIZE
 from calibre.utils.speedups import ReadOnlyFileBuffer
+
+
 speedup, err = plugins['speedup']
 if not speedup:
     raise RuntimeError('Failed to load speedup module with error: ' + err)
@@ -285,9 +286,9 @@ class WebSocketConnection(HTTPConnection):
         except Exception:
             ver_ok = False
         if not ver_ok:
-            return self.simple_response(httplib.BAD_REQUEST, 'Unsupported WebSocket protocol version: %s' % ver)
+            return self.simple_response(http.client.BAD_REQUEST, 'Unsupported WebSocket protocol version: %s' % ver)
         if self.method != 'GET':
-            return self.simple_response(httplib.BAD_REQUEST, 'Invalid WebSocket method: %s' % self.method)
+            return self.simple_response(http.client.BAD_REQUEST, 'Invalid WebSocket method: %s' % self.method)
 
         response = HANDSHAKE_STR % standard_b64encode(sha1(key + GUID_STR).digest())
         self.optimize_for_sending_packet()

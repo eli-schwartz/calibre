@@ -1,27 +1,32 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import pickle
+import os
+import subprocess
+import sys
+from threading import Thread
+
+from calibre import sanitize_file_name2
+from calibre.ebooks.conversion.plugins.pdf_output import PAPER_SIZES
+from calibre.gui2 import (
+	Application, choose_save_file, dynamic, elided_text, error_dialog, open_local_file
+)
+from calibre.gui2.viewer.main import vprefs
+from calibre.gui2.widgets2 import Dialog
+from calibre.ptempfile import PersistentTemporaryFile
+from calibre.utils.filenames import expanduser
+from calibre.utils.icu import numeric_sort_key
+from calibre.utils.ipc.simple_worker import start_pipe_worker
+from PyQt5.Qt import (
+	QCheckBox, QComboBox, QDoubleSpinBox, QFormLayout, QHBoxLayout, QIcon,
+	QLabel, QLineEdit, QPageSize, QPrinter, QProgressDialog, QTimer, QToolButton
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, subprocess, cPickle, sys
-from threading import Thread
 
-from PyQt5.Qt import (
-    QFormLayout, QLineEdit, QToolButton, QHBoxLayout, QLabel, QIcon, QPrinter,
-    QPageSize, QComboBox, QDoubleSpinBox, QCheckBox, QProgressDialog, QTimer)
 
-from calibre import sanitize_file_name2
-from calibre.ptempfile import PersistentTemporaryFile
-from calibre.ebooks.conversion.plugins.pdf_output import PAPER_SIZES
-from calibre.gui2 import elided_text, error_dialog, choose_save_file, Application, open_local_file, dynamic
-from calibre.gui2.widgets2 import Dialog
-from calibre.gui2.viewer.main import vprefs
-from calibre.utils.icu import numeric_sort_key
-from calibre.utils.ipc.simple_worker import start_pipe_worker
-from calibre.utils.filenames import expanduser
 
 
 class PrintDialog(Dialog):
@@ -143,7 +148,7 @@ class DoPrint(Thread):
         try:
             with PersistentTemporaryFile('print-to-pdf-log.txt') as f:
                 p = self.worker = start_pipe_worker('from calibre.gui2.viewer.printing import do_print; do_print()', stdout=f, stderr=subprocess.STDOUT)
-                p.stdin.write(cPickle.dumps(self.data, -1)), p.stdin.flush(), p.stdin.close()
+                p.stdin.write(pickle.dumps(self.data, -1)), p.stdin.flush(), p.stdin.close()
                 rc = p.wait()
                 if rc != 0:
                     f.seek(0)
@@ -158,7 +163,7 @@ class DoPrint(Thread):
 
 
 def do_print():
-    data = cPickle.loads(sys.stdin.read())
+    data = pickle.loads(sys.stdin.read())
     args = ['ebook-convert', data['input'], data['output'], '--paper-size', data['paper_size'], '--pdf-add-toc',
             '--disable-remove-fake-margins', '--disable-font-rescaling', '--page-breaks-before', '/', '--chapter-mark', 'none', '-vv']
     if data['page_numbers']:

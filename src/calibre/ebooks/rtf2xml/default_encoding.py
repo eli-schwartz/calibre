@@ -182,4 +182,4 @@ if __name__ == '__main__':
             bug_handler=Exception,
             check_raw=True,
             )
-    print encode_obj.get_codepage()
+    print(encode_obj.get_codepage())

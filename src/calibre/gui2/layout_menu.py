@@ -1,12 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from PyQt5.Qt import (
-    QFontMetrics, QHBoxLayout, QIcon, QMenu, QPainter, QPushButton, QSize,
-    QSizePolicy, Qt, QWidget, QStyleOption, QStyle)
+	QFontMetrics, QHBoxLayout, QIcon, QMenu, QPainter, QPushButton,
+	QSize, QSizePolicy, QStyle, QStyleOption, Qt, QWidget
+)
 
 
 ICON_SZ = 64

@@ -1,38 +1,41 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import shutil, os, weakref, traceback, tempfile, time
-from threading import Thread
+import os
+import shutil
+import tempfile
+import time
+import traceback
+import weakref
 from collections import OrderedDict
-from Queue import Empty
 from io import BytesIO
-from future_builtins import map
+from queue import Empty
+from threading import Thread
 
-from PyQt5.Qt import QObject, Qt, pyqtSignal
-
-from calibre import prints, as_unicode
-from calibre.constants import DEBUG, iswindows, isosx, filesystem_encoding
-from calibre.customize.ui import run_plugins_on_postimport, run_plugins_on_postadd
-from calibre.db.adding import find_books_in_directory, compile_rule
+from calibre import as_unicode, prints
+from calibre.constants import DEBUG, filesystem_encoding, isosx, iswindows
+from calibre.customize.ui import run_plugins_on_postadd, run_plugins_on_postimport
+from calibre.db.adding import compile_rule, find_books_in_directory
 from calibre.db.utils import find_identical_books
 from calibre.ebooks.metadata.book.base import Metadata
 from calibre.ebooks.metadata.opf2 import OPF
-from calibre.gui2 import error_dialog, warning_dialog, gprefs
+from calibre.gui2 import error_dialog, gprefs, warning_dialog
 from calibre.gui2.dialogs.duplicates import DuplicatesQuestion
 from calibre.gui2.dialogs.progress import ProgressDialog
 from calibre.ptempfile import PersistentTemporaryDirectory
 from calibre.utils import join_with_timeout
 from calibre.utils.config import prefs
-from calibre.utils.ipc.pool import Pool, Failure
+from calibre.utils.ipc.pool import Failure, Pool
+from PyQt5.Qt import QObject, Qt, pyqtSignal
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 
 def validate_source(source, parent=None):  # {{{
-    if isinstance(source, basestring):
+    if isinstance(source, str):
         if not os.path.exists(source):
             error_dialog(parent, _('Cannot add books'), _(
                 'The path %s does not exist') % source, show=True)
@@ -138,7 +141,7 @@ class Adder(QObject):
                         self.file_groups[len(self.file_groups)] = files
         else:
             def find_files(root):
-                if isinstance(root, type(u'')):
+                if isinstance(root, type('')):
                     root = root.encode(filesystem_encoding)
                 for dirpath, dirnames, filenames in os.walk(root):
                     try:
@@ -168,7 +171,7 @@ class Adder(QObject):
             return tdir
 
         try:
-            if isinstance(self.source, basestring):
+            if isinstance(self.source, str):
                 find_files(self.source)
                 self.ignore_opf = True
             else:
@@ -266,7 +269,7 @@ class Adder(QObject):
             except Failure as err:
                 error_dialog(self.pd, _('Cannot add books'), _(
                 'Failed to add some books, click "Show details" for more information.'),
-                det_msg=unicode(err.failure_message) + '\n' + unicode(err.details), show=True)
+                det_msg=str(err.failure_message) + '\n' + str(err.details), show=True)
                 self.pd.canceled = True
             else:
                 # All tasks completed
@@ -421,7 +424,7 @@ class Adder(QObject):
     def add_formats(self, book_id, paths, mi, replace=True, is_an_add=False):
         fmap = {p.rpartition(os.path.extsep)[-1].lower():p for p in paths}
         fmt_map = {}
-        for fmt, path in fmap.iteritems():
+        for fmt, path in fmap.items():
             # The onimport plugins have already been run by the read metadata
             # worker
             if self.ignore_opf and fmt.lower() == 'opf':

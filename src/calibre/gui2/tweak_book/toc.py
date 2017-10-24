@@ -1,21 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.constants import plugins
+from calibre.ebooks.oeb.polish.toc import commit_toc, get_toc
+from calibre.gui2 import error_dialog
+from calibre.gui2.toc.main import ItemEdit, TOCView
+from calibre.gui2.tweak_book import TOP, actions, current_container, tprefs
+from PyQt5.Qt import (
+	QAction, QApplication, QDialog, QDialogButtonBox, QGridLayout, QIcon,
+	QMenu, QSize, QStackedWidget, QStyledItemDelegate, Qt, QTimer,
+	QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from PyQt5.Qt import (
-    QDialog, pyqtSignal, QIcon, QVBoxLayout, QDialogButtonBox, QStackedWidget,
-    QAction, QMenu, QTreeWidget, QTreeWidgetItem, QGridLayout, QWidget, Qt,
-    QSize, QStyledItemDelegate, QApplication, QTimer)
 
-from calibre.constants import plugins
-from calibre.ebooks.oeb.polish.toc import commit_toc, get_toc
-from calibre.gui2 import error_dialog
-from calibre.gui2.toc.main import TOCView, ItemEdit
-from calibre.gui2.tweak_book import current_container, TOP, actions, tprefs
 
 
 class TOCEditor(QDialog):
@@ -183,7 +182,7 @@ class TOCViewer(QWidget):
     def iteritems(self, parent=None):
         if parent is None:
             parent = self.invisibleRootItem()
-        for i in xrange(parent.childCount()):
+        for i in range(parent.childCount()):
             child = parent.child(i)
             yield child
             for gc in self.iteritems(parent=child):
@@ -192,8 +191,8 @@ class TOCViewer(QWidget):
     def emit_navigate(self, *args):
         item = self.view.currentItem()
         if item is not None:
-            dest = unicode(item.data(0, DEST_ROLE) or '')
-            frag = unicode(item.data(0, FRAG_ROLE) or '')
+            dest = str(item.data(0, DEST_ROLE) or '')
+            frag = str(item.data(0, FRAG_ROLE) or '')
             if not frag:
                 frag = TOP
             self.navigate_requested.emit(dest, frag)

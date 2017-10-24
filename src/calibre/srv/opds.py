@@ -1,34 +1,32 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import hashlib, binascii
-from functools import partial
+import binascii
+import hashlib
 from collections import OrderedDict, namedtuple
-from urllib import urlencode
+from functools import partial
+from urllib.parse import urlencode
 
+from calibre import guess_type, prepare_string_for_xml as xml
+from calibre.constants import __appname__
+from calibre.db.view import sanitize_sort_field_name
+from calibre.ebooks.metadata import authors_to_string, fmt_sidx, rating_to_stars
+from calibre.library.comments import comments_to_html
+from calibre.srv.errors import HTTPInternalServerError, HTTPNotFound
+from calibre.srv.routes import endpoint
+from calibre.srv.utils import Offsets, get_library_data, http_date
+from calibre.utils.date import as_utc, is_date_undefined, timestampfromdt
+from calibre.utils.icu import sort_key
+from calibre.utils.search_query_parser import ParseException
 from lxml import etree, html
 from lxml.builder import ElementMaker
 
-from calibre.constants import __appname__
-from calibre.db.view import sanitize_sort_field_name
-from calibre.ebooks.metadata import fmt_sidx, authors_to_string, rating_to_stars
-from calibre.library.comments import comments_to_html
-from calibre import guess_type, prepare_string_for_xml as xml
-from calibre.utils.icu import sort_key
-from calibre.utils.date import as_utc, timestampfromdt, is_date_undefined
-from calibre.utils.search_query_parser import ParseException
-
-from calibre.srv.errors import HTTPNotFound, HTTPInternalServerError
-from calibre.srv.routes import endpoint
-from calibre.srv.utils import get_library_data, http_date, Offsets
-
 
 def hexlify(x):
-    if isinstance(x, unicode):
+    if isinstance(x, str):
         x = x.encode('utf-8')
     return binascii.hexlify(x)
 
@@ -121,7 +119,7 @@ PREVIOUS_LINK  = partial(NAVLINK, rel='previous')
 
 
 def html_to_lxml(raw):
-    raw = u'<div>%s</div>'%raw
+    raw = '<div>%s</div>'%raw
     root = html.fragment_fromstring(raw)
     root.set('xmlns', "http://www.w3.org/1999/xhtml")
     raw = etree.tostring(root, encoding=None)
@@ -208,9 +206,9 @@ def ACQUISITION_ENTRY(book_id, updated, request_context):
                                     joinval=fm['is_multiple']['list_to_ui']))))
             elif datatype == 'comments' or (fm['datatype'] == 'composite' and
                             fm['display'].get('contains_html', False)):
-                extra.append('%s: %s<br />'%(xml(name), comments_to_html(unicode(val))))
+                extra.append('%s: %s<br />'%(xml(name), comments_to_html(str(val))))
             else:
-                extra.append('%s: %s<br />'%(xml(name), xml(unicode(val))))
+                extra.append('%s: %s<br />'%(xml(name), xml(str(val))))
     if mi.comments:
         comments = comments_to_html(mi.comments)
         extra.append(comments)
@@ -298,7 +296,7 @@ class TopLevel(Feed):  # {{{
             categories]
         for x in subcatalogs:
             self.root.append(x)
-        for library_id, library_name in request_context.library_map.iteritems():
+        for library_id, library_name in request_context.library_map.items():
             id_ = 'calibre-library:' + library_id
             self.root.append(E.entry(
                 TITLE(_('Library:') + ' ' + library_name),
@@ -456,7 +454,7 @@ def get_navcatalog(request_context, which, page_url, up_url, offset=0):
         for x in sorted(starts, key=sort_key):
             category_groups[x] = len([y for y in items if
                 getattr(y, 'sort', y.name).upper().startswith(x)])
-        items = [Group(x, y) for x, y in category_groups.items()]
+        items = [Group(x, y) for x, y in list(category_groups.items())]
         max_items = request_context.opts.max_opds_items
         offsets = Offsets(offset, max_items, len(items))
         items = items[offsets.offset:offsets.offset+max_items]

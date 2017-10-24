@@ -1,17 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-import os, json, struct, hashlib, sys, errno, tempfile, time, shutil, uuid
+import errno
+import hashlib
+import json
+import os
+import shutil
+import struct
+import sys
+import tempfile
+import time
+import uuid
 from binascii import hexlify
 from collections import Counter
 
 from calibre import prints
-from calibre.constants import config_dir, iswindows, filesystem_encoding
-from calibre.utils.config_base import prefs, StringConfig, create_global_prefs
+from calibre.constants import config_dir, filesystem_encoding, iswindows
 from calibre.utils.config import JSONConfig
+from calibre.utils.config_base import StringConfig, create_global_prefs, prefs
 from calibre.utils.filenames import samefile
 
 

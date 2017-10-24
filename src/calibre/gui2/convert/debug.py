@@ -1,16 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import os
+
+from calibre.gui2 import choose_dir, error_dialog
+from calibre.gui2.convert import Widget
+from calibre.gui2.convert.debug_ui import Ui_Form
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os
 
-from calibre.gui2.convert.debug_ui import Ui_Form
-from calibre.gui2.convert import Widget
-from calibre.gui2 import error_dialog, choose_dir
 
 
 class DebugWidget(Widget, Ui_Form):
@@ -39,7 +39,7 @@ class DebugWidget(Widget, Ui_Form):
 
     def pre_commit_check(self):
         try:
-            x = unicode(self.opt_debug_pipeline.text()).strip()
+            x = str(self.opt_debug_pipeline.text()).strip()
             if not x:
                 return True
             x = os.path.abspath(x)
@@ -54,8 +54,7 @@ class DebugWidget(Widget, Ui_Form):
             det_msg = traceback.format_exc()
             error_dialog(self, _('Invalid debug directory'),
                     _('Failed to create debug directory')+': '+
-                        unicode(self.opt_debug_pipeline.text()),
+                        str(self.opt_debug_pipeline.text()),
                         det_msg=det_msg, show=True)
             return False
         return True
-

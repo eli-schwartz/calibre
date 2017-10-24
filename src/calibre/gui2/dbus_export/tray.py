@@ -1,7 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+
+import dbus
+from calibre.gui2.dbus_export.menu import DBusMenu
+from calibre.gui2.dbus_export.utils import icon_cache
+from calibre.utils.dbus_service import (
+	BusName, Object, dbus_property, method as dbus_method, signal as dbus_signal
+)
+from PyQt5.Qt import (
+	QApplication, QMenu, QObject, QPoint, QRect, QSystemTrayIcon, Qt, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
@@ -12,16 +21,8 @@ __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 # This is not an actual standard, but is apparently used by GNOME, KDE and
 # Unity, which makes it necessary enough to implement.
 
-import os
 
-import dbus
-from PyQt5.Qt import (
-    QApplication, QObject, pyqtSignal, Qt, QPoint, QRect, QMenu, QSystemTrayIcon)
 
-from calibre.gui2.dbus_export.menu import DBusMenu
-from calibre.gui2.dbus_export.utils import icon_cache
-from calibre.utils.dbus_service import (
-    Object, method as dbus_method, BusName, dbus_property, signal as dbus_signal)
 
 _sni_count = 0
 
@@ -234,5 +235,3 @@ class StatusNotifierItemAPI(Object):
     @dbus_signal(IFACE, 's')
     def NewStatus(self, status):
         pass
-
-

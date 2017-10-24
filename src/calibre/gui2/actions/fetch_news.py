@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -8,11 +7,10 @@ __docformat__ = 'restructuredtext en'
 import gc
 from functools import partial
 
-from PyQt5.Qt import Qt
-
 from calibre.gui2 import Dispatcher
-from calibre.gui2.tools import fetch_scheduled_recipe
 from calibre.gui2.actions import InterfaceAction
+from calibre.gui2.tools import fetch_scheduled_recipe
+from PyQt5.Qt import Qt
 
 
 class FetchNewsAction(InterfaceAction):

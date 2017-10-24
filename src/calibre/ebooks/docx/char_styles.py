@@ -1,14 +1,14 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import OrderedDict
+
+from calibre.ebooks.docx.block_styles import (  # noqa
+	LINE_STYLES, binary_property, inherit, read_shd, simple_color, simple_float
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from collections import OrderedDict
-from calibre.ebooks.docx.block_styles import (  # noqa
-    inherit, simple_color, LINE_STYLES, simple_float, binary_property, read_shd)
 
 # Read from XML {{{
 

@@ -1,13 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from datetime import datetime, timedelta
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from datetime import datetime, timedelta
 
 
 def align_block(raw, multiple=4, pad=b'\0'):
@@ -78,4 +76,3 @@ def load_font(stream_or_path):
         raw = raw.read()
     from calibre.utils.fonts.sfnt.container import Sfnt
     return Sfnt(raw)
-

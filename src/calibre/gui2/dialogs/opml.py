@@ -1,22 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import defaultdict, namedtuple
+from operator import itemgetter
+
+from calibre.gui2 import choose_files, error_dialog
+from calibre.utils.icu import sort_key
+from lxml import etree
+from PyQt5.Qt import (
+	QCheckBox, QDialog, QDialogButtonBox, QFormLayout,
+	QHBoxLayout, QIcon, QLineEdit, QSpinBox, Qt, QToolButton
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from collections import defaultdict, namedtuple
-from operator import itemgetter
 
-from PyQt5.Qt import (
-    QDialog, QFormLayout, QHBoxLayout, QLineEdit, QToolButton, QIcon,
-    QDialogButtonBox, Qt, QSpinBox, QCheckBox)
 
-from lxml import etree
 
-from calibre.gui2 import choose_files, error_dialog
-from calibre.utils.icu import sort_key
 
 Group = namedtuple('Group', 'title feeds')
 
@@ -48,7 +48,7 @@ def import_opml(raw, preserve_groups=True):
                         break
         groups[parent].append((title, url))
 
-    for title in sorted(groups.iterkeys(), key=sort_key):
+    for title in sorted(iter(groups.keys()), key=sort_key):
         yield Group(title, uniq(groups[title], kmap=itemgetter(1)))
 
 
@@ -125,7 +125,7 @@ class ImportOPML(QDialog):
             self.path.setText(opml_files[0])
 
     def accept(self):
-        path = unicode(self.path.text())
+        path = str(self.path.text())
         if not path:
             return error_dialog(self, _('Path not specified'), _(
                 'You must specify the path to the OPML file to import'), show=True)
@@ -141,7 +141,7 @@ class ImportOPML(QDialog):
 if __name__ == '__main__':
     import sys
     for group in import_opml(open(sys.argv[-1], 'rb').read()):
-        print (group.title)
+        print((group.title))
         for title, url in group.feeds:
-            print ('\t%s - %s' % (title, url))
+            print(('\t%s - %s' % (title, url)))
         print ()

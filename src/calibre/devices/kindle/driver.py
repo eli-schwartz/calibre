@@ -8,12 +8,19 @@ __docformat__ = 'restructuredtext en'
 Device driver for Amazon's Kindle
 '''
 
-import datetime, os, re, sys, json, hashlib, errno
+import datetime
+import errno
+import hashlib
+import json
+import os
+import re
+import sys
 
+from calibre import fsync, prints, strftime
 from calibre.constants import DEBUG
 from calibre.devices.kindle.bookmark import Bookmark
 from calibre.devices.usbms.driver import USBMS
-from calibre import strftime, fsync, prints
+
 
 '''
 Notes on collections:
@@ -112,17 +119,17 @@ class KINDLE(USBMS):
             match = cls.WIRELESS_FILE_NAME_PATTERN.match(os.path.basename(path))
             if match is not None:
                 mi.title = match.group('title')
-                if not isinstance(mi.title, unicode):
+                if not isinstance(mi.title, str):
                     mi.title = mi.title.decode(sys.getfilesystemencoding(),
                                                'replace')
         return mi
 
     def get_annotations(self, path_map):
-        MBP_FORMATS = [u'azw', u'mobi', u'prc', u'txt']
+        MBP_FORMATS = ['azw', 'mobi', 'prc', 'txt']
         mbp_formats = set(MBP_FORMATS)
-        PDR_FORMATS = [u'pdf']
+        PDR_FORMATS = ['pdf']
         pdr_formats = set(PDR_FORMATS)
-        TAN_FORMATS = [u'tpz', u'azw1']
+        TAN_FORMATS = ['tpz', 'azw1']
         tan_formats = set(TAN_FORMATS)
 
         def get_storage():
@@ -216,13 +223,13 @@ class KINDLE(USBMS):
         if bookmark.book_format == 'pdf':
             spanTag.insert(0,NavigableString(
                 _("%(time)s<br />Last page read: %(loc)d (%(pr)d%%)") % dict(
-                    time=strftime(u'%x', timestamp.timetuple()),
+                    time=strftime('%x', timestamp.timetuple()),
                     loc=last_read_location,
                     pr=percent_read)))
         else:
             spanTag.insert(0,NavigableString(
                 _("%(time)s<br />Last page read: Location %(loc)d (%(pr)d%%)") % dict(
-                    time=strftime(u'%x', timestamp.timetuple()),
+                    time=strftime('%x', timestamp.timetuple()),
                     loc=last_read_location,
                     pr=percent_read)))
 
@@ -290,9 +297,9 @@ class KINDLE(USBMS):
                     hrTag['class'] = 'annotations_divider'
                     user_notes_soup.insert(0, hrTag)
 
-                mi.comments += unicode(user_notes_soup.prettify())
+                mi.comments += str(user_notes_soup.prettify())
             else:
-                mi.comments = unicode(user_notes_soup.prettify())
+                mi.comments = str(user_notes_soup.prettify())
             # Update library comments
             db.set_comment(db_id, mi.comments)
 
@@ -301,7 +308,7 @@ class KINDLE(USBMS):
                                             bm.value.path, index_is_id=True)
         elif bm.type == 'kindle_clippings':
             # Find 'My Clippings' author=Kindle in database, or add
-            last_update = 'Last modified %s' % strftime(u'%x %X',bm.value['timestamp'].timetuple())
+            last_update = 'Last modified %s' % strftime('%x %X',bm.value['timestamp'].timetuple())
             mc_id = list(db.data.search_getting_ids('title:"My Clippings"', '', sort_results=False))
             if mc_id:
                 db.add_format_with_hooks(mc_id[0], 'TXT', bm.value['path'],
@@ -421,7 +428,7 @@ class KINDLE2(KINDLE):
             collections = f.read()
         collections = json.loads(collections)
         path_map = {}
-        for name, val in collections.items():
+        for name, val in list(collections.items()):
             col = name.split('@')[0]
             items = val.get('items', [])
             for x in items:
@@ -494,7 +501,7 @@ class KINDLE2(KINDLE):
                     os.remove(tp)
                 except EnvironmentError as err:
                     if err.errno != errno.ENOENT:
-                        prints(u'Failed to delete thumbnail for {!r} at {!r} with error: {}'.format(path, tp, err))
+                        prints('Failed to delete thumbnail for {!r} at {!r} with error: {}'.format(path, tp, err))
         except Exception:
             import traceback
             traceback.print_exc()
@@ -535,16 +542,16 @@ class KINDLE2(KINDLE):
                 cust_col_name = opts.extra_customization[self.OPT_APNX_METHOD_COL]
                 if cust_col_name:
                     try:
-                        temp = unicode(metadata.get(cust_col_name)).lower()
+                        temp = str(metadata.get(cust_col_name)).lower()
                         if temp in self.EXTRA_CUSTOMIZATION_CHOICES[self.OPT_APNX_METHOD]:
                             method = temp
                         else:
-                            print ("Invalid method choice for this book (%r), ignoring." % temp)
+                            print(("Invalid method choice for this book (%r), ignoring." % temp))
                     except:
-                        print 'Could not retrieve override method choice, using default.'
+                        print('Could not retrieve override method choice, using default.')
                 apnx_builder.write_apnx(filepath, apnx_path, method=method, page_count=custom_page_count)
             except:
-                print 'Failed to generate APNX'
+                print('Failed to generate APNX')
                 import traceback
                 traceback.print_exc()
 

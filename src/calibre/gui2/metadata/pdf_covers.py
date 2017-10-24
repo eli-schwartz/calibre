@@ -1,26 +1,27 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import shutil
+import sys
+from glob import glob
+from threading import Thread
+
+import sip
+from calibre import as_unicode
+from calibre.ebooks.metadata.pdf import page_images
+from calibre.gui2 import error_dialog, file_icon_provider
+from calibre.ptempfile import PersistentTemporaryDirectory
+from PyQt5.Qt import (
+	QApplication, QDialog, QDialogButtonBox, QGridLayout, QLabel, QListWidget,
+	QListWidgetItem, QPixmap, QSize, QStyledItemDelegate, Qt, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, shutil, os
-from threading import Thread
-from glob import glob
 
-import sip
-from PyQt5.Qt import (
-    QDialog, QApplication, QLabel, QGridLayout, QDialogButtonBox, Qt,
-    pyqtSignal, QListWidget, QListWidgetItem, QSize, QPixmap, QStyledItemDelegate
-)
 
-from calibre import as_unicode
-from calibre.ebooks.metadata.pdf import page_images
-from calibre.gui2 import error_dialog, file_icon_provider
-from calibre.ptempfile import PersistentTemporaryDirectory
 
 
 class CoverDelegate(QStyledItemDelegate):
@@ -76,9 +77,9 @@ class PDFCovers(QDialog):
     @property
     def cover_path(self):
         for item in self.covers.selectedItems():
-            return unicode(item.data(Qt.UserRole) or '')
+            return str(item.data(Qt.UserRole) or '')
         if self.covers.count() > 0:
-            return unicode(self.covers.item(0).data(Qt.UserRole) or '')
+            return str(self.covers.item(0).data(Qt.UserRole) or '')
 
     def cleanup(self):
         try:
@@ -128,4 +129,4 @@ if __name__ == '__main__':
     app
     d = PDFCovers(sys.argv[-1])
     d.exec_()
-    print (d.cover_path)
+    print((d.cover_path))

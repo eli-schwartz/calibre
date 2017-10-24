@@ -1,9 +1,7 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+
 
 # Based on https://github.com/jlhutch/pylru/blob/master/pylru.py (which is
 # licensed GPL v2+)
@@ -15,7 +13,7 @@ class DoublyLinkedNode(object):
 
     def __init__(self):
         self.empty = True
-        self.prev = self.next = self.key = self.value = None
+        self.prev = self.__next__ = self.key = self.value = None
 
 
 class lru_cache(object):
@@ -155,7 +153,7 @@ class lru_cache(object):
         # adjustment ensures correctness even for the case where the 'node'
         # is the 'head' node.
         self.move_to_front(node)
-        self.head = node.next
+        self.head = node.__next__
 
     def __iter__(self):
         ''' Return an iterator that returns the keys in the cache in order from
@@ -166,7 +164,7 @@ class lru_cache(object):
         while left > 0:
             left -= 1
             yield node
-            node = node.next
+            node = node.__next__
 
     def items(self):
         ''' Return an iterator that returns the (key, value) pairs in the cache
@@ -253,11 +251,11 @@ class lru_cache(object):
         'node' directly precedes the 'head' node. Because of the order of
         operations, if 'node' already directly precedes the 'head' node or if
         'node' is the 'head' node the order of the list will be unchanged. '''
-        node.prev.next = node.next
+        node.prev.next = node.__next__
         node.next.prev = node.prev
 
         node.prev = self.head.prev
-        node.next = self.head.prev.next
+        node.next = self.head.prev.__next__
 
         node.next.prev = node
         node.prev.next = node

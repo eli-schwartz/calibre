@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
-
-__license__ = 'GPL 3'
-__copyright__ = '2011, John Schember <john@nachtimwald.com>'
-__docformat__ = 'restructuredtext en'
-
 from functools import partial
-
-from PyQt5.Qt import (
-    pyqtSignal, QMenu, QTreeView, QStyledItemDelegate, Qt, QIcon)
 
 from calibre import fit_image
 from calibre.gui2 import empty_index
 from calibre.gui2.metadata.single_download import RichTextDelegate
 from calibre.gui2.store.search.models import Matches
+from PyQt5.Qt import QIcon, QMenu, QStyledItemDelegate, Qt, QTreeView, pyqtSignal
+
+
+__license__ = 'GPL 3'
+__copyright__ = '2011, John Schember <john@nachtimwald.com>'
+__docformat__ = 'restructuredtext en'
+
+
+
 
 
 class ImageDelegate(QStyledItemDelegate):

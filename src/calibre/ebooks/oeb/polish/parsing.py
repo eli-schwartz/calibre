@@ -1,19 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+
+import html5_parser
+from calibre import xml_replace_entities
+from calibre.ebooks.chardet import ENCODING_PATS, xml_to_unicode
+from calibre.utils.cleantext import clean_xml_chars
+from lxml.etree import Element as LxmlElement, XMLParser, fromstring
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re
 
-from lxml.etree import XMLParser, fromstring, Element as LxmlElement
-import html5_parser
 
-from calibre import xml_replace_entities
-from calibre.ebooks.chardet import xml_to_unicode, ENCODING_PATS
-from calibre.utils.cleantext import clean_xml_chars
 
 XHTML_NS     = 'http://www.w3.org/1999/xhtml'
 
@@ -82,5 +81,5 @@ def parse(raw, decoder=None, log=None, line_numbers=True, linenumber_attribute=N
 if __name__ == '__main__':
     from lxml import etree
     root = parse_html5('\n<html><head><title>a\n</title><p b=1 c=2 a=0>&nbsp;\n<b>b<svg ass="wipe" viewbox="0">', discard_namespaces=False)
-    print (etree.tostring(root, encoding='utf-8'))
+    print((etree.tostring(root, encoding='utf-8')))
     print()

@@ -1,15 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.ebooks.oeb.polish.container import OPF_NAMESPACES
+from calibre.utils.localization import canonicalize_lang
+from lxml import etree
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from lxml import etree
 
-from calibre.ebooks.oeb.polish.container import OPF_NAMESPACES
-from calibre.utils.localization import canonicalize_lang
 
 
 def get_book_language(container):
@@ -50,4 +48,3 @@ def set_guide_item(container, item_type, title, name, frag=None):
             else:
                 container.remove_from_xml(m)
     container.dirty(container.opf_name)
-

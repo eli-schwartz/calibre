@@ -1,23 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import json
+from collections import defaultdict
+
+from calibre import prints
+from calibre.constants import DEBUG, FAKE_HOST, FAKE_PROTOCOL
+from calibre.ebooks.oeb.display.webview import load_html
+from PyQt5.Qt import (
+	QHBoxLayout, QIcon, QSize, QToolButton, QUrl, QVBoxLayout, QWidget, pyqtSignal, pyqtSlot
+)
+from PyQt5.QtWebKit import QWebSettings
+from PyQt5.QtWebKitWidgets import QWebPage, QWebView
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import json
-from collections import defaultdict
 
-from PyQt5.Qt import (
-    QUrl, QWidget, QHBoxLayout, QSize, pyqtSlot, QVBoxLayout, QToolButton,
-    QIcon, pyqtSignal)
-from PyQt5.QtWebKitWidgets import QWebView, QWebPage
-from PyQt5.QtWebKit import QWebSettings
 
-from calibre import prints
-from calibre.constants import DEBUG, FAKE_PROTOCOL, FAKE_HOST
-from calibre.ebooks.oeb.display.webview import load_html
 
 
 class FootnotesPage(QWebPage):
@@ -60,7 +59,7 @@ class FootnotesPage(QWebPage):
 
     def javaScriptConsoleMessage(self, msg, lineno, source_id):
         if DEBUG:
-            prints('FootnoteView:%s:%s:'%(unicode(source_id), lineno), unicode(msg))
+            prints('FootnoteView:%s:%s:'%(str(source_id), lineno), str(msg))
 
 
 class FootnotesView(QWidget):

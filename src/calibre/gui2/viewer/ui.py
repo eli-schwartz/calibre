@@ -1,27 +1,26 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import textwrap
+
+from calibre.gui2 import error_dialog, open_url, rating_font
+from calibre.gui2.main_window import MainWindow
+from calibre.gui2.search_box import SearchBox2
+from calibre.gui2.viewer.bookmarkmanager import BookmarkManager
+from calibre.gui2.viewer.documentview import DocumentView
+from calibre.gui2.viewer.footnote import FootnotesView
+from calibre.gui2.viewer.toc import TOCSearch, TOCView
+from calibre.utils.localization import is_rtl
+from PyQt5.Qt import (
+	QAction, QBrush, QColor, QDockWidget, QDoubleSpinBox, QGridLayout, QIcon, QLabel,
+	QLineEdit, QMenu, QPainter, QPalette, QRegExp, QRegExpValidator, QScrollBar,
+	QSize, Qt, QToolBar, QToolButton, QVBoxLayout, QWebView, QWidget, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import textwrap
 
-from PyQt5.Qt import (
-    QIcon, QWidget, Qt, QGridLayout, QScrollBar, QToolBar, QAction,
-    QToolButton, QMenu, QDoubleSpinBox, pyqtSignal, QLineEdit,
-    QRegExpValidator, QRegExp, QPalette, QColor, QBrush, QPainter,
-    QDockWidget, QSize, QWebView, QLabel, QVBoxLayout)
 
-from calibre.gui2 import rating_font, error_dialog, open_url
-from calibre.gui2.main_window import MainWindow
-from calibre.gui2.search_box import SearchBox2
-from calibre.gui2.viewer.documentview import DocumentView
-from calibre.gui2.viewer.bookmarkmanager import BookmarkManager
-from calibre.gui2.viewer.toc import TOCView, TOCSearch
-from calibre.gui2.viewer.footnote import FootnotesView
-from calibre.utils.localization import is_rtl
 
 
 class DoubleSpinBox(QDoubleSpinBox):  # {{{
@@ -61,7 +60,7 @@ class Reference(QLineEdit):  # {{{
         self.editingFinished.connect(self.editing_finished)
 
     def editing_finished(self):
-        text = unicode(self.text())
+        text = str(self.text())
         self.setText('')
         self.goto.emit(text)
 # }}}
@@ -186,7 +185,7 @@ class History(list):  # {{{
 
 def test_history():
     h = History()
-    for i in xrange(4):
+    for i in range(4):
         h.add(i)
     for i in reversed(h):
         h.back(i)
@@ -215,7 +214,7 @@ class Main(MainWindow):
     def __init__(self, debug_javascript):
         MainWindow.__init__(self, None)
         self.setWindowTitle(_('E-book viewer'))
-        self.base_window_title = unicode(self.windowTitle())
+        self.base_window_title = str(self.windowTitle())
         self.setObjectName('EbookViewer')
         self.setWindowIcon(QIcon(I('viewer.png')))
         self.setDockOptions(self.AnimatedDocks | self.AllowTabbedDocks)
@@ -383,7 +382,7 @@ class Main(MainWindow):
             ac.setObjectName(name)
             (tb or self.tool_bar).addAction(ac)
             if sc_name:
-                ac.setToolTip(unicode(ac.text()) + (' [%s]' % _(' or ').join(self.view.shortcuts.get_shortcuts(sc_name))))
+                ac.setToolTip(str(ac.text()) + (' [%s]' % _(' or ').join(self.view.shortcuts.get_shortcuts(sc_name))))
             if menu_name is not None:
                 menu_name += '_menu'
                 m = QMenu()

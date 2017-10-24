@@ -10,8 +10,10 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import sys, os
-from calibre.ebooks.rtf2xml import copy, border_parse
+import os
+import sys
+
+from calibre.ebooks.rtf2xml import border_parse, copy
 from calibre.ptempfile import better_mktemp
 
 
@@ -258,7 +260,7 @@ class Styles:
         self.__ignore_list = [
         'list-tebef',
             ]
-        self.__tabs_list = self.__tabs_dict.keys()
+        self.__tabs_list = list(self.__tabs_dict.keys())
         self.__tab_type = 'left'
         self.__leader_found = 0
 
@@ -286,7 +288,7 @@ class Styles:
         # have to parse border lines with external module
         elif line[0:5] == 'cw<bd':
             border_dict = self.__border_obj.parse_border(line)
-            keys = border_dict.keys()
+            keys = list(border_dict.keys())
             for key in keys:
                 self.__enter_dict_entry(key, border_dict[key])
         elif self.__token_info in self.__tabs_list:
@@ -301,7 +303,7 @@ class Styles:
                 if info not in self.__ignore_list:
                     if self.__run_level > 3:
                         msg = 'no value for key %s\n' % info
-                        raise self.__bug_handler, msg
+                        raise self.__bug_handler(msg)
             else:
                 value = line[20:-1]
                 self.__enter_dict_entry(att, value)
@@ -346,7 +348,7 @@ class Styles:
         else:
             if self.__run_level > 3:
                 msg = 'no entry for %s\n' % self.__token_info
-                raise self.__bug_handler, msg
+                raise self.__bug_handler(msg)
 
     def __tab_leader_func(self, line):
         """
@@ -371,7 +373,7 @@ class Styles:
         else:
             if self.__run_level > 3:
                 msg = 'no entry for %s\n' % self.__token_info
-                raise self.__bug_handler, msg
+                raise self.__bug_handler(msg)
 
     def __tab_bar_func(self, line):
         """
@@ -438,7 +440,7 @@ class Styles:
         else:
             if self.__run_level > 3:
                 msg = self.__type_of_style + 'error\n'
-                raise self.__bug_handler, msg
+                raise self.__bug_handler(msg)
         smallest_dict = {}
         smallest_dict[att] = value
         type_dict[self.__styles_num] = smallest_dict
@@ -531,7 +533,7 @@ class Styles:
         """
         types = ['par', 'char']
         for type in types:
-            keys = self.__styles_dict[type].keys()
+            keys = list(self.__styles_dict[type].keys())
             for key in keys:
                 styles = ['next-style', 'based-on-style']
                 for style in styles:
@@ -550,7 +552,7 @@ class Styles:
                                 if self.__run_level > 4:
                                     msg = '%s %s is based on %s\n' % (type, key, value)
                                     msg = 'There is no style with %s\n' % value
-                                    raise self.__bug_handler, msg
+                                    raise self.__bug_handler(msg)
                             del self.__styles_dict[type][key][style]
 
     def __print_style_table(self):
@@ -576,12 +578,12 @@ class Styles:
             self.__write_obj.write(
             'mi<tg<open______<%s-styles\n' % prefix
             )
-            style_numbers = self.__styles_dict[type].keys()
+            style_numbers = list(self.__styles_dict[type].keys())
             for num in style_numbers:
                 self.__write_obj.write(
                 'mi<tg<empty-att_<%s-style-in-table<num>%s' % (prefix, num)
                 )
-                attributes = self.__styles_dict[type][num].keys()
+                attributes = list(self.__styles_dict[type][num].keys())
                 for att in attributes:
                     this_value = self.__styles_dict[type][num][att]
                     self.__write_obj.write(

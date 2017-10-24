@@ -10,7 +10,10 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import sys, os
+import os
+import sys
+
+
 # , codecs
 
 
@@ -81,7 +84,7 @@ class Output:
             msg += ('Type "o" to overwrite.\n'
                     'Type any other key to print to standard output.\n')
             sys.stderr.write(msg)
-            user_response = raw_input()
+            user_response = input()
         if user_response == 'o':
             with open(self.__file, 'r') as read_obj:
                 with open(self.output_file, 'w') as write_obj:

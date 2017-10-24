@@ -1,15 +1,14 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+from calibre.gui2.convert.font_key_ui import Ui_Dialog
+from calibre.utils.localization import localize_user_manual_link
+from PyQt5.Qt import QDialog
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QDialog
 
-from calibre.gui2.convert.font_key_ui import Ui_Dialog
-from calibre.utils.localization import localize_user_manual_link
 
 
 class FontKeyChooser(QDialog, Ui_Dialog):
@@ -66,7 +65,7 @@ class FontKeyChooser(QDialog, Ui_Dialog):
 
     @property
     def fsizes(self):
-        key = unicode(self.font_size_key.text()).strip()
+        key = str(self.font_size_key.text()).strip()
         return [float(x.strip()) for x in key.split(',' if ',' in key else ' ') if x.strip()]
 
     @property

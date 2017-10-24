@@ -7,15 +7,16 @@ __docformat__ = 'restructuredtext en'
 '''
 Device driver for Hanvon devices
 '''
-import re, os
+import os
+import re
 
 from calibre import fsync
 from calibre.devices.usbms.driver import USBMS
 
 
 def is_alex(device_info):
-    return device_info[3] == u'Linux 2.6.28 with pxa3xx_u2d' and \
-            device_info[4] == u'Seleucia Disk'
+    return device_info[3] == 'Linux 2.6.28 with pxa3xx_u2d' and \
+            device_info[4] == 'Seleucia Disk'
 
 
 class N516(USBMS):

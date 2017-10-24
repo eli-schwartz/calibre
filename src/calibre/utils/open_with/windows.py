@@ -1,21 +1,25 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import ctypes
+import re
+import struct
+from collections import namedtuple
+
+import pywintypes
+import win32api
+import win32con
+import win32gui
+import winerror
+from calibre import prints
+from calibre.gui2 import must_use_qt
+from calibre.utils.winreg.default_programs import split_commandline
+from PyQt5.Qt import QBuffer, QByteArray, QIcon, QPixmap, Qt, QtWin
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re, struct, ctypes
-from collections import namedtuple
-from future_builtins import map
 
-from PyQt5.Qt import QtWin, Qt, QIcon, QByteArray, QBuffer, QPixmap
-import win32con, win32api, win32gui, pywintypes, winerror
 
-from calibre import prints
-from calibre.gui2 import must_use_qt
-from calibre.utils.winreg.default_programs import split_commandline
 
 ICON_SIZE = 64
 
@@ -113,7 +117,7 @@ def load_icon(module, index, as_data=False, size=ICON_SIZE):
 def load_icon_resource(icon_resource, as_data=False, size=ICON_SIZE):
     if not icon_resource:
         return
-    parts = tuple(filter(None, re.split(r',([-0-9]+$)', icon_resource)))
+    parts = tuple([_f for _f in re.split(r',([-0-9]+$)', icon_resource) if _f])
     if len(parts) != 2:
         return
     module, index = parts

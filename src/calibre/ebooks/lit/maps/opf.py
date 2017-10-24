@@ -76,6 +76,6 @@ ATTRS = {
     0x0016: "xml:lang",
     }
 
-TAGS_ATTRS = [{} for i in xrange(43)]
+TAGS_ATTRS = [{} for i in range(43)]
 
 MAP = (TAGS, ATTRS, TAGS_ATTRS)

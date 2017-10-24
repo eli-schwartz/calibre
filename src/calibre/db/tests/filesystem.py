@@ -1,18 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__   = 'GPL v3'
-__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
-__docformat__ = 'restructuredtext en'
-
-import unittest, os
+import os
+import unittest
 from io import BytesIO
 
 from calibre.constants import iswindows
 from calibre.db.tests.base import BaseTest
 from calibre.ptempfile import TemporaryDirectory
+
+
+__license__   = 'GPL v3'
+__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
+__docformat__ = 'restructuredtext en'
+
+
 
 
 class FilesystemTest(BaseTest):
@@ -55,7 +55,7 @@ class FilesystemTest(BaseTest):
         cache2 = self.init_cache(cl)
         for c in (cache, cache2):
             data = self.get_filesystem_data(c, 1)
-            ae(set(orig_data.iterkeys()), set(data.iterkeys()))
+            ae(set(orig_data.keys()), set(data.keys()))
             ae(orig_data, data, 'Filesystem data does not match')
             ae(c.field_for('path', 1), 'Moved/Moved (1)')
             ae(c.field_for('path', 3), 'Moved1/Moved1 (3)')

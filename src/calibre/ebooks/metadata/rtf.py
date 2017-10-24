@@ -4,10 +4,13 @@ __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 """
 Edit metadata in RTF files.
 """
-import re, cStringIO, codecs
+import codecs
+import io
+import re
 
 from calibre import force_unicode
 from calibre.ebooks.metadata import MetaInformation, string_to_authors
+
 
 title_pat    = re.compile(r'\{\\info.*?\{\\title(.*?)(?<!\\)\}', re.DOTALL)
 author_pat   = re.compile(r'\{\\info.*?\{\\author(.*?)(?<!\\)\}', re.DOTALL)
@@ -42,7 +45,7 @@ def get_document_info(stream):
                 break
     if not found:
         return None, 0
-    data, count, = cStringIO.StringIO(), 0
+    data, count, = io.StringIO(), 0
     pos = stream.tell()
     while True:
         ch = stream.read(1)
@@ -75,7 +78,7 @@ def detect_codepage(stream):
 
 
 def encode(unistr):
-    if not isinstance(unistr, unicode):
+    if not isinstance(unistr, str):
         unistr = force_unicode(unistr)
     return ''.join([str(c) if ord(c) < 128 else '\\u' + str(ord(c)) + '?' for c in unistr])
 
@@ -88,7 +91,7 @@ def decode(raw, codec):
         raw = raw.decode(codec)
 
     def uni(match):
-        return unichr(int(match.group(1)))
+        return chr(int(match.group(1)))
     raw = re.sub(r'\\u([0-9]{3,4}).', uni, raw)
     return raw
 
@@ -129,7 +132,7 @@ def get_metadata(stream):
     tags_match = tags_pat.search(block)
     if tags_match is not None:
         tags = decode(tags_match.group(1).strip(), cpg)
-        mi.tags = list(filter(None, (x.strip() for x in tags.split(','))))
+        mi.tags = list([_f for _f in (x.strip() for x in tags.split(',')) if _f])
     publisher_match = publisher_pat.search(block)
     if publisher_match is not None:
         publisher = decode(publisher_match.group(1).strip(), cpg)
@@ -145,8 +148,8 @@ def create_metadata(stream, options):
         md.append(r'{\title %s}'%(title,))
     if options.authors:
         au = options.authors
-        if not isinstance(au, basestring):
-            au = u', '.join(au)
+        if not isinstance(au, str):
+            au = ', '.join(au)
         author = encode(au)
         md.append(r'{\author %s}'%(author,))
     comp = options.comment if hasattr(options, 'comment') else options.comments
@@ -157,14 +160,14 @@ def create_metadata(stream, options):
         publisher = encode(options.publisher)
         md.append(r'{\manager %s}'%(publisher,))
     if options.tags:
-        tags = u', '.join(options.tags)
+        tags = ', '.join(options.tags)
         tags = encode(tags)
         md.append(r'{\category %s}'%(tags,))
     if len(md) > 1:
         md.append('}')
         stream.seek(0)
         src   = stream.read()
-        ans = src[:6] + u''.join(md) + src[6:]
+        ans = src[:6] + ''.join(md) + src[6:]
         stream.seek(0)
         stream.write(ans)
 
@@ -232,4 +235,3 @@ def set_metadata(stream, options):
         stream.truncate()
         stream.write(src)
         stream.write(after)
-

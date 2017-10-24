@@ -1,18 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import random
+from collections import OrderedDict
+from io import BytesIO
+from struct import pack
+
+from calibre.ebooks.mobi.utils import align_block
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import random
-from io import BytesIO
-from collections import OrderedDict
-from struct import pack
 
-from calibre.ebooks.mobi.utils import align_block
 
 NULL = 0xffffffff
 zeroes = lambda x: b'\0'*x
@@ -51,28 +50,28 @@ class Header(OrderedDict):
 
     @property
     def dynamic_fields(self):
-        return tuple(k for k, v in self.iteritems() if v is None)
+        return tuple(k for k, v in self.items() if v is None)
 
     def __call__(self, **kwargs):
         positions = {}
-        for name, val in kwargs.iteritems():
+        for name, val in kwargs.items():
             if name not in self:
                 raise KeyError('Not a valid header field: %r'%name)
             self[name] = val
 
         buf = BytesIO()
         buf.write(bytes(self.HEADER_NAME))
-        for name, val in self.iteritems():
+        for name, val in self.items():
             val = self.format_value(name, val)
             positions[name] = buf.tell()
             if val is None:
                 raise ValueError('Dynamic field %r not set'%name)
-            if isinstance(val, (int, long)):
+            if isinstance(val, int):
                 fmt = b'H' if name in self.SHORT_FIELDS else b'I'
                 val = pack(b'>'+fmt, val)
             buf.write(val)
 
-        for pos_field, field in self.POSITIONS.iteritems():
+        for pos_field, field in self.POSITIONS.items():
             buf.seek(positions[pos_field])
             buf.write(pack(b'>I', positions[field]))
 
@@ -83,6 +82,3 @@ class Header(OrderedDict):
 
     def format_value(self, name, val):
         return val
-
-
-

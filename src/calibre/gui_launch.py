@@ -1,12 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import sys
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, sys
 
 # For some reason Qt 5 crashes on some linux systems if the fork() is done
 # after the Qt modules are loaded in calibre.gui2. We also cannot do a fork()

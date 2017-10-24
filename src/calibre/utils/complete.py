@@ -1,6 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import pickle
+import glob
+import os
+import re
+import shlex
+import sys
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
@@ -12,7 +17,6 @@ BASH completion for calibre commands that are too complex for simple
 completion.
 '''
 
-import sys, os, shlex, glob, re, cPickle
 
 
 def prints(*args, **kwargs):
@@ -28,7 +32,7 @@ def prints(*args, **kwargs):
     enc = 'utf-8'
     safe_encode = kwargs.get('safe_encode', False)
     for i, arg in enumerate(args):
-        if isinstance(arg, unicode):
+        if isinstance(arg, str):
             try:
                 arg = arg.encode(enc)
             except UnicodeEncodeError:
@@ -39,8 +43,8 @@ def prints(*args, **kwargs):
             try:
                 arg = str(arg)
             except ValueError:
-                arg = unicode(arg)
-            if isinstance(arg, unicode):
+                arg = str(arg)
+            if isinstance(arg, str):
                 try:
                     arg = arg.encode(enc)
                 except UnicodeEncodeError:

@@ -1,7 +1,14 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import signal
+import struct
+import sys
+import time
+from pprint import pformat
+from threading import Thread
+
+import dbus
+from gi.repository import Gdk, GdkX11, Gtk  # noqa
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
@@ -9,11 +16,7 @@ __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 # Demo program to explore the GTK DBus interface, which is only partially documented
 # at https://wiki.gnome.org/Projects/GLib/GApplication/DBusAPI
 
-import sys, dbus, struct, time, signal
-from threading import Thread
-from pprint import pformat
 
-from gi.repository import Gtk, Gdk, GdkX11  # noqa
 
 UI_INFO = """
 <ui>

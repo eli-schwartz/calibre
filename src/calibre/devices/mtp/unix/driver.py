@@ -1,22 +1,27 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import operator
+import pprint
+import sys
+import time
+import traceback
+from collections import namedtuple
+from functools import partial
+from threading import RLock
+
+from calibre import as_unicode, prints
+from calibre.constants import islinux, isosx, plugins
+from calibre.devices.errors import (
+	BlacklistedDevice, DeviceError, OpenActionNeeded, OpenFailed
+)
+from calibre.devices.mtp.base import MTPDeviceBase, debug, synchronous
+from calibre.ptempfile import SpooledTemporaryFile
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import operator, traceback, pprint, sys, time
-from threading import RLock
-from collections import namedtuple
-from functools import partial
 
-from calibre import prints, as_unicode
-from calibre.constants import plugins, islinux, isosx
-from calibre.ptempfile import SpooledTemporaryFile
-from calibre.devices.errors import OpenFailed, DeviceError, BlacklistedDevice, OpenActionNeeded
-from calibre.devices.mtp.base import MTPDeviceBase, synchronous, debug
 
 MTPDevice = namedtuple('MTPDevice', 'busnum devnum vendor_id product_id '
         'bcd serial manufacturer product')
@@ -193,7 +198,7 @@ class MTP_DEVICE(MTPDeviceBase):
         self.libmtp = p[0]
         if self.libmtp is None:
             print ('Failed to load libmtp, MTP device detection disabled')
-            print (p[1])
+            print((p[1]))
         else:
             self.known_devices = frozenset(self.libmtp.known_devices())
 
@@ -318,7 +323,7 @@ class MTP_DEVICE(MTPDeviceBase):
                     storage.append({'id':sid, 'size':capacity,
                         'is_folder':True, 'name':name, 'can_delete':False,
                         'is_system':True})
-                    self._currently_getting_sid = unicode(sid)
+                    self._currently_getting_sid = str(sid)
                     items, errs = self.dev.get_filesystem(sid,
                             partial(self._filesystem_callback, {}))
                     all_items.extend(items), all_errs.extend(errs)
@@ -370,7 +375,7 @@ class MTP_DEVICE(MTPDeviceBase):
         e = parent.folder_named(name)
         if e is not None:
             return e
-        ename = name.encode('utf-8') if isinstance(name, unicode) else name
+        ename = name.encode('utf-8') if isinstance(name, str) else name
         sid, pid = parent.storage_id, parent.object_id
         if pid == sid:
             pid = 0
@@ -393,7 +398,7 @@ class MTP_DEVICE(MTPDeviceBase):
                 raise ValueError('Cannot upload file %s, it already exists'%(
                     e.full_path,))
             self.delete_file_or_folder(e)
-        ename = name.encode('utf-8') if isinstance(name, unicode) else name
+        ename = name.encode('utf-8') if isinstance(name, str) else name
         sid, pid = parent.storage_id, parent.object_id
         if pid == sid:
             pid = 0xFFFFFFFF

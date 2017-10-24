@@ -1,7 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import dbus
+import sip
+from calibre.gui2.dbus_export.utils import (
+	icon_to_dbus_menu_icon, key_sequence_to_dbus_shortcut,
+	setup_for_cli_run, swap_mnemonic_char
+)
+from calibre.utils.dbus_service import (
+	BusName, Object, dbus_property, method as dbus_method, signal as dbus_signal
+)
+from PyQt5.Qt import (
+	QApplication, QEvent, QIcon, QKeySequence, QMenu, QObject, Qt, QTimer, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
@@ -9,13 +19,7 @@ __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 # Support for excporting Qt's MenuBars/Menus over DBUS. The API is defined in
 # dbus-menu.xml from the libdbusmenu project https://launchpad.net/libdbusmenu
 
-import dbus, sip
-from PyQt5.Qt import (
-    QApplication, QMenu, QIcon, QKeySequence, QObject, QEvent, QTimer, pyqtSignal, Qt)
 
-from calibre.utils.dbus_service import Object, BusName, method as dbus_method, dbus_property, signal as dbus_signal
-from calibre.gui2.dbus_export.utils import (
-    setup_for_cli_run, swap_mnemonic_char, key_sequence_to_dbus_shortcut, icon_to_dbus_menu_icon)
 
 null = object()
 
@@ -124,7 +128,7 @@ class DBusMenu(QObject):
             return {}
         ans = self._action_properties.get(action_id, PropDict())
         if restrict_to:
-            ans = PropDict({k:v for k, v in ans.iteritems() if k in restrict_to})
+            ans = PropDict({k:v for k, v in ans.items() if k in restrict_to})
         return ans
 
     def publish_new_menu(self, qmenu=None):
@@ -195,7 +199,7 @@ class DBusMenu(QObject):
             removed = set(old_props) - set(new_props)
             if removed:
                 removed_props.append((ac_id, dbus.Array(removed, signature='as')))
-            updated = PropDict({k:v for k, v in new_props.iteritems() if v != old_props.get(k, null)})
+            updated = PropDict({k:v for k, v in new_props.items() if v != old_props.get(k, null)})
             if updated:
                 updated_props.append((ac_id, updated))
         self.action_changes = set()

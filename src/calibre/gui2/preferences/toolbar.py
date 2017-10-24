@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,13 +6,11 @@ __docformat__ = 'restructuredtext en'
 
 from functools import partial
 
-from PyQt5.Qt import QAbstractListModel, Qt, QIcon, \
-        QItemSelectionModel
-
+from calibre.gui2 import error_dialog, gprefs, warning_dialog
+from calibre.gui2.preferences import AbortCommit, ConfigWidgetBase, test_widget
 from calibre.gui2.preferences.toolbar_ui import Ui_Form
-from calibre.gui2 import gprefs, warning_dialog, error_dialog
-from calibre.gui2.preferences import ConfigWidgetBase, test_widget, AbortCommit
 from calibre.utils.icu import primary_sort_key
+from PyQt5.Qt import QAbstractListModel, QIcon, QItemSelectionModel, Qt
 
 
 class FakeAction(object):
@@ -278,7 +275,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         self.help_text.setText(tt)
 
     def what_changed(self, idx):
-        key = unicode(self.what.itemData(idx) or '')
+        key = str(self.what.itemData(idx) or '')
         if key == 'blank':
             self.actions_widget.setVisible(False)
             self.spacer_widget.setVisible(True)
@@ -351,12 +348,12 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
             raise AbortCommit()
 
         # Save data.
-        for am, cm in self.models.values():
+        for am, cm in list(self.models.values()):
             cm.commit()
         return False
 
     def restore_defaults(self):
-        for am, cm in self.models.values():
+        for am, cm in list(self.models.values()):
             cm.restore_defaults()
             am.restore_defaults()
         self.changed_signal.emit()

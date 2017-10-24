@@ -1,6 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+from contextlib import closing
+
+from calibre import browser
+from calibre.utils.opensearch.url import URL
+from lxml import etree
+
 
 __license__ = 'GPL 3'
 __copyright__ = '''
@@ -9,12 +14,8 @@ __copyright__ = '''
 '''
 __docformat__ = 'restructuredtext en'
 
-from contextlib import closing
 
-from lxml import etree
 
-from calibre import browser
-from calibre.utils.opensearch.url import URL
 
 
 class Description(object):

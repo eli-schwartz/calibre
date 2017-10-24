@@ -1,11 +1,13 @@
-from __future__ import with_statement
+import os
+
+from calibre.customize.conversion import InputFormatPlugin
+
+
 __license__ = 'GPL 3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os
 
-from calibre.customize.conversion import InputFormatPlugin
 
 
 class MOBIInput(InputFormatPlugin):
@@ -27,13 +29,13 @@ class MOBIInput(InputFormatPlugin):
             mr = MobiReader(stream, log, options.input_encoding,
                         options.debug_pipeline)
             if mr.kf8_type is None:
-                mr.extract_content(u'.', parse_cache)
+                mr.extract_content('.', parse_cache)
 
         except:
             mr = MobiReader(stream, log, options.input_encoding,
                         options.debug_pipeline, try_extra_data_fix=True)
             if mr.kf8_type is None:
-                mr.extract_content(u'.', parse_cache)
+                mr.extract_content('.', parse_cache)
 
         if mr.kf8_type is not None:
             log('Found KF8 MOBI of type %r'%mr.kf8_type)
@@ -48,11 +50,11 @@ class MOBIInput(InputFormatPlugin):
 
         raw = parse_cache.pop('calibre_raw_mobi_markup', False)
         if raw:
-            if isinstance(raw, unicode):
+            if isinstance(raw, str):
                 raw = raw.encode('utf-8')
-            open(u'debug-raw.html', 'wb').write(raw)
+            open('debug-raw.html', 'wb').write(raw)
         from calibre.ebooks.oeb.base import close_self_closing_tags
-        for f, root in parse_cache.items():
+        for f, root in list(parse_cache.items()):
             raw = html.tostring(root, encoding='utf-8', method='xml',
                     include_meta_content_type=False)
             raw = close_self_closing_tags(raw)
@@ -60,4 +62,3 @@ class MOBIInput(InputFormatPlugin):
                 q.write(raw)
                 accelerators['pagebreaks'] = '//h:div[@class="mbp_pagebreak"]'
         return mr.created_opf_path
-

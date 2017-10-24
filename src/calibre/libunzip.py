@@ -4,6 +4,7 @@ __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
 
 import re
+
 from calibre.utils import zipfile
 from calibre.utils.icu import numeric_sort_key
 
@@ -28,8 +29,6 @@ def update(pathtozip, patterns, filepaths, names, compression=zipfile.ZIP_DEFLAT
     for name in z.namelist():
         for pat, fname, new_name in zip(patterns, filepaths, names):
             if pat.search(name):
-                if verbose:
-                    print 'Updating %s with %s' % (name, fname)
                 if new_name is None:
                     z.replace(fname, arcname=name, compress_type=compression)
                 else:

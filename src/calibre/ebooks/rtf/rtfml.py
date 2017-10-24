@@ -8,15 +8,15 @@ __docformat__ = 'restructuredtext en'
 Transform OEB content into RTF markup
 '''
 
+import io
 import os
 import re
-import cStringIO
-
-from lxml import etree
 
 from calibre.ebooks.metadata import authors_to_string
 from calibre.utils.img import save_cover_data_to
 from calibre.utils.imghdr import identify
+from lxml import etree
+
 
 TAGS = {
     'b': '\\b',
@@ -75,10 +75,10 @@ def txt2rtf(text):
     text = text.replace('}', r'\'7d')
     text = text.replace('\\', r'\'5c')
 
-    if not isinstance(text, unicode):
+    if not isinstance(text, str):
         return text
 
-    buf = cStringIO.StringIO()
+    buf = io.StringIO()
     for x in text:
         val = ord(x)
         if val == 160:
@@ -119,7 +119,7 @@ class RTFMLizer(object):
             self.log.debug('Converting %s to RTF markup...' % item.href)
             # Removing comments is needed as comments with -- inside them can
             # cause fromstring() to fail
-            content = re.sub(ur'<!--.*?-->', u'', etree.tostring(item.data, encoding=unicode), flags=re.DOTALL)
+            content = re.sub(r'<!--.*?-->', '', etree.tostring(item.data, encoding=str), flags=re.DOTALL)
             content = self.remove_newlines(content)
             content = self.remove_tabs(content)
             content = etree.fromstring(content)
@@ -148,7 +148,7 @@ class RTFMLizer(object):
         return text
 
     def header(self):
-        header = u'{\\rtf1{\\info{\\title %s}{\\author %s}}\\ansi\\ansicpg1252\\deff0\\deflang1033\n' % (
+        header = '{\\rtf1{\\info{\\title %s}{\\author %s}}\\ansi\\ansicpg1252\\deff0\\deflang1033\n' % (
             self.oeb_book.metadata.title[0].value, authors_to_string([x.value for x in self.oeb_book.metadata.creator]))
         return header + (
             '{\\fonttbl{\\f0\\froman\\fprq2\\fcharset128 Times New Roman;}{\\f1\\froman\\fprq2\\fcharset128 Times New Roman;}{\\f2\\fswiss\\fprq2\\fcharset128 Arial;}{\\f3\\fnil\\fprq2\\fcharset128 Arial;}{\\f4\\fnil\\fprq2\\fcharset128 MS Mincho;}{\\f5\\fnil\\fprq2\\fcharset128 Tahoma;}{\\f6\\fnil\\fprq0\\fcharset128 Tahoma;}}\n'  # noqa
@@ -214,7 +214,7 @@ class RTFMLizer(object):
         text = re.sub(r'(\{\\line \}\s*){3,}', r'{\\line }{\\line }', text)
 
         # Remove non-breaking spaces
-        text = text.replace(u'\xa0', ' ')
+        text = text.replace('\xa0', ' ')
         text = text.replace('\n\r', '\n')
 
         return text
@@ -223,22 +223,22 @@ class RTFMLizer(object):
         from calibre.ebooks.oeb.base import (XHTML_NS, namespace, barename,
                 urlnormalize)
 
-        if not isinstance(elem.tag, basestring) \
+        if not isinstance(elem.tag, str) \
            or namespace(elem.tag) != XHTML_NS:
             p = elem.getparent()
-            if p is not None and isinstance(p.tag, basestring) and namespace(p.tag) == XHTML_NS \
+            if p is not None and isinstance(p.tag, str) and namespace(p.tag) == XHTML_NS \
                     and elem.tail:
                 return elem.tail
-            return u''
+            return ''
 
-        text = u''
+        text = ''
         style = stylizer.style(elem)
 
         if style['display'] in ('none', 'oeb-page-head', 'oeb-page-foot') \
            or style['visibility'] == 'hidden':
             if hasattr(elem, 'tail') and elem.tail:
                 return elem.tail
-            return u''
+            return ''
 
         tag = barename(elem.tag)
         tag_count = 0
@@ -291,9 +291,9 @@ class RTFMLizer(object):
             end_tag =  tag_stack.pop()
             if end_tag != 'block':
                 if tag in BLOCK_TAGS:
-                    text += u'\\par\\pard\\plain\\hyphpar}'
+                    text += '\\par\\pard\\plain\\hyphpar}'
                 else:
-                    text += u'}'
+                    text += '}'
 
         if hasattr(elem, 'tail') and elem.tail:
             if 'block' in tag_stack:

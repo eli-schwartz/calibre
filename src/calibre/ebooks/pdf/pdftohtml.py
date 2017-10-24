@@ -5,16 +5,21 @@ __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>, ' \
                 '2009, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-import errno, os, sys, subprocess, shutil, re
+import errno
+import os
+import re
+import shutil
+import subprocess
+import sys
 from functools import partial
 
+from calibre import CurrentDir
+from calibre.constants import filesystem_encoding, isbsd, islinux, isosx, iswindows
 from calibre.ebooks import ConversionError, DRMError
 from calibre.ebooks.chardet import xml_to_unicode
 from calibre.ptempfile import PersistentTemporaryFile
-from calibre.constants import (isosx, iswindows, islinux, isbsd,
-            filesystem_encoding)
-from calibre import CurrentDir
 from calibre.utils.cleantext import clean_xml_chars
+
 
 PDFTOHTML = 'pdftohtml'
 popen = subprocess.Popen
@@ -35,8 +40,8 @@ def pdftohtml(output_dir, pdf_path, no_images, as_xml=False):
     It will also write all extracted images to the output_dir
     '''
 
-    pdfsrc = os.path.join(output_dir, u'src.pdf')
-    index = os.path.join(output_dir, u'index.'+('xml' if as_xml else 'html'))
+    pdfsrc = os.path.join(output_dir, 'src.pdf')
+    index = os.path.join(output_dir, 'index.'+('xml' if as_xml else 'html'))
 
     with open(pdf_path, 'rb') as src, open(pdfsrc, 'wb') as dest:
         shutil.copyfileobj(src, dest)
@@ -53,7 +58,7 @@ def pdftohtml(output_dir, pdf_path, no_images, as_xml=False):
             return os.path.basename(x).encode('ascii')
 
         exe = PDFTOHTML.encode(filesystem_encoding) if isinstance(PDFTOHTML,
-                unicode) else PDFTOHTML
+                str) else PDFTOHTML
 
         cmd = [exe, b'-enc', b'UTF-8', b'-noframes', b'-p', b'-nomerge',
                 b'-nodrm', a(pdfsrc), a(index)]
@@ -65,7 +70,7 @@ def pdftohtml(output_dir, pdf_path, no_images, as_xml=False):
         if as_xml:
             cmd.append('-xml')
 
-        logf = PersistentTemporaryFile(u'pdftohtml_log')
+        logf = PersistentTemporaryFile('pdftohtml_log')
         try:
             p = popen(cmd, stderr=logf._fd, stdout=logf._fd,
                     stdin=subprocess.PIPE)
@@ -91,8 +96,8 @@ def pdftohtml(output_dir, pdf_path, no_images, as_xml=False):
         if ret != 0:
             raise ConversionError(b'pdftohtml failed with return code: %d\n%s' % (ret, out))
         if out:
-            print "pdftohtml log:"
-            print out
+            print("pdftohtml log:")
+            print(out)
         if not os.path.exists(index) or os.stat(index).st_size < 100:
             raise DRMError()
 

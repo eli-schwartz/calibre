@@ -6,17 +6,14 @@ __docformat__ = 'restructuredtext en'
 Perform various initialization tasks.
 '''
 
-import locale, sys
-
 # Default translation is NOOP
-import __builtin__
-__builtin__.__dict__['_'] = lambda s: s
+import locale
+import sys
 
-# For strings which belong in the translation tables, but which shouldn't be
-# immediately translated to the environment language
-__builtin__.__dict__['__'] = lambda s: s
+from .constants import (
+	DEBUG, isfrozen, islinux, isosx, iswindows, plugins, preferred_encoding
+)
 
-from .constants import iswindows, preferred_encoding, plugins, isosx, islinux, isfrozen, DEBUG
 
 _run_once = False
 winutil = winutilerror = None
@@ -43,7 +40,7 @@ if not _run_once:
         winutil, winutilerror = plugins['winutil']
         if not winutil:
             raise RuntimeError('Failed to load the winutil plugin: %s'%winutilerror)
-        if len(sys.argv) > 1 and not isinstance(sys.argv[1], unicode):
+        if len(sys.argv) > 1 and not isinstance(sys.argv[1], str):
             sys.argv[1:] = winutil.argv()[1-len(sys.argv):]
 
     #
@@ -60,7 +57,7 @@ if not _run_once:
     if isosx:
         enc = 'utf-8'
     for i in range(1, len(sys.argv)):
-        if not isinstance(sys.argv[i], unicode):
+        if not isinstance(sys.argv[i], str):
             sys.argv[i] = sys.argv[i].decode(enc, 'replace')
 
     #
@@ -146,12 +143,8 @@ if not _run_once:
                 supports_mode_e = True
             return ans
 
-    __builtin__.__dict__['lopen'] = local_open
 
     from .utils.icu import title_case, lower as icu_lower, upper as icu_upper
-    __builtin__.__dict__['icu_lower'] = icu_lower
-    __builtin__.__dict__['icu_upper'] = icu_upper
-    __builtin__.__dict__['icu_title'] = title_case
 
     if islinux:
         # Name all threads at the OS level created using the threading module, see
@@ -175,7 +168,7 @@ if not _run_once:
                             if name == 'Thread':
                                 name = self.name
                         if name:
-                            if isinstance(name, unicode):
+                            if isinstance(name, str):
                                 name = name.encode('ascii', 'replace')
                             ident = getattr(self, "ident", None)
                             if ident is not None:

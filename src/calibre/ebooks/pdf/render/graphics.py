@@ -1,22 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import namedtuple
+from math import sqrt
+
+from calibre.ebooks.pdf.render.common import Array, Dictionary, Name, Stream, fmtnum
+from calibre.ebooks.pdf.render.gradients import LinearGradientPattern
+from calibre.ebooks.pdf.render.serialize import Path
+from PyQt5.Qt import QBrush, QImage, QPaintEngine, QPen, QPointF, Qt, QTransform
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from math import sqrt
-from collections import namedtuple
 
-from PyQt5.Qt import (
-    QBrush, QPen, Qt, QPointF, QTransform, QPaintEngine, QImage)
 
-from calibre.ebooks.pdf.render.common import (
-    Name, Array, fmtnum, Stream, Dictionary)
-from calibre.ebooks.pdf.render.serialize import Path
-from calibre.ebooks.pdf.render.gradients import LinearGradientPattern
 
 
 def convert_path(path):  # {{{
@@ -482,5 +479,3 @@ class Graphics(object):
             pat = TexturePattern(None, matrix, self.pdf, clone=self.last_fill.brush)
             pattern = self.pdf.add_pattern(pat)
             self.pdf.apply_fill(self.last_fill.color, pattern)
-
-

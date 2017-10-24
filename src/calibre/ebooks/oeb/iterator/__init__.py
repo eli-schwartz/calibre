@@ -1,15 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import re
+import sys
+
+from calibre.customize.ui import available_input_formats
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, os, re
 
-from calibre.customize.ui import available_input_formats
 
 
 def is_supported(path):

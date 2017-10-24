@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+import os
+from io import StringIO
+
+from calibre.customize.conversion import OptionRecommendation, OutputFormatPlugin
+from calibre.ptempfile import TemporaryDirectory
+
 
 __license__ = 'GPL 3'
 __copyright__ = '2011, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-import os
-from cStringIO import StringIO
 
 
-from calibre.customize.conversion import OutputFormatPlugin, \
-    OptionRecommendation
-from calibre.ptempfile import TemporaryDirectory
 
 
 class HTMLZOutput(OutputFormatPlugin):
@@ -62,36 +62,36 @@ class HTMLZOutput(OutputFormatPlugin):
         else:
             from calibre.ebooks.htmlz.oeb2html import OEB2HTMLClassCSSizer as OEB2HTMLizer
 
-        with TemporaryDirectory(u'_htmlz_output') as tdir:
+        with TemporaryDirectory('_htmlz_output') as tdir:
             htmlizer = OEB2HTMLizer(log)
             html = htmlizer.oeb2html(oeb_book, opts)
 
-            fname = u'index'
+            fname = 'index'
             if opts.htmlz_title_filename:
                 from calibre.utils.filenames import shorten_components_to
-                fname = shorten_components_to(100, (ascii_filename(unicode(oeb_book.metadata.title[0])),))[0]
-            with open(os.path.join(tdir, fname+u'.html'), 'wb') as tf:
-                if isinstance(html, unicode):
+                fname = shorten_components_to(100, (ascii_filename(str(oeb_book.metadata.title[0])),))[0]
+            with open(os.path.join(tdir, fname+'.html'), 'wb') as tf:
+                if isinstance(html, str):
                     html = html.encode('utf-8')
                 tf.write(html)
 
             # CSS
             if opts.htmlz_css_type == 'class' and opts.htmlz_class_style == 'external':
-                with open(os.path.join(tdir, u'style.css'), 'wb') as tf:
+                with open(os.path.join(tdir, 'style.css'), 'wb') as tf:
                     tf.write(htmlizer.get_css(oeb_book))
 
             # Images
             images = htmlizer.images
             if images:
-                if not os.path.exists(os.path.join(tdir, u'images')):
-                    os.makedirs(os.path.join(tdir, u'images'))
+                if not os.path.exists(os.path.join(tdir, 'images')):
+                    os.makedirs(os.path.join(tdir, 'images'))
                 for item in oeb_book.manifest:
                     if item.media_type in OEB_IMAGES and item.href in images:
                         if item.media_type == SVG_MIME:
-                            data = unicode(etree.tostring(item.data, encoding=unicode))
+                            data = str(etree.tostring(item.data, encoding=str))
                         else:
                             data = item.data
-                        fname = os.path.join(tdir, u'images', images[item.href])
+                        fname = os.path.join(tdir, 'images', images[item.href])
                         with open(fname, 'wb') as img:
                             img.write(data)
 
@@ -104,7 +104,7 @@ class HTMLZOutput(OutputFormatPlugin):
                     cover_data = oeb_book.guide[term].item.data
                 if cover_data:
                     from calibre.utils.img import save_cover_data_to
-                    cover_path = os.path.join(tdir, u'cover.jpg')
+                    cover_path = os.path.join(tdir, 'cover.jpg')
                     with lopen(cover_path, 'w') as cf:
                         cf.write('')
                     save_cover_data_to(cover_data, cover_path)
@@ -113,11 +113,11 @@ class HTMLZOutput(OutputFormatPlugin):
                 traceback.print_exc()
 
             # Metadata
-            with open(os.path.join(tdir, u'metadata.opf'), 'wb') as mdataf:
+            with open(os.path.join(tdir, 'metadata.opf'), 'wb') as mdataf:
                 opf = OPF(StringIO(etree.tostring(oeb_book.metadata.to_opf1())))
                 mi = opf.to_book_metadata()
                 if cover_path:
-                    mi.cover = u'cover.jpg'
+                    mi.cover = 'cover.jpg'
                 mdataf.write(metadata_to_opf(mi))
 
             htmlz = ZipFile(output_path, 'w')

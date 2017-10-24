@@ -1,16 +1,15 @@
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
-import collections, itertools, glob
+import collections
+import glob
+import itertools
 
+from calibre.ebooks.lrf.objects import Canvas as __Canvas, RuledLine as _RuledLine
+from calibre.gui2.lrf_renderer.text import COLOR, FontLoader, PixmapItem, TextBlock
 from PyQt5.Qt import (
-    Qt, QByteArray, pyqtSignal, QGraphicsRectItem, QGraphicsScene, QPen,
-    QBrush, QColor, QFontDatabase, QGraphicsItem, QGraphicsLineItem)
-
-from calibre.gui2.lrf_renderer.text import TextBlock, FontLoader, COLOR, PixmapItem
-
-
-from calibre.ebooks.lrf.objects import RuledLine as _RuledLine
-from calibre.ebooks.lrf.objects import Canvas as __Canvas
+	QBrush, QByteArray, QColor, QFontDatabase, QGraphicsItem,
+	QGraphicsLineItem, QGraphicsRectItem, QGraphicsScene, QPen, Qt, pyqtSignal
+)
 
 
 class Color(QColor):
@@ -163,10 +162,10 @@ class _Canvas(QGraphicsRectItem):
             self.is_full = y > self.max_y-5
             ib.has_content = False
             if ib.block_id == 54:
-                print
-                print ib.block_id, ib.has_content, self.is_full
-                print self.current_y, self.max_y, y, br.height()
-                print
+                print()
+                print(ib.block_id, ib.has_content, self.is_full)
+                print(self.current_y, self.max_y, y, br.height())
+                print()
 
     def search(self, phrase):
         matches = []
@@ -491,7 +490,7 @@ class Document(QGraphicsScene):
         self.current_screen.set_page(page)
         self.page_changed.emit(self.current_page)
 
-    def next(self):
+    def __next__(self):
         self.next_by(1)
 
     def previous(self):
@@ -526,4 +525,3 @@ class Document(QGraphicsScene):
         else:
             self.add_to_history()
             self.show_page(page_num)
-

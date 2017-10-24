@@ -8,15 +8,16 @@ __docformat__ = 'restructuredtext en'
 Read content from txt file.
 '''
 
-import os, re
+import os
+import re
 
-from calibre import prepare_string_for_xml, isbytestring
-from calibre.ebooks.metadata.opf2 import OPFCreator
-
+from calibre import isbytestring, prepare_string_for_xml
 from calibre.ebooks.conversion.preprocess import DocAnalysis
+from calibre.ebooks.metadata.opf2 import OPFCreator
 from calibre.utils.cleantext import clean_ascii_chars
 
-HTML_TEMPLATE = u'<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>%s </title></head><body>\n%s\n</body></html>'
+
+HTML_TEMPLATE = '<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>%s </title></head><body>\n%s\n</body></html>'
 
 
 def clean_txt(txt):
@@ -59,13 +60,13 @@ def split_txt(txt, epub_split_size_kb=0):
     '''
     # Takes care if there is no point to split
     if epub_split_size_kb > 0:
-        if isinstance(txt, unicode):
+        if isinstance(txt, str):
             txt = txt.encode('utf-8')
         length_byte = len(txt)
         # Calculating the average chunk value for easy splitting as EPUB (+2 as a safe margin)
-        chunk_size = long(length_byte / (int(length_byte / (epub_split_size_kb * 1024)) + 2))
+        chunk_size = int(length_byte / (int(length_byte / (epub_split_size_kb * 1024)) + 2))
         # if there are chunks with a superior size then go and break
-        if (len(filter(lambda x: len(x) > chunk_size, txt.split('\n\n')))) :
+        if (len([x for x in txt.split('\n\n') if len(x) > chunk_size])) :
             txt = '\n\n'.join([split_string_separator(line, chunk_size)
                 for line in txt.split('\n\n')])
     if isbytestring(txt):
@@ -90,13 +91,13 @@ def convert_basic(txt, title='', epub_split_size_kb=0):
     for line in txt.split('\n'):
         if line.strip():
             blank_count = 0
-            lines.append(u'<p>%s</p>' % prepare_string_for_xml(line.replace('\n', ' ')))
+            lines.append('<p>%s</p>' % prepare_string_for_xml(line.replace('\n', ' ')))
         else:
             blank_count += 1
             if blank_count == 2:
-                lines.append(u'<p>&nbsp;</p>')
+                lines.append('<p>&nbsp;</p>')
 
-    return HTML_TEMPLATE % (title, u'\n'.join(lines))
+    return HTML_TEMPLATE % (title, '\n'.join(lines))
 
 
 DEFAULT_MD_EXTENSIONS = ('footnotes', 'tables', 'toc')
@@ -124,7 +125,7 @@ def convert_markdown_with_metadata(txt, title='', extensions=DEFAULT_MD_EXTENSIO
     html = md.convert(txt)
     mi = Metadata(title or _('Unknown'))
     m = md.Meta
-    for k, v in {'date':'pubdate', 'summary':'comments'}.iteritems():
+    for k, v in {'date':'pubdate', 'summary':'comments'}.items():
         if v not in m and k in m:
             m[v] = m.pop(k)
     for k in 'title authors series tags pubdate comments publisher rating'.split():
@@ -168,7 +169,7 @@ def separate_paragraphs_single_line(txt):
 
 
 def separate_paragraphs_print_formatted(txt):
-    txt = re.sub(u'(?miu)^(?P<indent>\t+|[ ]{2,})(?=.)', lambda mo: '\n%s' % mo.group('indent'), txt)
+    txt = re.sub('(?miu)^(?P<indent>\t+|[ ]{2,})(?=.)', lambda mo: '\n%s' % mo.group('indent'), txt)
     return txt
 
 
@@ -178,7 +179,7 @@ def separate_hard_scene_breaks(txt):
             return '\n%s\n' % line
         else:
             return line
-    txt = re.sub(u'(?miu)^[ \t-=~\/_]+$', lambda mo: sep_break(mo.group()), txt)
+    txt = re.sub('(?miu)^[ \t-=~\/_]+$', lambda mo: sep_break(mo.group()), txt)
     return txt
 
 
@@ -217,9 +218,9 @@ def split_string_separator(txt, size):
     Splits the text by putting \n\n at the point size.
     '''
     if len(txt) > size:
-        txt = ''.join([re.sub(u'\.(?P<ends>[^.]*)$', '.\n\n\g<ends>',
+        txt = ''.join([re.sub('\.(?P<ends>[^.]*)$', '.\n\n\g<ends>',
             txt[i:i+size], 1) for i in
-            xrange(0, len(txt), size)])
+            range(0, len(txt), size)])
     return txt
 
 

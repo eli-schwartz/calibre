@@ -1,20 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import re, string
+import re
+import string
 from collections import Counter, defaultdict
 from functools import partial
-
-from lxml.html.builder import OL, UL, SPAN
 
 from calibre.ebooks.docx.block_styles import ParagraphStyle
 from calibre.ebooks.docx.char_styles import RunStyle, inherit
 from calibre.ebooks.metadata import roman
+from lxml.html.builder import OL, SPAN, UL
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 STYLE_MAP = {
     'aiueo': 'hiragana',
@@ -106,9 +106,9 @@ class Level(object):
             if val == 'bullet':
                 self.is_numbered = False
                 cs = self.character_style
-                if lt in {'\uf0a7', 'o'} or (
+                if lt in {'\\uf0a7', 'o'} or (
                     cs is not None and cs.font_family is not inherit and cs.font_family.lower() in {'wingdings', 'symbol'}):
-                    self.fmt = {'\uf0a7':'square', 'o':'circle'}.get(lt, 'disc')
+                    self.fmt = {'\\uf0a7':'square', 'o':'circle'}.get(lt, 'disc')
                 else:
                     self.bullet_template = lt
                 for lpid in XPath('./w:lvlPicBulletId[@w:val]')(lvl):
@@ -168,7 +168,7 @@ class NumberingDefinition(object):
 
     def copy(self):
         ans = NumberingDefinition(self.namespace, an_id=self.abstract_numbering_definition_id)
-        for l, lvl in self.levels.iteritems():
+        for l, lvl in self.levels.items():
             ans.levels[l] = lvl.copy()
         return ans
 
@@ -224,7 +224,7 @@ class Numbering(object):
                     if alvl is None:
                         alvl = Level(self.namespace)
                     alvl.read_from_xml(lvl, override=True)
-            for ilvl, so in start_overrides.iteritems():
+            for ilvl, so in start_overrides.items():
                 try:
                     nd.levels[ilvl].start = start_override
                 except KeyError:
@@ -244,22 +244,22 @@ class Numbering(object):
             self.instances[num_id] = create_instance(n, d)
 
         numbering_links = styles.numbering_style_links
-        for an_id, style_link in lazy_load.iteritems():
+        for an_id, style_link in lazy_load.items():
             num_id = numbering_links[style_link]
             self.definitions[an_id] = self.instances[num_id].copy()
 
-        for num_id, (an_id, n) in next_pass.iteritems():
+        for num_id, (an_id, n) in next_pass.items():
             d = self.definitions.get(an_id, None)
             if d is not None:
                 self.instances[num_id] = create_instance(n, d)
 
-        for num_id, d in self.instances.iteritems():
+        for num_id, d in self.instances.items():
             self.starts[num_id] = {lvl:d.levels[lvl].start for lvl in d.levels}
 
     def get_pstyle(self, num_id, style_id):
         d = self.instances.get(num_id, None)
         if d is not None:
-            for ilvl, lvl in d.levels.iteritems():
+            for ilvl, lvl in d.levels.items():
                 if lvl.para_link == style_id:
                     return ilvl
 
@@ -271,7 +271,7 @@ class Numbering(object):
 
     def update_counter(self, counter, levelnum, levels):
         counter[levelnum] += 1
-        for ilvl, lvl in levels.iteritems():
+        for ilvl, lvl in levels.items():
             restart = lvl.restart
             if (restart is None and ilvl == levelnum + 1) or restart == levelnum + 1:
                 counter[ilvl] = lvl.start

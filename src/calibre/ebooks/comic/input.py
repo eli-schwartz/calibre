@@ -1,4 +1,16 @@
-from __future__ import with_statement
+import os
+import time
+import traceback
+from queue import Empty
+
+from calibre import extract, prints, walk
+from calibre.constants import filesystem_encoding
+from calibre.ptempfile import PersistentTemporaryDirectory
+from calibre.utils.icu import numeric_sort_key
+from calibre.utils.ipc.job import ParallelJob
+from calibre.utils.ipc.server import Server
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
@@ -7,15 +19,7 @@ __docformat__ = 'restructuredtext en'
 Based on ideas from comiclrf created by FangornUK.
 '''
 
-import os, traceback, time
-from Queue import Empty
 
-from calibre import extract, prints, walk
-from calibre.constants import filesystem_encoding
-from calibre.ptempfile import PersistentTemporaryDirectory
-from calibre.utils.icu import numeric_sort_key
-from calibre.utils.ipc.server import Server
-from calibre.utils.ipc.job import ParallelJob
 
 # If the specified screen has either dimension larger than this value, no image
 # rescaling is done (we assume that it is a tablet output profile)
@@ -27,7 +31,7 @@ def extract_comic(path_to_comic_file):
     Un-archive the comic file.
     '''
     tdir = PersistentTemporaryDirectory(suffix='_comic_extract')
-    if not isinstance(tdir, unicode):
+    if not isinstance(tdir, str):
         # Needed in case the zip file has wrongly encoded unicode file/dir
         # names
         tdir = tdir.decode(filesystem_encoding)
@@ -132,8 +136,8 @@ class PageProcessor(list):  # {{{
 
             try:
                 if self.opts.comic_image_size:
-                    SCRWIDTH, SCRHEIGHT = map(int, [x.strip() for x in
-                        self.opts.comic_image_size.split('x')])
+                    SCRWIDTH, SCRHEIGHT = list(map(int, [x.strip() for x in
+                        self.opts.comic_image_size.split('x')]))
             except:
                 pass  # Ignore
 
@@ -273,6 +277,3 @@ def process_pages(pages, opts, update, tdir):
         ans += pages
         failures += failures_
     return ans, failures
-
-
-

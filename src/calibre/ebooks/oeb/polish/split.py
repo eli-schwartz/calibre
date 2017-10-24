@@ -1,19 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import copy
+import os
+import re
+from urllib.parse import urlparse
+
+from calibre.ebooks.oeb.base import OEB_DOCS, OPF, XHTML, XPNSMAP, XPath, barename
+from calibre.ebooks.oeb.polish.errors import MalformedMarkup
+from calibre.ebooks.oeb.polish.replace import LinkRebaser
+from calibre.ebooks.oeb.polish.toc import node_from_loc
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import copy, os, re
-from future_builtins import map
-from urlparse import urlparse
 
-from calibre.ebooks.oeb.base import barename, XPNSMAP, XPath, OPF, XHTML, OEB_DOCS
-from calibre.ebooks.oeb.polish.errors import MalformedMarkup
-from calibre.ebooks.oeb.polish.toc import node_from_loc
-from calibre.ebooks.oeb.polish.replace import LinkRebaser
 
 
 class AbortError(ValueError):
@@ -75,7 +75,7 @@ def do_split(split_point, log, before=True):
 
     tree, tree2  = copy.deepcopy(tree), copy.deepcopy(tree)
     root, root2  = tree.getroot(), tree2.getroot()
-    body, body2  = map(get_body, (root, root2))
+    body, body2  = list(map(get_body, (root, root2)))
     split_point  = root.xpath(path)[0]
     split_point2 = root2.xpath(path)[0]
 
@@ -233,7 +233,7 @@ def split(container, name, loc_or_xpath, before=True, totals=None):
                     a.set('href', '%s#%s' % (container.name_to_href(rname, name), purl.fragment))
 
     # Fix all links in the container that point to anchors in the bottom tree
-    for fname, media_type in container.mime_map.iteritems():
+    for fname, media_type in container.mime_map.items():
         if fname not in {name, bottom_name}:
             repl = SplitLinkReplacer(fname, anchors_in_bottom, name, bottom_name, container)
             container.replace_links(fname, repl)
@@ -278,7 +278,7 @@ def multisplit(container, name, xpath, before=True):
 
     current = name
     all_names = [name]
-    for i in xrange(len(nodes)):
+    for i in range(len(nodes)):
         current = split(container, current, '//*[@calibre-split-point="%d"]' % i, before=before)
         all_names.append(current)
 
@@ -387,9 +387,9 @@ def merge_html(container, names, master):
 
         first_child = ''
         for first_child in children:
-            if not isinstance(first_child, basestring):
+            if not isinstance(first_child, str):
                 break
-        if isinstance(first_child, basestring):
+        if isinstance(first_child, str):
             # body contained only text, no tags
             first_child = body.makeelement(XHTML('p'))
             first_child.text, children[0] = children[0], first_child
@@ -421,7 +421,7 @@ def merge_html(container, names, master):
                 a.set('href', '#' + amap[q])
 
         for child in children:
-            if isinstance(child, basestring):
+            if isinstance(child, str):
                 add_text(master_body, child)
             else:
                 master_body.append(copy.deepcopy(child))
@@ -429,7 +429,7 @@ def merge_html(container, names, master):
         container.remove_item(name, remove_from_guide=False)
 
     # Fix all links in the container that point to merged files
-    for fname, media_type in container.mime_map.iteritems():
+    for fname, media_type in container.mime_map.items():
         repl = MergeLinkReplacer(fname, anchor_map, master, container)
         container.replace_links(fname, repl)
 
@@ -460,7 +460,7 @@ def merge_css(container, names, master):
 
     # Remove links to merged stylesheets in the html files, replacing with a
     # link to the master sheet
-    for name, mt in container.mime_map.iteritems():
+    for name, mt in container.mime_map.items():
         if mt in OEB_DOCS:
             removed = False
             root = p(name)

@@ -1,19 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import sys
+
+from calibre.gui2 import gprefs
+from calibre.gui2.tweak_book.editor.canvas import Canvas
+from PyQt5.Qt import (
+	QApplication, QDialog, QDialogButtonBox, QGridLayout,
+	QIcon, QKeySequence, QLabel, QSize, Qt, QToolBar
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import sys, os
 
-from PyQt5.Qt import (
-    QDialog, QGridLayout, QToolBar, Qt, QLabel, QIcon, QDialogButtonBox, QSize,
-    QApplication, QKeySequence)
 
-from calibre.gui2 import gprefs
-from calibre.gui2.tweak_book.editor.canvas import Canvas
 
 
 class TrimImage(QDialog):
@@ -107,4 +108,4 @@ if __name__ == '__main__':
         fname = b + '-trimmed' + ext
         with open(fname, 'wb') as f:
             f.write(d.image_data)
-        print ('Trimmed image written to', fname)
+        print(('Trimmed image written to', fname))

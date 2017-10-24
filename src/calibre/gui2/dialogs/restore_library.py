@@ -1,17 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import (QDialog, QLabel, QVBoxLayout, QDialogButtonBox,
-        QProgressBar, QSize, QTimer, pyqtSignal, Qt)
-
-from calibre.gui2 import (error_dialog, question_dialog, warning_dialog,
-    info_dialog)
 from calibre import force_unicode
 from calibre.constants import filesystem_encoding
+from calibre.gui2 import error_dialog, info_dialog, question_dialog, warning_dialog
+from PyQt5.Qt import (
+	QDialog, QDialogButtonBox, QLabel, QProgressBar,
+	QSize, Qt, QTimer, QVBoxLayout, pyqtSignal
+)
 
 
 class DBRestore(QDialog):
@@ -134,6 +133,3 @@ def repair_library_at(library_path, parent=None, wait_time=2):
         return False
     _show_success_msg(r, parent=parent)
     return True
-
-
-

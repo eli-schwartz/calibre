@@ -1,16 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import print_function
+import os
+import shutil
+import sys
+import time
+
+from calibre import isbytestring
+from calibre.constants import filesystem_encoding, islinux, isosx, iswindows, plugins
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, shutil, time, sys
 
-from calibre import isbytestring
-from calibre.constants import (iswindows, isosx, plugins, filesystem_encoding,
-        islinux)
 
 recycle = None
 
@@ -149,4 +151,3 @@ def delete_tree(path, permanent=False):
                 import traceback
                 traceback.print_exc()
         delete_tree(path, permanent=True)
-

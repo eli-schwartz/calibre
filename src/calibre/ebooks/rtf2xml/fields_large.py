@@ -10,8 +10,10 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import sys, os
-from calibre.ebooks.rtf2xml import field_strings, copy
+import os
+import sys
+
+from calibre.ebooks.rtf2xml import copy, field_strings
 from calibre.ptempfile import better_mktemp
 
 
@@ -69,7 +71,7 @@ Examples
         \widctlpar\aspalpha\aspnum\faauto\adjustright\rin0\lin0\itap0
         \f4\lang1033\cgrid }}\pard\plain
         \widctlpar\aspalpha\aspnum\faauto\adjustright\rin0\lin0\itap0
-        \f4\lang1033\cgrid {\fs28 \u214\'85 \par }{\fs36 {\field{\*\fldinst
+        \f4\lang1033\cgrid {\fs28 \\u214\'85 \par }{\fs36 {\field{\*\fldinst
         SYMBOL 67 \\f "Symbol" \\s 18}{\fldrslt\f3\fs36}}}
     Becomes:
         <field-block type="table-of-contents">

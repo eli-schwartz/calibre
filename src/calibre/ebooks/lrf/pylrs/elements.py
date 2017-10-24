@@ -21,28 +21,28 @@ class ElementWriter(object):
         return text
 
     def _writeAttribute(self, f, name, value):
-        f.write(u' %s="' % unicode(name))
-        if not isinstance(value, basestring):
-            value = unicode(value)
+        f.write(' %s="' % str(name))
+        if not isinstance(value, str):
+            value = str(value)
         value = self._encodeCdata(value)
         value = value.replace('"', '&quot;')
         f.write(value)
-        f.write(u'"')
+        f.write('"')
 
     def _writeText(self, f, rawText):
         text = self._encodeCdata(rawText)
         f.write(text)
 
     def _write(self, f, e):
-        f.write(u'<' + unicode(e.tag))
+        f.write('<' + str(e.tag))
 
-        attributes = e.items()
+        attributes = list(e.items())
         attributes.sort()
         for name, value in attributes:
             self._writeAttribute(f, name, value)
 
         if e.text is not None or len(e) > 0:
-            f.write(u'>')
+            f.write('>')
 
             if e.text:
                 self._writeText(f, e.text)
@@ -50,11 +50,11 @@ class ElementWriter(object):
             for e2 in e:
                 self._write(f, e2)
 
-            f.write(u'</%s>' % e.tag)
+            f.write('</%s>' % e.tag)
         else:
             if self.spaceBeforeClose:
                 f.write(' ')
-            f.write(u'/>')
+            f.write('/>')
 
         if e.tail is not None:
             self._writeText(f, e.tail)
@@ -65,13 +65,10 @@ class ElementWriter(object):
         buffer = []
         x.write = buffer.append
         self.write(x)
-        return u''.join(buffer)
+        return ''.join(buffer)
 
     def write(self, f):
         if self.header:
-            f.write(u'<?xml version="1.0" encoding="%s"?>\n' % self.outputEncodingName)
+            f.write('<?xml version="1.0" encoding="%s"?>\n' % self.outputEncodingName)
 
         self._write(f, self.e)
-
-
-

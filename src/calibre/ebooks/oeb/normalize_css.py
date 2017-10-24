@@ -1,20 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from functools import wraps
+
+from cssutils import CSSParser, profile as cssprofiles
+from tinycss.fonts3 import parse_font, serialize_font_family
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from future_builtins import zip
-from functools import wraps
 
 try:
     from cssutils.css import PropertyValue
 except ImportError:
     raise RuntimeError('You need cssutils >= 0.9.9 for calibre')
-from cssutils import profile as cssprofiles, CSSParser
-from tinycss.fonts3 import parse_font, serialize_font_family
 
 DEFAULTS = {'azimuth': 'center', 'background-attachment': 'scroll',  # {{{
             'background-color': 'transparent', 'background-image': 'none',
@@ -45,7 +43,7 @@ DEFAULTS = {'azimuth': 'center', 'background-attachment': 'scroll',  # {{{
             'page-break-after': 'auto', 'page-break-before': 'auto',
             'page-break-inside': 'auto', 'pause-after': 0, 'pause-before': 0,
             'pitch': 'medium', 'pitch-range': '50', 'play-during': 'auto',
-            'position': 'static', 'quotes': u"'“' '”' '‘' '’'", 'richness':
+            'position': 'static', 'quotes': "'“' '”' '‘' '’'", 'richness':
             '50', 'right': 'auto', 'speak': 'normal', 'speak-header': 'once',
             'speak-numeral': 'continuous', 'speak-punctuation': 'none',
             'speech-rate': 'medium', 'stress': '50', 'table-layout': 'auto',
@@ -129,10 +127,10 @@ def normalize_font(cssvalue, font_family_as_list=False):
         ans = {k:DEFAULTS[k] for k in composition}
         ans.update(parse_font(val))
     if font_family_as_list:
-        if isinstance(ans['font-family'], basestring):
+        if isinstance(ans['font-family'], str):
             ans['font-family'] = [x.strip() for x in ans['font-family'].split(',')]
     else:
-        if not isinstance(ans['font-family'], basestring):
+        if not isinstance(ans['font-family'], str):
             ans['font-family'] = serialize_font_family(ans['font-family'])
     return ans
 
@@ -141,7 +139,7 @@ def normalize_border(name, cssvalue):
     style = normalizers['border-' + EDGES[0]]('border-' + EDGES[0], cssvalue)
     vals = style.copy()
     for edge in EDGES[1:]:
-        style.update({k.replace(EDGES[0], edge):v for k, v in vals.iteritems()})
+        style.update({k.replace(EDGES[0], edge):v for k, v in vals.items()})
     return style
 
 normalizers = {
@@ -253,7 +251,7 @@ def condense_rule(style):
             if prop.name and prop.name.startswith(x):
                 expanded[x].append(prop)
                 break
-    for prefix, vals in expanded.iteritems():
+    for prefix, vals in expanded.items():
         if len(vals) > 1 and {x.priority for x in vals} == {''}:
             condensers[prefix[:-1]](style, vals)
 
@@ -290,7 +288,7 @@ def test_normalization(return_tests=False):  # {{{
                 {'font-family':'serif', 'font-weight':'bold', 'font-style':'italic', 'font-size':'larger',
                  'line-height':'normal', 'font-variant':'small-caps'},
                 '2em A B': {'font-family': '"A B"', 'font-size': '2em'},
-            }.iteritems():
+            }.items():
                 val = tuple(parseStyle('font: %s' % raw, validate=False))[0].cssValue
                 style = normalizers['font']('font', val)
                 self.assertDictEqual(font_dict(expected), style, raw)
@@ -298,7 +296,7 @@ def test_normalization(return_tests=False):  # {{{
         def test_border_normalization(self):
             def border_edge_dict(expected, edge='right'):
                 ans = {'border-%s-%s' % (edge, x): DEFAULTS['border-%s-%s' % (edge, x)] for x in ('style', 'width', 'color')}
-                for x, v in expected.iteritems():
+                for x, v in expected.items():
                     ans['border-%s-%s' % (edge, x)] = v
                 return ans
 
@@ -318,7 +316,7 @@ def test_normalization(return_tests=False):  # {{{
                 'solid 1px red': {'color':'red', 'width':'1px', 'style':'solid'},
                 '1px': {'width': '1px'}, '#aaa': {'color': '#aaa'},
                 '2em groove': {'width':'2em', 'style':'groove'},
-            }.iteritems():
+            }.items():
                 for edge in EDGES:
                     br = 'border-%s' % edge
                     val = tuple(parseStyle('%s: %s' % (br, raw), validate=False))[0].cssValue
@@ -328,13 +326,13 @@ def test_normalization(return_tests=False):  # {{{
                 'solid 1px red': {'color':'red', 'width':'1px', 'style':'solid'},
                 '1px': {'width': '1px'}, '#aaa': {'color': '#aaa'},
                 'thin groove': {'width':'thin', 'style':'groove'},
-            }.iteritems():
+            }.items():
                 val = tuple(parseStyle('%s: %s' % ('border', raw), validate=False))[0].cssValue
                 self.assertDictEqual(border_dict(expected), normalizers['border']('border', val))
 
             for name, val in {
                 'width': '10%', 'color': 'rgb(0, 1, 1)', 'style': 'double',
-            }.iteritems():
+            }.items():
                 cval = tuple(parseStyle('border-%s: %s' % (name, val), validate=False))[0].cssValue
                 self.assertDictEqual(border_val_dict(val, name), normalizers['border-'+name]('border-'+name, cval))
 
@@ -346,7 +344,7 @@ def test_normalization(return_tests=False):  # {{{
                 '1em 2em': ('1em', '2em', '1em', '2em'),
                 '1em 2em 3em': ('1em', '2em', '3em', '2em'),
                 '1 2 3 4': ('1', '2', '3', '4'),
-            }.iteritems():
+            }.items():
                 for prefix in ('margin', 'padding'):
                     cval = tuple(parseStyle('%s: %s' % (prefix, raw), validate=False))[0].cssValue
                     self.assertDictEqual(edge_dict(prefix, expected), normalizers[prefix](prefix, cval))
@@ -354,14 +352,14 @@ def test_normalization(return_tests=False):  # {{{
         def test_list_style_normalization(self):
             def ls_dict(expected):
                 ans = {'list-style-%s' % x : DEFAULTS['list-style-%s' % x] for x in ('type', 'image', 'position')}
-                for k, v in expected.iteritems():
+                for k, v in expected.items():
                     ans['list-style-%s' % k] = v
                 return ans
             for raw, expected in {
                 'url(http://www.example.com/images/list.png)': {'image': 'url(http://www.example.com/images/list.png)'},
                 'inside square': {'position':'inside', 'type':'square'},
                 'upper-roman url(img) outside': {'position':'outside', 'type':'upper-roman', 'image':'url(img)'},
-            }.iteritems():
+            }.items():
                 cval = tuple(parseStyle('list-style: %s' % raw, validate=False))[0].cssValue
                 self.assertDictEqual(ls_dict(expected), normalizers['list-style']('list-style', cval))
 
@@ -390,10 +388,10 @@ def test_normalization(return_tests=False):  # {{{
                 (1, 1, 1, 1) : '1pt',
                 ('2%', '2%', '2%', '2%') : '2%',
                 tuple('0 0 0 0'.split()) : '0',
-            }.iteritems():
+            }.items():
                 for prefix in ('margin', 'padding'):
                     css = {'%s-%s' % (prefix, x) : str(y)+'pt' if isinstance(y, (int, float)) else y for x, y in zip(('left', 'top', 'right', 'bottom'), s)}
-                    css = '; '.join(('%s:%s' % (k, v) for k, v in css.iteritems()))
+                    css = '; '.join(('%s:%s' % (k, v) for k, v in css.items()))
                     style = parseStyle(css)
                     condense_rule(style)
                     val = getattr(style.getProperty(prefix), 'value', None)

@@ -1,20 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-from future_builtins import map
+import os
+import re
+from collections import namedtuple
+from functools import partial
+from operator import attrgetter
+
+from calibre import guess_type, replace_entities
+from calibre.ebooks.chardet import xml_to_unicode
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re, os
-from functools import partial
-from operator import attrgetter
-from collections import namedtuple
 
-from calibre import guess_type, replace_entities
-from calibre.ebooks.chardet import xml_to_unicode
 
 
 def character_count(html):
@@ -45,7 +44,7 @@ def all_links(html):
     return ans
 
 
-class SpineItem(unicode):
+class SpineItem(str):
 
     def __new__(cls, path, mime_type=None, read_anchor_map=True,
             run_char_count=True, from_epub=False, read_links=True):
@@ -149,5 +148,3 @@ def create_indexing_data(spine, toc):
             start = i.anchor if i.spine_pos == spine_pos else None
             end = i.end_anchor if i.spine_pos == spine_pos else None
             spine_item.index_entries.append(ie(i, start, end))
-
-

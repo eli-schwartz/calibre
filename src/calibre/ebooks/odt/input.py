@@ -1,4 +1,17 @@
-from __future__ import with_statement
+import logging
+import os
+
+from calibre import CurrentDir, walk
+from calibre.ebooks.oeb.base import _css_logger
+from cssutils import CSSParser
+from cssutils.css import CSSRule
+from lxml import etree
+from odf.draw import Frame as odFrame, Image as odImage
+from odf.namespaces import TEXTNS as odTEXTNS
+from odf.odf2xhtml import ODF2XHTML
+from odf.opendocument import load as odLoad
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
@@ -6,19 +19,9 @@ __docformat__ = 'restructuredtext en'
 '''
 Convert an ODT file into a Open Ebook
 '''
-import os, logging
 
-from lxml import etree
-from cssutils import CSSParser
-from cssutils.css import CSSRule
 
-from odf.odf2xhtml import ODF2XHTML
-from odf.opendocument import load as odLoad
-from odf.draw import Frame as odFrame, Image as odImage
-from odf.namespaces import TEXTNS as odTEXTNS
 
-from calibre import CurrentDir, walk
-from calibre.ebooks.oeb.base import _css_logger
 
 
 class Extract(ODF2XHTML):
@@ -68,7 +71,7 @@ class Extract(ODF2XHTML):
             etree.SubElement(head, ns+'link', {'type':'text/css',
                 'rel':'stylesheet', 'href':'odfpy.css'})
 
-        css = u'\n\n'.join(ans)
+        css = '\n\n'.join(ans)
         parser = CSSParser(loglevel=logging.WARNING,
                             log=_css_logger)
         self.css = parser.parseString(css, validate=False)
@@ -90,7 +93,7 @@ class Extract(ODF2XHTML):
         # Fix empty title tags
         for t in XPath('//h:title')(root):
             if not t.text:
-                t.text = u' '
+                t.text = ' '
         # Fix <p><div> constructs as the asinine epubchecker complains
         # about them
         pdiv = XPath('//h:p/h:div')
@@ -128,28 +131,28 @@ class Extract(ODF2XHTML):
             if (len(div1), len(div2)) != (1, 1):
                 continue
             cls = div1.get('class', '')
-            first_rules = filter(None, [self.get_css_for_class(x) for x in
-                cls.split()])
+            first_rules = [_f for _f in [self.get_css_for_class(x) for x in
+                cls.split()] if _f]
             has_align = False
             for r in first_rules:
-                if r.style.getProperty(u'text-align') is not None:
+                if r.style.getProperty('text-align') is not None:
                     has_align = True
             ml = mr = None
             if not has_align:
                 aval = None
-                cls = div2.get(u'class', u'')
-                rules = filter(None, [self.get_css_for_class(x) for x in
-                    cls.split()])
+                cls = div2.get('class', '')
+                rules = [_f for _f in [self.get_css_for_class(x) for x in
+                    cls.split()] if _f]
                 for r in rules:
-                    ml = r.style.getPropertyCSSValue(u'margin-left') or ml
-                    mr = r.style.getPropertyCSSValue(u'margin-right') or mr
+                    ml = r.style.getPropertyCSSValue('margin-left') or ml
+                    mr = r.style.getPropertyCSSValue('margin-right') or mr
                     ml = getattr(ml, 'value', None)
                     mr = getattr(mr, 'value', None)
-                if ml == mr == u'auto':
-                    aval = u'center'
-                elif ml == u'auto' and mr != u'auto':
+                if ml == mr == 'auto':
+                    aval = 'center'
+                elif ml == 'auto' and mr != 'auto':
                     aval = 'right'
-                elif ml != u'auto' and mr == u'auto':
+                elif ml != 'auto' and mr == 'auto':
                     aval = 'left'
                 if aval is not None:
                     style = div1.attrib.get('style', '').strip()
@@ -172,7 +175,7 @@ class Extract(ODF2XHTML):
             css = style.text
             if css:
                 css, sel_map = self.do_filter_css(css)
-                if not isinstance(css, unicode):
+                if not isinstance(css, str):
                     css = css.decode('utf-8', 'ignore')
                 style.text = css
                 for x in root.xpath('//*[@class]'):
@@ -211,7 +214,7 @@ class Extract(ODF2XHTML):
     def search_page_img(self, mi, log):
         for frm in self.document.topnode.getElementsByType(odFrame):
             try:
-                if frm.getAttrNS(odTEXTNS,u'anchor-type') == 'page':
+                if frm.getAttrNS(odTEXTNS,'anchor-type') == 'page':
                     log.warn('Document has Pictures anchored to Page, will all end up before first page!')
                     break
             except ValueError:
@@ -248,7 +251,7 @@ class Extract(ODF2XHTML):
         # first load the odf structure
         self.lines = []
         self._wfunc = self._wlines
-        if isinstance(odffile, basestring) \
+        if isinstance(odffile, str) \
                 or hasattr(odffile, 'read'):  # Added by Kovid
             self.document = odLoad(odffile)
         else:
@@ -294,14 +297,10 @@ class Extract(ODF2XHTML):
                 f.write(html.encode('utf-8'))
             zf = ZipFile(stream, 'r')
             self.extract_pictures(zf)
-            opf = OPFCreator(os.path.abspath(os.getcwdu()), mi)
+            opf = OPFCreator(os.path.abspath(os.getcwd()), mi)
             opf.create_manifest([(os.path.abspath(f2), None) for f2 in
-                walk(os.getcwdu())])
+                walk(os.getcwd())])
             opf.create_spine([os.path.abspath('index.xhtml')])
             with open('metadata.opf', 'wb') as f:
                 opf.render(f)
             return os.path.abspath('metadata.opf')
-
-
-
-

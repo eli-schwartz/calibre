@@ -1,14 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+from PyQt5.Qt import (
+	QApplication, QDialog, QDialogButtonBox, QIcon, QMessageBox,
+	QPlainTextEdit, QPushButton, QTimer, QVBoxLayout
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
 
-from PyQt5.Qt import QDialog, QVBoxLayout, QPlainTextEdit, QTimer, \
-    QDialogButtonBox, QPushButton, QApplication, QIcon, QMessageBox
 
 
 def step_dialog(parent, title, msg, det_msg=''):
@@ -63,7 +64,7 @@ class UserDefinedDevice(QDialog):
             res = ''
             if len(new_devices) == 1:
                 def fmtid(x):
-                    if isinstance(x, (int, long)):
+                    if isinstance(x, int):
                         x = hex(x)
                     if not x.startswith('0x'):
                         x = '0x' + x

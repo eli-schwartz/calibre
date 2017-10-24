@@ -1,17 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import json
+import mimetypes
+import os
+import shutil
+import sys
+import time
+from argparse import ArgumentParser, FileType
+from collections import OrderedDict
+from pprint import pprint
+from subprocess import check_call
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, time, sys, shutil, json, mimetypes
-from pprint import pprint
-from argparse import ArgumentParser, FileType
-from subprocess import check_call
-from collections import OrderedDict
 
 class ReadFileWithProgressReporting(file):  # {{{
 

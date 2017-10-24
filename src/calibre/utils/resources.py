@@ -1,15 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import os
+import sys
+
+from .. import config_dir
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
 
-import __builtin__, sys, os
 
-from .. import config_dir
 
 
 class PathResolver(object):
@@ -82,7 +83,7 @@ def get_image_path(path, data=False, allow_user_override=True):
 
 
 def js_name_to_path(name, ext='.coffee'):
-    path = (u'/'.join(name.split('.'))) + ext
+    path = ('/'.join(name.split('.'))) + ext
     d = os.path.dirname
     base = d(d(os.path.abspath(__file__)))
     return os.path.join(base, path)
@@ -102,7 +103,7 @@ def _compile_coffeescript(name):
 
 
 def compiled_coffeescript(name, dynamic=False):
-    import zipfile
+    from . import zipfile
     zipf = get_path('compiled_coffeescript.zip', allow_user_override=False)
     with zipfile.ZipFile(zipf, 'r') as zf:
         if dynamic:
@@ -116,6 +117,3 @@ def compiled_coffeescript(name, dynamic=False):
             return _compile_coffeescript(name)
         else:
             return zf.read(name+'.js')
-
-__builtin__.__dict__['P'] = get_path
-__builtin__.__dict__['I'] = get_image_path

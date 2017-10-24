@@ -1,7 +1,6 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.constants import iswindows
+
 
 '''
 Created on 29 Nov 2013
@@ -12,7 +11,6 @@ Code taken from https://mail.python.org/pipermail/python-dev/2007-June/073745.ht
 modified to make it work
 '''
 
-from calibre.constants import iswindows
 
 
 def get_socket_inherit(socket):

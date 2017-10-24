@@ -1,28 +1,28 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import sys
+
+from calibre.ebooks.conversion.plumber import Plumber
+from calibre.ebooks.epub import initialize_container
+from calibre.ebooks.oeb.polish.container import OEB_DOCS, OEB_STYLES, Container
+from calibre.ptempfile import TemporaryDirectory
+from calibre.utils.logging import default_log
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, sys
 
-from calibre.ptempfile import TemporaryDirectory
-from calibre.ebooks.conversion.plumber import Plumber
-from calibre.ebooks.oeb.polish.container import Container, OEB_DOCS, OEB_STYLES
-from calibre.ebooks.epub import initialize_container
 
-from calibre.utils.logging import default_log
 
 IMPORTABLE = {'htm', 'xhtml', 'html', 'xhtm', 'docx'}
 
 
 def auto_fill_manifest(container):
     manifest_id_map = container.manifest_id_map
-    manifest_name_map = {v:k for k, v in manifest_id_map.iteritems()}
+    manifest_name_map = {v:k for k, v in manifest_id_map.items()}
 
-    for name, mt in container.mime_map.iteritems():
+    for name, mt in container.mime_map.items():
         if name not in manifest_name_map and not container.ok_to_be_unmanifested(name):
             mitem = container.generate_item(name, unique_href=False)
             gname = container.href_to_name(mitem.get('href'), container.opf_name)
@@ -53,7 +53,7 @@ def import_book_as_epub(srcpath, destpath, log=default_log):
         c = Container(tdir, pathtoopf, log)
         auto_fill_manifest(c)
         # Auto fix all HTML/CSS
-        for name, mt in c.mime_map.iteritems():
+        for name, mt in c.mime_map.items():
             if mt in set(OEB_DOCS) | set(OEB_STYLES):
                 c.parsed(name)
                 c.dirty(name)
@@ -66,4 +66,3 @@ def import_book_as_epub(srcpath, destpath, log=default_log):
 
 if __name__ == '__main__':
     import_book_as_epub(sys.argv[-2], sys.argv[-1])
-

@@ -1,16 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import atexit
+import inspect
+import os
+import pdb
+import select
+import socket
+import sys
+import time
+
+from calibre import prints
+from calibre.constants import cache_dir
+from calibre.utils.ipc import eintr_retry_call
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import pdb, socket, inspect, sys, select, os, atexit, time
 
-from calibre import prints
-from calibre.utils.ipc import eintr_retry_call
-from calibre.constants import cache_dir
 
 PROMPT = b'(debug) '
 QUESTION = b'\x00\x01\x02'
@@ -96,7 +102,7 @@ def set_trace(port=4444, skip=None):
 def cli(port=4444):
     prints('Connecting to remote debugger on port %d...' % port)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    for i in xrange(20):
+    for i in range(20):
         try:
             sock.connect(('127.0.0.1', port))
             break
@@ -138,7 +144,7 @@ def cli(port=4444):
                 sys.stdout.write(recvd)
                 raw = b''
                 try:
-                    raw = raw_input(PROMPT) + b'\n'
+                    raw = input(PROMPT) + b'\n'
                 except (EOFError, KeyboardInterrupt):
                     pass
                 if not raw:

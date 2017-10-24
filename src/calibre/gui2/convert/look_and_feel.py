@@ -1,17 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import json
+
+from calibre.gui2.convert import Widget
+from calibre.gui2.convert.look_and_feel_ui import Ui_Form
+from PyQt5.Qt import Qt
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import json
 
-from PyQt5.Qt import Qt
 
-from calibre.gui2.convert.look_and_feel_ui import Ui_Form
-from calibre.gui2.convert import Widget
 
 
 class LookAndFeelWidget(Widget, Ui_Form):
@@ -67,19 +67,19 @@ class LookAndFeelWidget(Widget, Ui_Form):
 
     def get_value_handler(self, g):
         if g is self.opt_change_justification:
-            ans = unicode(g.itemData(g.currentIndex()) or '')
+            ans = str(g.itemData(g.currentIndex()) or '')
             return ans
         if g is self.opt_filter_css:
             ans = set()
-            for key, item in self.FILTER_CSS.iteritems():
+            for key, item in self.FILTER_CSS.items():
                 w = getattr(self, 'filter_css_%s'%key)
                 if w.isChecked():
                     ans = ans.union(item)
             ans = ans.union(set([x.strip().lower() for x in
-                unicode(self.filter_css_others.text()).split(',')]))
+                str(self.filter_css_others.text()).split(',')]))
             return ','.join(ans) if ans else None
         if g is self.opt_font_size_mapping:
-            val = unicode(g.text()).strip()
+            val = str(g.text()).strip()
             val = [x.strip() for x in val.split(',' if ',' in val else ' ') if x.strip()]
             return ', '.join(val) or None
         if g is self.opt_transform_css_rules:
@@ -89,7 +89,7 @@ class LookAndFeelWidget(Widget, Ui_Form):
     def set_value_handler(self, g, val):
         if g is self.opt_change_justification:
             for i in range(g.count()):
-                c = unicode(g.itemData(i) or '')
+                c = str(g.itemData(i) or '')
                 if val == c:
                     g.setCurrentIndex(i)
                     break
@@ -98,7 +98,7 @@ class LookAndFeelWidget(Widget, Ui_Form):
             if not val:
                 val = ''
             items = frozenset([x.strip().lower() for x in val.split(',')])
-            for key, vals in self.FILTER_CSS.iteritems():
+            for key, vals in self.FILTER_CSS.items():
                 w = getattr(self, 'filter_css_%s'%key)
                 if not vals - items:
                     items = items - vals
@@ -126,7 +126,7 @@ class LookAndFeelWidget(Widget, Ui_Form):
     def font_key_wizard(self):
         from calibre.gui2.convert.font_key import FontKeyChooser
         d = FontKeyChooser(self, self.opt_base_font_size.value(),
-                unicode(self.opt_font_size_mapping.text()).strip())
+                str(self.opt_font_size_mapping.text()).strip())
         if d.exec_() == d.Accepted:
             self.opt_font_size_mapping.setText(', '.join(['%.1f'%x for x in
                 d.fsizes]))

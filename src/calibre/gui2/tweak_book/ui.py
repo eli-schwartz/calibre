@@ -1,51 +1,51 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
-
 import os
 from functools import partial
 from itertools import product
-from future_builtins import map
-
-from PyQt5.Qt import (
-    QDockWidget, Qt, QLabel, QIcon, QAction, QApplication, QWidget, QEvent,
-    QVBoxLayout, QStackedWidget, QTabWidget, QImage, QPixmap, pyqtSignal,
-    QMenu, QHBoxLayout, QTimer, QUrl, QSize)
 
 from calibre import prints
-from calibre.constants import __appname__, get_version, isosx, DEBUG
+from calibre.constants import DEBUG, __appname__, get_version, isosx
 from calibre.gui2 import elided_text, open_url
 from calibre.gui2.dbus_export.widgets import factory
 from calibre.gui2.keyboard import Manager as KeyboardManager
 from calibre.gui2.main_window import MainWindow
 from calibre.gui2.throbber import ThrobbingButton
 from calibre.gui2.tweak_book import (
-    current_container, tprefs, actions, capitalize, toolbar_actions, editors, update_mark_text_action)
-from calibre.gui2.tweak_book.file_list import FileListWidget
-from calibre.gui2.tweak_book.job import BlockingJob
+	actions, capitalize, current_container, editors,
+	toolbar_actions, tprefs, update_mark_text_action
+)
 from calibre.gui2.tweak_book.boss import Boss
-from calibre.gui2.tweak_book.undo import CheckpointView
-from calibre.gui2.tweak_book.preview import Preview
-from calibre.gui2.tweak_book.plugin import create_plugin_actions
-from calibre.gui2.tweak_book.search import SearchPanel
+from calibre.gui2.tweak_book.char_select import CharSelect
 from calibre.gui2.tweak_book.check import Check
 from calibre.gui2.tweak_book.check_links import CheckExternalLinks
-from calibre.gui2.tweak_book.search import SavedSearches
+from calibre.gui2.tweak_book.editor.insert_resource import InsertImage
+from calibre.gui2.tweak_book.editor.widget import register_text_editor_actions
+from calibre.gui2.tweak_book.file_list import FileListWidget
+from calibre.gui2.tweak_book.function_replace import DebugOutput
+from calibre.gui2.tweak_book.job import BlockingJob
+from calibre.gui2.tweak_book.live_css import LiveCSS
+from calibre.gui2.tweak_book.manage_fonts import ManageFonts
+from calibre.gui2.tweak_book.plugin import create_plugin_actions
+from calibre.gui2.tweak_book.preview import Preview
+from calibre.gui2.tweak_book.reports import Reports
+from calibre.gui2.tweak_book.search import SavedSearches, SearchPanel
 from calibre.gui2.tweak_book.text_search import TextSearch
 from calibre.gui2.tweak_book.toc import TOCViewer
-from calibre.gui2.tweak_book.char_select import CharSelect
-from calibre.gui2.tweak_book.live_css import LiveCSS
-from calibre.gui2.tweak_book.reports import Reports
-from calibre.gui2.tweak_book.manage_fonts import ManageFonts
-from calibre.gui2.tweak_book.function_replace import DebugOutput
-from calibre.gui2.tweak_book.editor.widget import register_text_editor_actions
-from calibre.gui2.tweak_book.editor.insert_resource import InsertImage
+from calibre.gui2.tweak_book.undo import CheckpointView
 from calibre.utils.icu import character_name, sort_key
 from calibre.utils.localization import localize_user_manual_link
+from PyQt5.Qt import (
+	QAction, QApplication, QDockWidget, QEvent, QHBoxLayout, QIcon,
+	QImage, QLabel, QMenu, QPixmap, QSize, QStackedWidget, Qt,
+	QTabWidget, QTimer, QUrl, QVBoxLayout, QWidget, pyqtSignal
+)
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 
 def open_donate():
@@ -105,15 +105,15 @@ class Central(QStackedWidget):  # {{{
     @property
     def tab_order(self):
         ans = []
-        rmap = {v:k for k, v in editors.iteritems()}
-        for i in xrange(self.editor_tabs.count()):
+        rmap = {v:k for k, v in editors.items()}
+        for i in range(self.editor_tabs.count()):
             name = rmap.get(self.editor_tabs.widget(i))
             if name is not None:
                 ans.append(name)
         return ans
 
     def rename_editor(self, editor, name):
-        for i in xrange(self.editor_tabs.count()):
+        for i in range(self.editor_tabs.count()):
             if self.editor_tabs.widget(i) is editor:
                 fname = name.rpartition('/')[2]
                 self.editor_tabs.setTabText(i, fname)
@@ -124,7 +124,7 @@ class Central(QStackedWidget):  # {{{
         self.editor_tabs.setCurrentWidget(editor)
 
     def close_editor(self, editor):
-        for i in xrange(self.editor_tabs.count()):
+        for i in range(self.editor_tabs.count()):
             if self.editor_tabs.widget(i) is editor:
                 self.editor_tabs.removeTab(i)
                 if self.editor_tabs.count() == 0:
@@ -134,7 +134,7 @@ class Central(QStackedWidget):  # {{{
 
     def editor_modified(self, *args):
         tb = self.editor_tabs.tabBar()
-        for i in xrange(self.editor_tabs.count()):
+        for i in range(self.editor_tabs.count()):
             editor = self.editor_tabs.widget(i)
             modified = getattr(editor, 'is_modified', False)
             tb.setTabIcon(i, self.modified_icon if modified else QIcon())
@@ -150,7 +150,7 @@ class Central(QStackedWidget):  # {{{
     def close_all_but(self, ed):
         close = []
         if ed is not None:
-            for i in xrange(self.editor_tabs.count()):
+            for i in range(self.editor_tabs.count()):
                 q = self.editor_tabs.widget(i)
                 if q is not None and q is not ed:
                     close.append(q)
@@ -164,7 +164,7 @@ class Central(QStackedWidget):  # {{{
     def save_state(self):
         tprefs.set('search-panel-visible', self.search_panel.isVisible())
         self.search_panel.save_state()
-        for ed in editors.itervalues():
+        for ed in editors.values():
             ed.save_state()
         if self.current_editor is not None:
             self.current_editor.save_state()  # Ensure the current editor saves it state last
@@ -270,7 +270,7 @@ class Main(MainWindow):
         self.cursor_position_widget = CursorPositionWidget(self)
         self.status_bar.addPermanentWidget(self.cursor_position_widget)
         self.status_bar_default_msg = la = QLabel(_('{0} {1} created by {2}').format(__appname__, get_version(), 'Kovid Goyal'))
-        la.base_template = unicode(la.text())
+        la.base_template = str(la.text())
         self.status_bar.addWidget(la)
         f = self.status_bar.font()
         f.setBold(True)
@@ -321,7 +321,7 @@ class Main(MainWindow):
             if isinstance(keys, type('')):
                 keys = (keys,)
             self.keyboard.register_shortcut(
-                sid, unicode(ac.text()).replace('&', ''), default_keys=keys, description=description, action=ac, group=group)
+                sid, str(ac.text()).replace('&', ''), default_keys=keys, description=description, action=ac, group=group)
             self.addAction(ac)
             return ac
 
@@ -600,7 +600,7 @@ class Main(MainWindow):
 
         if self.plugin_menu_actions:
             e = b.addMenu(_('&Plugins'))
-            for ac in sorted(self.plugin_menu_actions, key=lambda x:sort_key(unicode(x.text()))):
+            for ac in sorted(self.plugin_menu_actions, key=lambda x:sort_key(str(x.text()))):
                 e.addAction(ac)
 
         e = b.addMenu(_('&Help'))
@@ -652,7 +652,7 @@ class Main(MainWindow):
                     bar.addAction(actions[ac])
                 except KeyError:
                     if DEBUG:
-                        prints('Unknown action for toolbar %r: %r' % (unicode(bar.objectName()), ac))
+                        prints('Unknown action for toolbar %r: %r' % (str(bar.objectName()), ac))
 
         for x in tprefs['global_book_toolbar']:
             add(self.global_bar, x)

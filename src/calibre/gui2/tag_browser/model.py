@@ -1,28 +1,30 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-from future_builtins import map
+import copy
+import pickle
+import os
+import traceback
+from collections import OrderedDict
+
+from calibre.constants import config_dir
+from calibre.db.categories import Tag
+from calibre.ebooks.metadata import rating_to_stars
+from calibre.gui2 import config, error_dialog, file_icon_provider, gprefs
+from calibre.gui2.dialogs.confirm_delete import confirm
+from calibre.library.field_metadata import category_icon_map
+from calibre.utils.config import tweaks
+from calibre.utils.formatter import EvalFormatter
+from calibre.utils.icu import collation_order, lower, sort_key, strcmp
+from PyQt5.Qt import (
+	QAbstractItemModel, QFont, QIcon, QMimeData, QModelIndex, QObject, Qt, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import traceback, cPickle, copy, os
-from collections import OrderedDict
 
-from PyQt5.Qt import (QAbstractItemModel, QIcon, QFont, Qt,
-        QMimeData, QModelIndex, pyqtSignal, QObject)
 
-from calibre.constants import config_dir
-from calibre.ebooks.metadata import rating_to_stars
-from calibre.gui2 import gprefs, config, error_dialog, file_icon_provider
-from calibre.db.categories import Tag
-from calibre.utils.config import tweaks
-from calibre.utils.icu import sort_key, lower, strcmp, collation_order
-from calibre.library.field_metadata import category_icon_map
-from calibre.gui2.dialogs.confirm_delete import confirm
-from calibre.utils.formatter import EvalFormatter
 
 TAG_SEARCH_STATES = {'clear': 0, 'mark_plus': 1, 'mark_plusplus': 2,
                      'mark_minus': 3, 'mark_minusminus': 4}
@@ -191,7 +193,7 @@ class TagTreeItem(object):  # {{{
             else:
                 name = tag.name
         if role == Qt.DisplayRole:
-            return unicode(name)
+            return str(name)
         if role == Qt.EditRole:
             return (tag.original_name)
         if role == Qt.DecorationRole:
@@ -302,7 +304,7 @@ class TagsModel(QAbstractItemModel):  # {{{
         self.node_map = {}
         self.category_nodes = []
         self.category_custom_icons = {}
-        for k, v in self.prefs['tags_browser_category_icons'].iteritems():
+        for k, v in self.prefs['tags_browser_category_icons'].items():
             icon = QIcon(os.path.join(config_dir, 'tb_icons', v))
             if len(icon.availableSizes()) > 0:
                 self.category_custom_icons[k] = icon
@@ -382,7 +384,7 @@ class TagsModel(QAbstractItemModel):  # {{{
         self._build_in_progress = False
 
     def _run_rebuild(self, state_map={}):
-        for node in self.node_map.itervalues():
+        for node in self.node_map.values():
             node.break_cycles()
         del node  # Clear reference to node in the current frame
         self.node_map.clear()
@@ -406,7 +408,7 @@ class TagsModel(QAbstractItemModel):  # {{{
         for i, key in enumerate(self.categories):
             is_gst = False
             if key.startswith('@') and key[1:] in gst:
-                tt = _(u'The grouped search term name is "{0}"').format(key)
+                tt = _('The grouped search term name is "{0}"').format(key)
                 is_gst = True
             elif key == 'news':
                 tt = ''
@@ -417,7 +419,7 @@ class TagsModel(QAbstractItemModel):  # {{{
                     cust_desc = fm['display'].get('description', '')
                     if cust_desc:
                         cust_desc = '\n' + _('Description:') + ' ' + cust_desc
-                tt = _(u'The lookup/search name is "{0}"{1}').format(key, cust_desc)
+                tt = _('The lookup/search name is "{0}"{1}').format(key, cust_desc)
 
             if self.category_custom_icons.get(key, None) is None:
                 self.category_custom_icons[key] = QIcon(I(
@@ -737,13 +739,13 @@ class TagsModel(QAbstractItemModel):  # {{{
                 data.append(d)
             else:
                 data.append(None)
-        raw = bytearray(cPickle.dumps(data, -1))
+        raw = bytearray(pickle.dumps(data, -1))
         ans = QMimeData()
         ans.setData('application/calibre+from_tag_browser', raw)
         return ans
 
     def dropMimeData(self, md, action, row, column, parent):
-        fmts = set([unicode(x) for x in md.formats()])
+        fmts = set([str(x) for x in md.formats()])
         if not fmts.intersection(set(self.mimeTypes())):
             return False
         if "application/calibre+from_library" in fmts:
@@ -762,7 +764,7 @@ class TagsModel(QAbstractItemModel):  # {{{
         if not md.hasFormat('application/calibre+from_tag_browser'):
             return False
         data = str(md.data('application/calibre+from_tag_browser'))
-        src = cPickle.loads(data)
+        src = pickle.loads(data)
         for s in src:
             if s[0] != TagTreeItem.TAG:
                 return False
@@ -991,7 +993,7 @@ class TagsModel(QAbstractItemModel):  # {{{
             self.restriction_error.emit()
 
         if self.filter_categories_by:
-            for category in data.keys():
+            for category in list(data.keys()):
                 data[category] = [t for t in data[category]
                         if lower(t.name).find(self.filter_categories_by) >= 0]
 
@@ -1066,7 +1068,7 @@ class TagsModel(QAbstractItemModel):  # {{{
         # set up to reposition at the same item. We can do this except if
         # working with the last item and that item is deleted, in which case
         # we position at the parent label
-        val = unicode(value or '').strip()
+        val = str(value or '').strip()
         if not val:
             error_dialog(self.gui_parent, _('Item is blank'),
                         _('An item cannot be set to nothing. Delete it instead.')).exec_()
@@ -1094,7 +1096,7 @@ class TagsModel(QAbstractItemModel):  # {{{
                 self.use_position_based_index_on_next_recount = True
                 return True
 
-            for c in sorted(user_cats.keys(), key=sort_key):
+            for c in sorted(list(user_cats.keys()), key=sort_key):
                 if icu_lower(c).startswith(ckey_lower):
                     if len(c) == len(ckey):
                         if strcmp(ckey, nkey) != 0 and \
@@ -1133,7 +1135,7 @@ class TagsModel(QAbstractItemModel):  # {{{
                     _('The saved search name %s is already used.')%val).exec_()
                 return False
             self.use_position_based_index_on_next_recount = True
-            self.db.saved_search_rename(unicode(item.data(role) or ''), val)
+            self.db.saved_search_rename(str(item.data(role) or ''), val)
             item.tag.name = val
             self.search_item_renamed.emit()  # Does a refresh
         else:
@@ -1157,7 +1159,7 @@ class TagsModel(QAbstractItemModel):  # {{{
         redisplay the tree as appropriate.
         '''
         user_cats = self.db.prefs.get('user_categories', {})
-        for k in user_cats.keys():
+        for k in list(user_cats.keys()):
             new_contents = []
             for tup in user_cats[k]:
                 if tup[0] == item_name and tup[1] == item_category:
@@ -1174,7 +1176,7 @@ class TagsModel(QAbstractItemModel):  # {{{
         tree as appropriate.
         '''
         user_cats = self.db.prefs.get('user_categories', {})
-        for cat in user_cats.keys():
+        for cat in list(user_cats.keys()):
             self.delete_item_from_user_category(cat, item_name, item_category,
                                                 user_categories=user_cats)
         self.db.new_api.set_pref('user_categories', user_cats)
@@ -1481,7 +1483,7 @@ class TagsModel(QAbstractItemModel):  # {{{
                 if path[depth] > start_path[depth]:
                     start_path = path
             my_key = self.get_node(category_index).category_key
-            for j in xrange(self.rowCount(category_index)):
+            for j in range(self.rowCount(category_index)):
                 tag_index = self.index(j, 0, category_index)
                 tag_item = self.get_node(tag_index)
                 if tag_item.type == TagTreeItem.CATEGORY:
@@ -1492,7 +1494,7 @@ class TagsModel(QAbstractItemModel):  # {{{
                         return True
             return False
 
-        for i in xrange(self.rowCount(QModelIndex())):
+        for i in range(self.rowCount(QModelIndex())):
             if process_level(0, self.index(i, 0, QModelIndex()), start_path):
                 break
         return self.path_found
@@ -1506,7 +1508,7 @@ class TagsModel(QAbstractItemModel):  # {{{
         if not key:
             return None
 
-        for i in xrange(self.rowCount(parent)):
+        for i in range(self.rowCount(parent)):
             idx = self.index(i, 0, parent)
             node = self.get_node(idx)
             if node.type == TagTreeItem.CATEGORY:
@@ -1536,7 +1538,7 @@ class TagsModel(QAbstractItemModel):  # {{{
                 process_tag(self.index(i, 0, tag_index), c)
 
         def process_level(category_index):
-            for j in xrange(self.rowCount(category_index)):
+            for j in range(self.rowCount(category_index)):
                 tag_index = self.index(j, 0, category_index)
                 tag_item = self.get_node(tag_index)
                 if tag_item.boxed:
@@ -1547,7 +1549,7 @@ class TagsModel(QAbstractItemModel):  # {{{
                 else:
                     process_tag(tag_index, tag_item)
 
-        for i in xrange(self.rowCount(QModelIndex())):
+        for i in range(self.rowCount(QModelIndex())):
             process_level(self.index(i, 0, QModelIndex()))
 
     # }}}

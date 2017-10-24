@@ -1,16 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+from calibre.gui2 import error_dialog
+from calibre.gui2.convert import Widget
+from calibre.gui2.convert.toc_ui import Ui_Form
+from calibre.utils.localization import localize_user_manual_link
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
 
-from calibre.gui2.convert.toc_ui import Ui_Form
-from calibre.gui2.convert import Widget
-from calibre.gui2 import error_dialog
-from calibre.utils.localization import localize_user_manual_link
 
 
 class TOCWidget(Widget, Ui_Form):

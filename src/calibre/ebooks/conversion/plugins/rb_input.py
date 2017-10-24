@@ -21,6 +21,6 @@ class RBInput(InputFormatPlugin):
         from calibre.ebooks.rb.reader import Reader
 
         reader = Reader(stream, log, options.input_encoding)
-        opf = reader.extract_content(os.getcwdu())
+        opf = reader.extract_content(os.getcwd())
 
         return opf

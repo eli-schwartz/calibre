@@ -1,25 +1,25 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-from future_builtins import map
+import os
+import struct
+import sys
+import textwrap
+from itertools import izip
+
+from calibre import CurrentDir
+from calibre.ebooks.mobi.debug import format_bytes
+from calibre.ebooks.mobi.debug.containers import ContainerHeader
+from calibre.ebooks.mobi.debug.headers import TextRecord
+from calibre.ebooks.mobi.debug.index import GuideIndex, NCXIndex, SECTIndex, SKELIndex
+from calibre.ebooks.mobi.reader.headers import NULL_INDEX
+from calibre.ebooks.mobi.utils import RECORD_SIZE, decode_tbs, read_font_record
+from calibre.utils.imghdr import what
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, os, struct, textwrap
-from itertools import izip
 
-from calibre import CurrentDir
-from calibre.ebooks.mobi.debug.containers import ContainerHeader
-from calibre.ebooks.mobi.debug.headers import TextRecord
-from calibre.ebooks.mobi.debug.index import (SKELIndex, SECTIndex, NCXIndex,
-        GuideIndex)
-from calibre.ebooks.mobi.utils import read_font_record, decode_tbs, RECORD_SIZE
-from calibre.ebooks.mobi.debug import format_bytes
-from calibre.ebooks.mobi.reader.headers import NULL_INDEX
-from calibre.utils.imghdr import what
 
 
 class FDST(object):
@@ -340,5 +340,3 @@ def inspect_mobi(mobi_file, ddir):
         part.dump(os.path.join(ddir, 'files'))
 
     f.dump_flows(os.path.join(ddir, 'flows'))
-
-

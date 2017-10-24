@@ -1,19 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import re
+import uuid
+from collections import Counter, OrderedDict
+from urllib.parse import urlparse
+
+from calibre.ebooks import ConversionError
+from calibre.ebooks.oeb.base import TOC, XHTML, XPNSMAP, barename, xml2text
+from lxml import etree
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re, uuid
 
-from lxml import etree
-from urlparse import urlparse
-from collections import OrderedDict, Counter
 
-from calibre.ebooks.oeb.base import XPNSMAP, TOC, XHTML, xml2text, barename
-from calibre.ebooks import ConversionError
 
 
 def XPath(x):
@@ -25,7 +26,7 @@ def XPath(x):
 
 
 def isspace(x):
-    return not x or x.replace(u'\xa0', u'').isspace()
+    return not x or x.replace('\xa0', '').isspace()
 
 
 def at_start(elem):
@@ -84,8 +85,8 @@ class DetectStructure(object):
             for item in oeb.spine:
                 for elem in pb_xpath(item.data):
                     try:
-                        prev = elem.itersiblings(tag=etree.Element,
-                                preceding=True).next()
+                        prev = next(elem.itersiblings(tag=etree.Element,
+                                preceding=True))
                         if (barename(elem.tag) in {'h1', 'h2'} and barename(
                                 prev.tag) in {'h1', 'h2'} and (not prev.tail or
                                     not prev.tail.split())):
@@ -123,11 +124,11 @@ class DetectStructure(object):
                 elem = matches[0]
                 eid = elem.get('id', None)
                 if not eid:
-                    eid = u'start_reading_at_'+unicode(uuid.uuid4()).replace(u'-', u'')
+                    eid = 'start_reading_at_'+str(uuid.uuid4()).replace('-', '')
                     elem.set('id', eid)
-                if u'text' in self.oeb.guide:
-                    self.oeb.guide.remove(u'text')
-                self.oeb.guide.add(u'text', u'Start', item.href+u'#'+eid)
+                if 'text' in self.oeb.guide:
+                    self.oeb.guide.remove('text')
+                self.oeb.guide.add('text', 'Start', item.href+'#'+eid)
                 self.log('Setting start reading at position to %s in %s'%(
                     self.opts.start_reading_at, item.href))
                 return
@@ -270,8 +271,8 @@ class DetectStructure(object):
                 return []
 
         for document in self.oeb.spine:
-            previous_level1 = list(added.itervalues())[-1] if added else None
-            previous_level2 = list(added2.itervalues())[-1] if added2 else None
+            previous_level1 = list(added.values())[-1] if added else None
+            previous_level2 = list(added2.values())[-1] if added2 else None
 
             level1_toc, level1_title = self.get_toc_parts_for_xpath(self.opts.level1_toc)
             for elem in find_matches(level1_toc, document.data):

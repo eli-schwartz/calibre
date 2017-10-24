@@ -1,22 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals,  # division, absolute_import,
-                        print_function)
+import textwrap
+import weakref
+
+from calibre.devices.usbms.driver import debug_print
+from calibre.ebooks import BOOK_EXTENSIONS
+from calibre.gui2.device_drivers.mtp_config import FormatsConfig, TemplateConfig
+from PyQt5.Qt import (
+	QCheckBox, QComboBox, QDialog, QDialogButtonBox, QGridLayout, QGroupBox,
+	QLabel, QLineEdit, QSizePolicy, QSpacerItem, QTabWidget, QVBoxLayout, QWidget
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import weakref, textwrap
 
-from PyQt5.Qt import (
-    QWidget, QLabel, QTabWidget, QGridLayout, QLineEdit, QVBoxLayout,
-    QGroupBox, QComboBox, QSizePolicy, QDialog, QDialogButtonBox, QCheckBox,
-    QSpacerItem)
 
-from calibre.ebooks import BOOK_EXTENSIONS
-from calibre.gui2.device_drivers.mtp_config import (FormatsConfig, TemplateConfig)
-from calibre.devices.usbms.driver import debug_print
 
 
 def wrap_msg(msg):
@@ -340,11 +340,11 @@ class ExtraCustomization(DeviceConfigTab):  # {{{
                     if hasattr(self.opt_extra_customization[i], 'isChecked'):
                         ec.append(self.opt_extra_customization[i].isChecked())
                     elif hasattr(self.opt_extra_customization[i], 'currentText'):
-                        ec.append(unicode(self.opt_extra_customization[i].currentText()).strip())
+                        ec.append(str(self.opt_extra_customization[i].currentText()).strip())
                     else:
-                        ec.append(unicode(self.opt_extra_customization[i].text()).strip())
+                        ec.append(str(self.opt_extra_customization[i].text()).strip())
             else:
-                ec = unicode(self.opt_extra_customization.text()).strip()
+                ec = str(self.opt_extra_customization.text()).strip()
                 if not ec:
                     ec = None
 

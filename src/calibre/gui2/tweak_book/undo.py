@@ -1,18 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import shutil
+
+from calibre.gui2 import error_dialog
+from PyQt5.Qt import (
+	QAbstractListModel, QApplication, QGridLayout, QIcon, QListView,
+	QModelIndex, QPushButton, QStyledItemDelegate, Qt, QWidget, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import shutil
 
-from PyQt5.Qt import (
-    QAbstractListModel, Qt, QModelIndex, QApplication, QWidget,
-    QGridLayout, QListView, QStyledItemDelegate, pyqtSignal, QPushButton, QIcon)
 
-from calibre.gui2 import error_dialog
 
 ROOT = QModelIndex()
 
@@ -243,4 +243,3 @@ class CheckpointView(QWidget):
             return error_dialog(self, _('Cannot compare'), _(
                 'There is no point comparing the current state to itself'), show=True)
         self.compare_requested.emit(m.states[row].container)
-

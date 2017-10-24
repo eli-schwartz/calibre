@@ -1,19 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re, os, shutil, errno
+import errno
+import os
+import re
+import shutil
 
-from PyQt5.Qt import QModelIndex
-
+from calibre import sanitize_file_name_unicode
 from calibre.gui2 import choose_dir, error_dialog, warning_dialog
+from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.tools import generate_catalog
 from calibre.utils.config import dynamic
-from calibre.gui2.actions import InterfaceAction
-from calibre import sanitize_file_name_unicode
+from PyQt5.Qt import QModelIndex
 
 
 class GenerateCatalogAction(InterfaceAction):
@@ -33,8 +34,8 @@ class GenerateCatalogAction(InterfaceAction):
     def generate_catalog(self):
         rows = self.gui.library_view.selectionModel().selectedRows()
         if not rows or len(rows) < 2:
-            rows = xrange(self.gui.library_view.model().rowCount(QModelIndex()))
-        ids = map(self.gui.library_view.model().id, rows)
+            rows = range(self.gui.library_view.model().rowCount(QModelIndex()))
+        ids = list(map(self.gui.library_view.model().id, rows))
 
         if not ids:
             return error_dialog(self.gui, _('No books selected'),

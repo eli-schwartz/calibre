@@ -1,16 +1,14 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-import os, json, re
+import json
+import os
+import re
 from threading import RLock
 
 import apsw
-
 from calibre.constants import config_dir
-from calibre.utils.config import to_json, from_json
+from calibre.utils.config import from_json, to_json
 
 
 def as_json(data):
@@ -31,9 +29,9 @@ def parse_restriction(raw):
     lr = r.get('library_restrictions', {})
     if not isinstance(lr, dict):
         lr = {}
-    r['allowed_library_names'] = frozenset(map(lambda x: x.lower(), r.get('allowed_library_names', ())))
-    r['blocked_library_names'] = frozenset(map(lambda x: x.lower(), r.get('blocked_library_names', ())))
-    r['library_restrictions'] = {k.lower(): v or '' for k, v in lr.iteritems()}
+    r['allowed_library_names'] = frozenset([x.lower() for x in r.get('allowed_library_names', ())])
+    r['blocked_library_names'] = frozenset([x.lower() for x in r.get('blocked_library_names', ())])
+    r['library_restrictions'] = {k.lower(): v or '' for k, v in lr.items()}
     return r
 
 
@@ -43,7 +41,7 @@ def serialize_restriction(r):
         v = r.get(x)
         if v:
             ans[x] = list(v)
-    ans['library_restrictions'] = {l.lower(): v or '' for l, v in r.get('library_restrictions', {}).iteritems()}
+    ans['library_restrictions'] = {l.lower(): v or '' for l, v in r.get('library_restrictions', {}).items()}
     return json.dumps(ans)
 
 
@@ -180,7 +178,7 @@ class UserManager(object):
             remove = self.all_user_names - set(users)
             if remove:
                 c.executemany('DELETE FROM users WHERE name=?', [(n,) for n in remove])
-            for name, data in users.iteritems():
+            for name, data in users.items():
                 res = serialize_restriction(data['restriction'])
                 r = 'y' if data['readonly'] else 'n'
                 c.execute('UPDATE users SET pw=?, restriction=?, readonly=? WHERE name=?',

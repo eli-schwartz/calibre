@@ -1,18 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import pickle
+import os
+import re
+import shlex
+from collections import defaultdict
+
+from calibre import force_unicode, guess_type, prints, walk
+from calibre.constants import cache_dir, filesystem_encoding
+from calibre.utils.icu import numeric_sort_key as sort_key
+from calibre.utils.localization import canonicalize_lang, get_lang
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re, shlex, os, cPickle
-from collections import defaultdict
 
-from calibre import walk, guess_type, prints, force_unicode
-from calibre.constants import filesystem_encoding, cache_dir
-from calibre.utils.icu import numeric_sort_key as sort_key
-from calibre.utils.localization import canonicalize_lang, get_lang
 
 
 def parse_localized_key(key):
@@ -106,13 +108,13 @@ def find_icons():
                         sz = int(sz.partition('x')[0])
                     idx = len(ans[name])
                     ans[name].append((-sz, idx, sz, path))
-        for icons in ans.itervalues():
+        for icons in ans.values():
             icons.sort()
-        return {k:(-v[0][2], v[0][3]) for k, v in ans.iteritems()}
+        return {k:(-v[0][2], v[0][3]) for k, v in ans.items()}
 
     try:
         with open(cache_file, 'rb') as f:
-            cache = cPickle.load(f)
+            cache = pickle.load(f)
             mtimes, cache = cache['mtimes'], cache['data']
     except Exception:
         mtimes, cache = defaultdict(int), defaultdict(dict)
@@ -142,7 +144,7 @@ def find_icons():
                         import traceback
                         traceback.print_exc()
                     mtimes[d] = mtime
-                for name, data in cache[d].iteritems():
+                for name, data in cache[d].items():
                     ans[name].append(data)
     for removed in set(mtimes) - seen_dirs:
         mtimes.pop(removed), cache.pop(removed)
@@ -151,14 +153,14 @@ def find_icons():
     if changed:
         try:
             with open(cache_file, 'wb') as f:
-                cPickle.dump({'data':cache, 'mtimes':mtimes}, f, -1)
+                pickle.dump({'data':cache, 'mtimes':mtimes}, f, -1)
         except Exception:
             import traceback
             traceback.print_exc()
 
-    for icons in ans.itervalues():
+    for icons in ans.values():
         icons.sort()
-    icon_data = {k:v[0][1] for k, v in ans.iteritems()}
+    icon_data = {k:v[0][1] for k, v in ans.items()}
     return icon_data
 
 
@@ -182,7 +184,7 @@ def find_programs(extensions):
                 bn = os.path.basename(f)
                 if f not in desktop_files:
                     desktop_files[bn] = f
-    for bn, path in desktop_files.iteritems():
+    for bn, path in desktop_files.items():
         try:
             data = parse_desktop_file(path)
         except Exception:
@@ -197,7 +199,7 @@ def find_programs(extensions):
                     data['Icon'] = icon
                 else:
                     data.pop('Icon')
-            if not isinstance(data.get('Icon'), basestring):
+            if not isinstance(data.get('Icon'), str):
                 data.pop('Icon', None)
             for k in ('Name', 'GenericName', 'Comment'):
                 val = data.get(k)

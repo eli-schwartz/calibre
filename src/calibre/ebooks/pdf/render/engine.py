@@ -1,25 +1,25 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import math
+import sys
+import traceback
+from collections import namedtuple
+from functools import partial, wraps
+
+from calibre.constants import plugins
+from calibre.ebooks.pdf.render.common import A4, fmtnum, inch
+from calibre.ebooks.pdf.render.graphics import Graphics, convert_path
+from calibre.ebooks.pdf.render.serialize import Path, PDFStream
+from calibre.utils.fonts.sfnt.container import Sfnt, UnsupportedFont
+from calibre.utils.fonts.sfnt.metrics import FontMetrics
+from PyQt5.Qt import QBrush, QPaintDevice, QPaintEngine, Qt, QTransform
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, traceback, math
-from collections import namedtuple
-from functools import wraps, partial
-from future_builtins import map, zip
 
-from PyQt5.Qt import (QPaintEngine, QPaintDevice, Qt, QTransform, QBrush)
 
-from calibre.constants import plugins
-from calibre.ebooks.pdf.render.serialize import (PDFStream, Path)
-from calibre.ebooks.pdf.render.common import inch, A4, fmtnum
-from calibre.ebooks.pdf.render.graphics import convert_path, Graphics
-from calibre.utils.fonts.sfnt.container import Sfnt, UnsupportedFont
-from calibre.utils.fonts.sfnt.metrics import FontMetrics
 
 Point = namedtuple('Point', 'x y')
 ColorState = namedtuple('ColorState', 'color opacity do')

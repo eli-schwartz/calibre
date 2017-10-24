@@ -1,7 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import re
+import time
+from contextlib import closing
+from datetime import date
+
+from calibre import fsync
+from calibre.constants import islinux
+from calibre.devices.errors import DeviceError
+from calibre.devices.mime import mime_type_ext
+from calibre.devices.usbms.books import BookList, CollectionsBookList
+from calibre.devices.usbms.device import USBDevice
+from calibre.devices.usbms.driver import USBMS, debug_print
+from calibre.ebooks.metadata import authors_to_sort_string, authors_to_string
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
@@ -11,19 +23,7 @@ __docformat__ = 'restructuredtext en'
 Device driver for the SONY T1 devices
 '''
 
-import os, time, re
-from contextlib import closing
-from datetime import date
 
-from calibre import fsync
-from calibre.devices.mime import mime_type_ext
-from calibre.devices.errors import DeviceError
-from calibre.devices.usbms.driver import USBMS, debug_print
-from calibre.devices.usbms.device import USBDevice
-from calibre.devices.usbms.books import CollectionsBookList
-from calibre.devices.usbms.books import BookList
-from calibre.ebooks.metadata import authors_to_sort_string, authors_to_string
-from calibre.constants import islinux
 
 DBPATH = 'Sony_Reader/database/books.db'
 THUMBPATH = 'Sony_Reader/database/cache/books/%s/thumbnail/main_thumbnail.jpg'
@@ -170,7 +170,7 @@ class PRST1(USBMS):
 
         with closing(sqlite.connect(dbpath)) as connection:
             # Replace undecodable characters in the db instead of erroring out
-            connection.text_factory = lambda x: unicode(x, "utf-8", "replace")
+            connection.text_factory = lambda x: str(x, "utf-8", "replace")
 
             cursor = connection.cursor()
             # Query collections
@@ -329,12 +329,12 @@ class PRST1(USBMS):
         cursor.execute(query)
         row = cursor.fetchone()
 
-        return long(row[0])
+        return int(row[0])
 
     def get_database_min_id(self, source_id):
-        sequence_min = 0L
+        sequence_min = 0
         if source_id == 1:
-            sequence_min = 4294967296L
+            sequence_min = 4294967296
 
         return sequence_min
 
@@ -397,7 +397,7 @@ class PRST1(USBMS):
         if sequence_dirty == 1:
             debug_print("Book Sequence Dirty for Source Id: %d"%source_id)
             sequence_max = sequence_max + 1
-            for book, bookId in db_books.items():
+            for book, bookId in list(db_books.items()):
                 if bookId < sequence_min:
                     # Record the new Id and write it to the DB
                     db_books[book] = sequence_max
@@ -511,7 +511,7 @@ class PRST1(USBMS):
             if self.is_sony_periodical(book):
                 self.periodicalize_book(connection, book)
 
-        for book, bookId in db_books.items():
+        for book, bookId in list(db_books.items()):
             if bookId is not None:
                 # Remove From Collections
                 query = 'DELETE FROM collections WHERE content_id = ?'
@@ -564,7 +564,7 @@ class PRST1(USBMS):
         if sequence_dirty == 1:
             debug_print("Collection Sequence Dirty for Source Id: %d"%source_id)
             sequence_max = sequence_max + 1
-            for collection, collectionId in db_collections.items():
+            for collection, collectionId in list(db_collections.items()):
                 if collectionId < sequence_min:
                     # Record the new Id and write it to the DB
                     db_collections[collection] = sequence_max
@@ -624,7 +624,7 @@ class PRST1(USBMS):
             db_collections = self.read_device_collections(connection, source_id, dbpath)
             cursor = connection.cursor()
 
-            for collection, books in collections.items():
+            for collection, books in list(collections.items()):
                 if collection not in db_collections:
                     query = 'INSERT INTO collection (title, source_id) VALUES (?,?)'
                     t = (collection, source_id)
@@ -669,7 +669,7 @@ class PRST1(USBMS):
 
                     db_books[book.lpath] = None
 
-                for bookPath, bookId in db_books.items():
+                for bookPath, bookId in list(db_books.items()):
                     if bookId is not None:
                         query = ('DELETE FROM collections '
                                 'WHERE content_id = ? AND collection_id = ? ')
@@ -679,7 +679,7 @@ class PRST1(USBMS):
 
                 db_collections[collection] = None
 
-            for collection, collectionId in db_collections.items():
+            for collection, collectionId in list(db_collections.items()):
                 if collectionId is not None:
                     # Remove Books from Collection
                     query = ('DELETE FROM collections '

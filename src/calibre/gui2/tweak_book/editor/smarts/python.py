@@ -1,19 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+
+from calibre.gui2.tweak_book.editor.smarts import NullSmarts
+from calibre.gui2.tweak_book.editor.smarts.utils import (
+	get_leading_whitespace_on_block as lw, get_text_before_cursor,
+	smart_backspace, smart_home, smart_tab
+)
+from PyQt5.Qt import Qt
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re
 
-from PyQt5.Qt import Qt
 
-from calibre.gui2.tweak_book.editor.smarts import NullSmarts
-from calibre.gui2.tweak_book.editor.smarts.utils import (
-    get_text_before_cursor, get_leading_whitespace_on_block as lw,
-    smart_home, smart_backspace, smart_tab)
 
 get_leading_whitespace_on_block = lambda editor, previous=False: expand_tabs(lw(editor, previous=previous))
 

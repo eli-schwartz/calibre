@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,14 +6,13 @@ __docformat__ = 'restructuredtext en'
 
 import sys
 
-from PyQt5.Qt import (
-    QPainter, QDialog, QIcon, QApplication, QSize, QKeySequence,
-    QAction, Qt, QTextBrowser, QDialogButtonBox, QVBoxLayout, QGridLayout,
-    QLabel, QPlainTextEdit, QTextDocument, QCheckBox, pyqtSignal, QWidget,
-    QSizePolicy)
-
 from calibre.constants import __version__, isfrozen
 from calibre.gui2 import gprefs
+from PyQt5.Qt import (
+	QAction, QApplication, QCheckBox, QDialog, QDialogButtonBox, QGridLayout,
+	QIcon, QKeySequence, QLabel, QPainter, QPlainTextEdit, QSize, QSizePolicy,
+	Qt, QTextBrowser, QTextDocument, QVBoxLayout, QWidget, pyqtSignal
+)
 
 
 class Icon(QWidget):
@@ -161,9 +159,9 @@ class MessageBox(QDialog):  # {{{
     def copy_to_clipboard(self, *args):
         QApplication.clipboard().setText(
                 'calibre, version %s\n%s: %s\n\n%s' %
-                (__version__, unicode(self.windowTitle()),
-                    unicode(self.msg.text()),
-                    unicode(self.det_msg.toPlainText())))
+                (__version__, str(self.windowTitle()),
+                    str(self.msg.text()),
+                    str(self.det_msg.toPlainText())))
         if hasattr(self, 'ctc_button'):
             self.ctc_button.setText(_('Copied'))
 
@@ -415,15 +413,15 @@ class JobError(QDialog):  # {{{
         d = QTextDocument()
         d.setHtml(self.msg_label.text())
         QApplication.clipboard().setText(
-                u'calibre, version %s (%s, embedded-python: %s)\n%s: %s\n\n%s' %
+                'calibre, version %s (%s, embedded-python: %s)\n%s: %s\n\n%s' %
                 (__version__, sys.platform, isfrozen,
-                    unicode(self.windowTitle()), unicode(d.toPlainText()),
-                    unicode(self.det_msg.toPlainText())))
+                    str(self.windowTitle()), str(d.toPlainText()),
+                    str(self.det_msg.toPlainText())))
         if hasattr(self, 'ctc_button'):
             self.ctc_button.setText(_('Copied'))
 
     def toggle_det_msg(self, *args):
-        vis = unicode(self.det_msg_toggle.text()) == self.hide_det_msg
+        vis = str(self.det_msg_toggle.text()) == self.hide_det_msg
         self.det_msg_toggle.setText(self.show_det_msg if vis else
                 self.hide_det_msg)
         self.det_msg.setVisible(not vis)
@@ -442,7 +440,7 @@ class JobError(QDialog):  # {{{
         self.bb.button(self.bb.Close).setFocus(Qt.OtherFocusReason)
         return ret
 
-    def show_error(self, title, msg, det_msg=u'', retry_func=None):
+    def show_error(self, title, msg, det_msg='', retry_func=None):
         self.queue.append((title, msg, det_msg, retry_func))
         self.update_suppress_state()
         self.pop()
@@ -478,6 +476,6 @@ class JobError(QDialog):  # {{{
 if __name__ == '__main__':
     from calibre.gui2 import question_dialog, Application
     app = Application([])
-    print(question_dialog(None, 'title', 'msg <a href="http://google.com">goog</a> ',
+    print((question_dialog(None, 'title', 'msg <a href="http://google.com">goog</a> ',
             det_msg='det '*1000,
-            show_copy_button=True))
+            show_copy_button=True)))

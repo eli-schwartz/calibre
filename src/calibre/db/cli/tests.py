@@ -1,7 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import csv
+import unittest
+from io import StringIO
+
+from calibre.db.cli.cmd_check_library import _print_check_library_results
+
 
 __license__ = 'GPL v3'
 __docformat__ = 'restructuredtext en'
@@ -9,18 +12,14 @@ __docformat__ = 'restructuredtext en'
 '''
 Test the CLI of the calibre database management tool
 '''
-import csv
-import unittest
-from cStringIO import StringIO
 
 
-from calibre.db.cli.cmd_check_library import _print_check_library_results
 
 
 class Checker(object):
 
     def __init__(self, kw):
-        for k, v in kw.iteritems():
+        for k, v in kw.items():
             setattr(self, k, v)
 
 

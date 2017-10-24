@@ -1,13 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from struct import pack, unpack
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from struct import unpack, pack
 
 t1_operand_encoding = [None] * 256
 t1_operand_encoding[0:32] = (32) * ["do_operator"]
@@ -308,4 +306,3 @@ class PrivateDict(Dict):
     )
 
     OFFSETS = {'Subrs'}
-

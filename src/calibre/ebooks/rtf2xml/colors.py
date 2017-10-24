@@ -10,7 +10,9 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import sys, os, re
+import os
+import re
+import sys
 
 from calibre.ebooks.rtf2xml import copy
 from calibre.ptempfile import better_mktemp
@@ -195,7 +197,7 @@ class Colors:
         except ValueError:
             if self.__run_level > 3:
                 msg = 'can\'t make integer from string\n'
-                raise self.__bug_handler, msg
+                raise self.__bug_handler(msg)
             else:
                 return 'bdr-color_:no-value'
         hex_num = self.__figure_num(num)
@@ -211,7 +213,7 @@ class Colors:
             if self.__run_level > 3:
                 msg = 'no value in self.__color_dict' \
                 'for key %s at line %d\n' % (num, self.__line)
-                raise self.__bug_handler, msg
+                raise self.__bug_handler(msg)
         return hex_num
 
     def __do_nothing_func(self, line):

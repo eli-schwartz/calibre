@@ -1,28 +1,29 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+import time
+from contextlib import closing
+from threading import Thread
+
+from calibre import browser
+from calibre.gui2.store.search_result import SearchResult
+from lxml import html
+from PyQt5.Qt import QObject, pyqtSignal
+
 
 __license__ = 'GPL 3'
 __copyright__ = '2011, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-import time
-from contextlib import closing
-from threading import Thread
 
-from lxml import html
 
-from PyQt5.Qt import (pyqtSignal, QObject)
 
-from calibre import browser
-from calibre.gui2.store.search_result import SearchResult
 
 
 class CacheUpdateThread(Thread, QObject):
 
     total_changed = pyqtSignal(int)
     update_progress = pyqtSignal(int)
-    update_details = pyqtSignal(unicode)
+    update_details = pyqtSignal(str)
 
     def __init__(self, config, seralize_books_function, timeout):
         Thread.__init__(self)

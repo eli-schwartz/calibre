@@ -1,42 +1,41 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import json, textwrap
-
+import json
+import textwrap
 from collections import defaultdict
-from threading import Thread
 from functools import partial
-
-from PyQt5.Qt import (
-    QApplication, QFont, QFontInfo, QFontDialog, QColorDialog, QPainter,
-    QAbstractListModel, Qt, QIcon, QKeySequence, QColor, pyqtSignal, QCursor,
-    QWidget, QSizePolicy, QBrush, QPixmap, QSize, QPushButton, QVBoxLayout,
-    QTableWidget, QTableWidgetItem, QLabel, QFormLayout, QLineEdit, QComboBox
-)
+from threading import Thread
 
 from calibre import human_readable
-from calibre.ebooks.metadata.book.render import DEFAULT_AUTHOR_LINK
 from calibre.constants import isosx, iswindows
+from calibre.ebooks.metadata.book.render import DEFAULT_AUTHOR_LINK
 from calibre.ebooks.metadata.sources.prefs import msprefs
-from calibre.gui2 import default_author_link
-from calibre.gui2.dialogs.template_dialog import TemplateDialog
-from calibre.gui2.preferences import ConfigWidgetBase, test_widget, CommaSeparatedList
-from calibre.gui2.preferences.look_feel_ui import Ui_Form
-from calibre.gui2 import config, gprefs, qt_app, open_local_file, question_dialog, error_dialog
-from calibre.utils.localization import (available_translations,
-    get_language, get_lang)
-from calibre.utils.config import prefs
-from calibre.utils.icu import sort_key
+from calibre.gui2 import (
+	config, default_author_link, error_dialog,
+	gprefs, open_local_file, qt_app, question_dialog
+)
+from calibre.gui2.actions.show_quickview import get_quickview_action_plugin
 from calibre.gui2.book_details import get_field_list
 from calibre.gui2.dialogs.quickview import get_qv_field_list
+from calibre.gui2.dialogs.template_dialog import TemplateDialog
+from calibre.gui2.library.alternate_views import CM_TO_INCH, auto_height
+from calibre.gui2.preferences import CommaSeparatedList, ConfigWidgetBase, test_widget
 from calibre.gui2.preferences.coloring import EditRules
-from calibre.gui2.library.alternate_views import auto_height, CM_TO_INCH
+from calibre.gui2.preferences.look_feel_ui import Ui_Form
 from calibre.gui2.widgets2 import Dialog
-from calibre.gui2.actions.show_quickview import get_quickview_action_plugin
+from calibre.utils.config import prefs
+from calibre.utils.icu import sort_key
+from calibre.utils.localization import available_translations, get_lang, get_language
+from PyQt5.Qt import (
+	QAbstractListModel, QApplication, QBrush, QColor, QColorDialog, QComboBox,
+	QCursor, QFont, QFontDialog, QFontInfo, QFormLayout, QIcon, QKeySequence,
+	QLabel, QLineEdit, QPainter, QPixmap, QPushButton, QSize, QSizePolicy, Qt,
+	QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, pyqtSignal
+)
 
 
 class BusyCursor(object):
@@ -159,7 +158,7 @@ class IdLinksEditor(Dialog):
         la.setWordWrap(True)
         l.addWidget(la)
         items = []
-        for k, lx in msprefs['id_link_rules'].iteritems():
+        for k, lx in msprefs['id_link_rules'].items():
             for n, t in lx:
                 items.append((k, n, t))
         items.sort(key=lambda x:sort_key(x[1]))
@@ -197,7 +196,7 @@ class IdLinksEditor(Dialog):
     def edit_rule(self, r=-1):
         key = name = template = ''
         if r > -1:
-            key, name, template = map(lambda c: self.table.item(r, c).text(), range(3))
+            key, name, template = [self.table.item(r, c).text() for c in range(3)]
         d = IdLinksRuleEdit(key, name, template, self)
         if d.exec_() == d.Accepted:
             if r < 0:
@@ -510,8 +509,8 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         self.tabWidget.setCurrentIndex(0)
         keys = [QKeySequence('F11', QKeySequence.PortableText), QKeySequence(
             'Ctrl+Shift+F', QKeySequence.PortableText)]
-        keys = [unicode(x.toString(QKeySequence.NativeText)) for x in keys]
-        self.fs_help_msg.setText(unicode(self.fs_help_msg.text())%(
+        keys = [str(x.toString(QKeySequence.NativeText)) for x in keys]
+        self.fs_help_msg.setText(str(self.fs_help_msg.text())%(
             _(' or ').join(keys)))
         self.size_calculated.connect(self.update_cg_cache_size, type=Qt.QueuedConnection)
         self.tabWidget.currentChanged.connect(self.tab_changed)
@@ -696,7 +695,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
     def update_font_display(self):
         font = self.build_font_obj()
         fi = QFontInfo(font)
-        name = unicode(fi.family())
+        name = str(fi.family())
 
         self.font_display.setFont(font)
         self.font_display.setText(name +
@@ -725,7 +724,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         if fd.exec_() == fd.Accepted:
             font = fd.selectedFont()
             fi = QFontInfo(font)
-            self.current_font = [unicode(fi.family()), fi.pointSize(),
+            self.current_font = [str(fi.family()), fi.pointSize(),
                     fi.weight(), fi.italic(), font.stretch()]
             self.update_font_display()
             self.changed_signal.emit()

@@ -1,9 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
 
 import os
 
@@ -90,7 +86,7 @@ def svg_path_to_painter_path(d):
         return float(b''.join(chars))
 
     def parse_floats(num, x_offset=0, y_offset=0):
-        for i in xrange(num):
+        for i in range(num):
             val = parse_float()
             yield val + (x_offset if i % 2 == 0 else y_offset)
 

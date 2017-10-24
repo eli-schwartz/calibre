@@ -1,18 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.gui2 import config
+from PyQt5.Qt import (
+	QIcon, QMetaObject, QPainter, QPropertyAnimation, QSize,
+	QStyleOptionToolButton, Qt, QToolButton, QWidget, pyqtProperty
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
 
-from PyQt5.Qt import (
-    QToolButton, QSize, QPropertyAnimation, Qt, QMetaObject, pyqtProperty,
-    QWidget, QIcon, QPainter, QStyleOptionToolButton)
 
-from calibre.gui2 import config
 
 
 class ThrobbingButton(QToolButton):

@@ -9,6 +9,7 @@ import os
 from calibre import _ent_pat, walk, xml_entity_to_unicode
 from calibre.customize.conversion import InputFormatPlugin, OptionRecommendation
 
+
 MD_EXTENSIONS = {
     'abbr': _('Abbreviations'),
     'admonition': _('Support admonitions'),
@@ -217,7 +218,7 @@ class TXTInput(InputFormatPlugin):
         for opt in html_input.options:
             setattr(options, opt.option.name, opt.recommended_value)
         options.input_encoding = 'utf-8'
-        base = os.getcwdu()
+        base = os.getcwd()
         if file_ext != 'txtz' and hasattr(stream, 'name'):
             base = os.path.dirname(stream.name)
         fname = os.path.join(base, 'index.html')

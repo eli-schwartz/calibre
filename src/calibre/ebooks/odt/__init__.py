@@ -6,4 +6,3 @@ __docformat__ = 'restructuredtext en'
 '''
 Handle the Open Document Format
 '''
-

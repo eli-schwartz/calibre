@@ -9,9 +9,9 @@ Decode unicode text to an ASCII representation of the text in Vietnamese.
 
 '''
 
+from calibre.ebooks.unihandecode.unicodepoints import CODEPOINTS
 from calibre.ebooks.unihandecode.unidecoder import Unidecoder
 from calibre.ebooks.unihandecode.vncodepoints import CODEPOINTS as HANCODES
-from calibre.ebooks.unihandecode.unicodepoints import CODEPOINTS
 
 
 class Vndecoder(Unidecoder):
@@ -21,4 +21,3 @@ class Vndecoder(Unidecoder):
     def __init__(self):
         self.codepoints = CODEPOINTS
         self.codepoints.update(HANCODES)
-

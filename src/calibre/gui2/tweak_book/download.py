@@ -1,20 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
 from threading import Thread
 
-from PyQt5.Qt import (
-    pyqtSignal, QWidget, QListWidget, QListWidgetItem, QLabel, Qt,
-    QVBoxLayout, QScrollArea, QProgressBar, QGridLayout, QSize, QIcon)
-
+from calibre.ebooks.oeb.polish.download import (
+	download_external_resources, get_external_resources, replace_resources
+)
 from calibre.gui2 import error_dialog, info_dialog, warning_dialog
+from calibre.gui2.progress_indicator import WaitStack
 from calibre.gui2.tweak_book import current_container
 from calibre.gui2.tweak_book.widgets import Dialog
-from calibre.gui2.progress_indicator import WaitStack
-from calibre.ebooks.oeb.polish.download import get_external_resources, download_external_resources, replace_resources
+from PyQt5.Qt import (
+	QGridLayout, QIcon, QLabel, QListWidget, QListWidgetItem, QProgressBar,
+	QScrollArea, QSize, Qt, QVBoxLayout, QWidget, pyqtSignal
+)
 
 
 class ChooseResources(QWidget):
@@ -29,7 +28,7 @@ class ChooseResources(QWidget):
         l.addWidget(i)
 
     def __iter__(self):
-        for i in xrange(self.items.count()):
+        for i in range(self.items.count()):
             yield self.items.item(i)
 
     def select_none(self):
@@ -171,7 +170,7 @@ class DownloadResources(Dialog):
         else:
             replacements, failures = ret
             if failures:
-                tb = ['{}\n\t{}\n'.format(url, err) for url, err in failures.iteritems()]
+                tb = ['{}\n\t{}\n'.format(url, err) for url, err in failures.items()]
                 if not replacements:
                     error_dialog(self, _('Download failed'), _(
                         'Failed to download external resources, click "Show Details" for more information.'),
@@ -258,5 +257,5 @@ if __name__ == '__main__':
     set_current_container(get_container(sys.argv[-1]))
     d = DownloadResources()
     d.exec_()
-    print(d.show_diff)
+    print((d.show_diff))
     del d, app

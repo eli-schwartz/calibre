@@ -1,17 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import shutil
+import sys
+
+from calibre.ebooks.mobi.debug.headers import MOBIFile
+from calibre.ebooks.mobi.debug.mobi6 import inspect_mobi as inspect_mobi6
+from calibre.ebooks.mobi.debug.mobi8 import inspect_mobi as inspect_mobi8
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, os, shutil
 
-from calibre.ebooks.mobi.debug.headers import MOBIFile
-from calibre.ebooks.mobi.debug.mobi6 import inspect_mobi as inspect_mobi6
-from calibre.ebooks.mobi.debug.mobi8 import inspect_mobi as inspect_mobi8
 
 
 def inspect_mobi(path_or_stream, ddir=None):  # {{{
@@ -37,7 +38,7 @@ def inspect_mobi(path_or_stream, ddir=None):  # {{{
     else:
         inspect_mobi8(f, ddir)
 
-    print ('Debug data saved to:', ddir)
+    print(('Debug data saved to:', ddir))
 
 # }}}
 
@@ -47,4 +48,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

@@ -1,15 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import time
+
+from calibre import prints
+from calibre.constants import DEBUG, get_osx_version, islinux, isosx
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
 
-import time
-from calibre import prints
-from calibre.constants import islinux, isosx, get_osx_version, DEBUG
 
 
 class Notifier(object):
@@ -106,7 +106,7 @@ class QtNotifier(Notifier):
             try:
                 hide = False
                 try:
-                    if not isinstance(body, unicode):
+                    if not isinstance(body, str):
                         body = body.decode('utf-8')
                     if isosx and not self.systray.isVisible():
                         self.systray.show()
@@ -144,7 +144,7 @@ class AppleNotifier(Notifier):
 
     def notify(self, body, summary):
         def encode(x):
-            if isinstance(x, unicode):
+            if isinstance(x, str):
                 x = x.encode('utf-8')
             return x
 

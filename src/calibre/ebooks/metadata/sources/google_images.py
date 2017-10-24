@@ -1,16 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import OrderedDict
+
+from calibre import random_user_agent
+from calibre.ebooks.metadata.sources.base import Option, Source
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from collections import OrderedDict
 
-from calibre import random_user_agent
-from calibre.ebooks.metadata.sources.base import Source, Option
 
 
 def parse_html(raw):
@@ -65,7 +64,7 @@ class GoogleImages(Source):
 
     def get_image_urls(self, title, author, log, abort, timeout):
         from calibre.utils.cleantext import clean_ascii_chars
-        from urllib import urlencode
+        from urllib.parse import urlencode
         import json
         from collections import OrderedDict
         ans = OrderedDict()
@@ -91,11 +90,11 @@ class GoogleImages(Source):
                 continue
             if 'ou' in data:
                 ans[data['ou']] = True
-        return list(ans.iterkeys())
+        return list(ans.keys())
 
 
 def test():
-    from Queue import Queue
+    from queue import Queue
     from threading import Event
     from calibre.utils.logging import default_log
     p = GoogleImages(None)
@@ -103,7 +102,7 @@ def test():
     rq = Queue()
     p.download_cover(default_log, rq, Event(), title='The Heroes',
                      authors=('Joe Abercrombie',))
-    print ('Downloaded', rq.qsize(), 'covers')
+    print(('Downloaded', rq.qsize(), 'covers'))
 
 
 if __name__ == '__main__':

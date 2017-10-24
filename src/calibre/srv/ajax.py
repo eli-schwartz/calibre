@@ -1,27 +1,27 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from functools import partial
+from itertools import cycle
+
+from calibre import force_unicode
+from calibre.db.view import sanitize_sort_field_name
+from calibre.ebooks.metadata import title_sort
+from calibre.ebooks.metadata.book.json_codec import JsonCodec
+from calibre.library.field_metadata import category_icon_map
+from calibre.srv.content import get as get_content, icon as get_icon
+from calibre.srv.errors import BookNotFound, HTTPNotFound
+from calibre.srv.routes import endpoint, json
+from calibre.srv.utils import (
+	custom_fields_to_display, decode_name, encode_name, get_db, http_date
+)
+from calibre.utils.config import prefs, tweaks
+from calibre.utils.date import isoformat, timestampfromdt
+from calibre.utils.icu import numeric_sort_key as sort_key
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from functools import partial
-from future_builtins import zip
-from itertools import cycle
 
-from calibre import force_unicode
-from calibre.library.field_metadata import category_icon_map
-from calibre.db.view import sanitize_sort_field_name
-from calibre.ebooks.metadata import title_sort
-from calibre.ebooks.metadata.book.json_codec import JsonCodec
-from calibre.srv.errors import HTTPNotFound, BookNotFound
-from calibre.srv.routes import endpoint, json
-from calibre.srv.content import get as get_content, icon as get_icon
-from calibre.srv.utils import http_date, custom_fields_to_display, encode_name, decode_name, get_db
-from calibre.utils.config import prefs, tweaks
-from calibre.utils.date import isoformat, timestampfromdt
-from calibre.utils.icu import numeric_sort_key as sort_key
 
 
 def ensure_val(x, *allowed):
@@ -77,13 +77,13 @@ def book_to_json(ctx, rd, db, book_id,
 
     if not device_compatible:
         mi.format_metadata = {k.lower():dict(v) for k, v in
-                mi.format_metadata.iteritems()}
-        for v in mi.format_metadata.itervalues():
+                mi.format_metadata.items()}
+        for v in mi.format_metadata.values():
             mtime = v.get('mtime', None)
             if mtime is not None:
                 v['mtime'] = isoformat(mtime, as_utc=True)
         data['format_metadata'] = mi.format_metadata
-        fmts = set(x.lower() for x in mi.format_metadata.iterkeys())
+        fmts = set(x.lower() for x in mi.format_metadata.keys())
         pf = prefs['output_format'].lower()
         other_fmts = list(fmts)
         try:
@@ -107,7 +107,7 @@ def book_to_json(ctx, rd, db, book_id,
                 if (fm and fm['is_category'] and not fm['is_csp'] and
                         key != 'formats' and fm['datatype'] != 'rating'):
                     categories = mi.get(key) or []
-                    if isinstance(categories, basestring):
+                    if isinstance(categories, str):
                         categories = [categories]
                     category_urls[key] = dbtags = {}
                     for category in categories:
@@ -116,7 +116,7 @@ def book_to_json(ctx, rd, db, book_id,
                                 dbtags[category] = ctx.url_for(
                                     books_in,
                                     encoded_category=encode_name(tag.category if tag.category else key),
-                                    encoded_item=encode_name(tag.original_name if tag.id is None else unicode(tag.id)),
+                                    encoded_item=encode_name(tag.original_name if tag.id is None else str(tag.id)),
                                     library_id=db.server_library_id
                                 )
                                 break
@@ -280,7 +280,7 @@ def categories(ctx, rd, library_id):
             ans[url] = (display_name, icon)
 
         ans = [{'url':k, 'name':v[0], 'icon':v[1], 'is_category':True}
-                for k, v in ans.iteritems()]
+                for k, v in ans.items()]
         ans.sort(key=lambda x: sort_key(x['name']))
         for name, url, icon in [
                 (_('All books'), 'allbooks', 'book.png'),
@@ -446,7 +446,7 @@ def category(ctx, rd, encoded_name, library_id):
             'average_rating': x.avg_rating,
             'count': x.count,
             'url': ctx.url_for(books_in, encoded_category=encode_name(x.category if x.category else toplevel),
-                               encoded_item=encode_name(x.original_name if x.id is None else unicode(x.id)),
+                               encoded_item=encode_name(x.original_name if x.id is None else str(x.id)),
                                library_id=db.server_library_id
                                ),
             'has_children': x.original_name in children,
@@ -473,7 +473,7 @@ def books_in(ctx, rd, encoded_category, encoded_item, library_id):
     db = get_db(ctx, rd, library_id)
     with db.safe_read_lock:
         try:
-            dname, ditem = map(decode_name, (encoded_category, encoded_item))
+            dname, ditem = list(map(decode_name, (encoded_category, encoded_item)))
         except:
             raise HTTPNotFound('Invalid encoded param: %r (%r)' % (encoded_category, encoded_item))
         num, offset = get_pagination(rd.query)
@@ -550,7 +550,7 @@ def search_result(ctx, rd, db, query, num, offset, sort, sort_order, vl=''):
         'vl': vl,
     }
     if parse_error is not None:
-        ans['bad_restriction'] = unicode(parse_error)
+        ans['bad_restriction'] = str(parse_error)
     return ans
 
 

@@ -1,25 +1,25 @@
-#!/usr/bin/env python2
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
 __license__   = 'GPL v3'
 
-import json, os, traceback
-
-from PyQt5.Qt import (Qt, QDialog, QDialogButtonBox, QSyntaxHighlighter, QFont,
-                      QRegExp, QApplication, QTextCharFormat, QColor, QCursor,
-                      QIcon, QSize)
+import json
+import os
+import traceback
 
 from calibre import sanitize_file_name_unicode
 from calibre.constants import config_dir
-from calibre.gui2 import gprefs
-from calibre.gui2.dialogs.template_dialog_ui import Ui_TemplateDialog
-from calibre.utils.formatter_functions import formatter_functions
-from calibre.utils.icu import sort_key
 from calibre.ebooks.metadata.book.base import Metadata
 from calibre.ebooks.metadata.book.formatter import SafeFormat
-from calibre.library.coloring import (displayable_columns, color_row_key)
-from calibre.gui2 import error_dialog, choose_files, pixmap_to_data
+from calibre.gui2 import choose_files, error_dialog, gprefs, pixmap_to_data
+from calibre.gui2.dialogs.template_dialog_ui import Ui_TemplateDialog
+from calibre.library.coloring import color_row_key, displayable_columns
+from calibre.utils.formatter_functions import formatter_functions
+from calibre.utils.icu import sort_key
 from calibre.utils.localization import localize_user_manual_link
+from PyQt5.Qt import (
+	QApplication, QColor, QCursor, QDialog, QDialogButtonBox, QFont,
+	QIcon, QRegExp, QSize, QSyntaxHighlighter, Qt, QTextCharFormat
+)
 
 
 class ParenPosition:
@@ -117,7 +117,7 @@ class TemplateHighlighter(QSyntaxHighlighter):
 
         if not text:
             pass
-        elif text[0] == u"#":
+        elif text[0] == "#":
             self.setFormat(0, textLength, self.Formats["comment"])
             return
 
@@ -134,7 +134,7 @@ class TemplateHighlighter(QSyntaxHighlighter):
                 i = regex.indexIn(text, i + length)
 
         if self.generate_paren_positions:
-            t = unicode(text)
+            t = str(text)
             i = 0
             foundQuote = False
             while i < len(t):
@@ -219,7 +219,7 @@ class TemplateDialog(QDialog, Ui_TemplateDialog):
         cols = []
         if fm is not None:
             for key in sorted(displayable_columns(fm),
-                              key=lambda(k): sort_key(fm[k]['name']) if k != color_row_key else 0):
+                              key=lambda k: sort_key(fm[k]['name']) if k != color_row_key else 0):
                 if key == color_row_key and not self.coloring:
                     continue
                 from calibre.gui2.preferences.coloring import all_columns_string
@@ -392,15 +392,15 @@ class TemplateDialog(QDialog, Ui_TemplateDialog):
     def color_to_clipboard(self):
         app = QApplication.instance()
         c = app.clipboard()
-        c.setText(unicode(self.color_name.color))
+        c.setText(str(self.color_name.color))
 
     def icon_to_clipboard(self):
         app = QApplication.instance()
         c = app.clipboard()
-        c.setText(unicode(self.icon_files.currentText()))
+        c.setText(str(self.icon_files.currentText()))
 
     def textbox_changed(self):
-        cur_text = unicode(self.textbox.toPlainText())
+        cur_text = str(self.textbox.toPlainText())
         if self.last_text != cur_text:
             self.last_text = cur_text
             self.highlighter.regenerate_paren_positions()
@@ -412,7 +412,7 @@ class TemplateDialog(QDialog, Ui_TemplateDialog):
     def text_cursor_changed(self):
         cursor = self.textbox.textCursor()
         position = cursor.position()
-        t = unicode(self.textbox.toPlainText())
+        t = str(self.textbox.toPlainText())
         if position > 0 and position <= len(t):
             block_number = cursor.blockNumber()
             pos_in_block = cursor.positionInBlock() - 1
@@ -420,7 +420,7 @@ class TemplateDialog(QDialog, Ui_TemplateDialog):
                                               pos_in_block)
 
     def function_changed(self, toWhat):
-        name = unicode(toWhat)
+        name = str(toWhat)
         self.source_code.clear()
         self.documentation.clear()
         if name in self.funcs:
@@ -431,7 +431,7 @@ class TemplateDialog(QDialog, Ui_TemplateDialog):
                 self.source_code.setPlainText(self.funcs[name].program_text)
 
     def accept(self):
-        txt = unicode(self.textbox.toPlainText()).rstrip()
+        txt = str(self.textbox.toPlainText()).rstrip()
         if self.coloring:
             if self.colored_field.currentIndex() == -1:
                 error_dialog(self, _('No column chosen'),
@@ -442,12 +442,12 @@ class TemplateDialog(QDialog, Ui_TemplateDialog):
                     _('The template box cannot be empty'), show=True)
                 return
 
-            self.rule = (unicode(self.colored_field.itemData(
+            self.rule = (str(self.colored_field.itemData(
                                 self.colored_field.currentIndex()) or ''), txt)
         elif self.iconing:
-            rt = unicode(self.icon_kind.itemData(self.icon_kind.currentIndex()) or '')
+            rt = str(self.icon_kind.itemData(self.icon_kind.currentIndex()) or '')
             self.rule = (rt,
-                         unicode(self.icon_field.itemData(
+                         str(self.icon_field.itemData(
                                 self.icon_field.currentIndex()) or ''),
                          txt)
         elif self.embleming:

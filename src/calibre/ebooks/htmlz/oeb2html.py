@@ -1,6 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+import os
+import re
+from functools import partial
+from urllib.parse import urldefrag
+
+from calibre import prepare_string_for_xml
+from calibre.ebooks.oeb.base import (
+	OEB_IMAGES, XHTML, XHTML_NS, XLINK, barename, namespace, rewrite_links, urlnormalize
+)
+from calibre.ebooks.oeb.stylizer import Stylizer
+from calibre.utils.logging import default_log
+from lxml import html
+
 
 __license__ = 'GPL 3'
 __copyright__ = '2011, John Schember <john@nachtimwald.com>'
@@ -10,18 +22,8 @@ __docformat__ = 'restructuredtext en'
 Transform OEB content into a single (more or less) HTML file.
 '''
 
-import os
-import re
 
-from functools import partial
-from lxml import html
-from urlparse import urldefrag
 
-from calibre import prepare_string_for_xml
-from calibre.ebooks.oeb.base import (
-    XHTML, XHTML_NS, barename, namespace, OEB_IMAGES, XLINK, rewrite_links, urlnormalize)
-from calibre.ebooks.oeb.stylizer import Stylizer
-from calibre.utils.logging import default_log
 
 SELF_CLOSING_TAGS = {'area', 'base', 'basefont', 'br', 'hr', 'input', 'img', 'link', 'meta'}
 
@@ -46,7 +48,7 @@ class OEB2HTML(object):
         self.log.info('Converting OEB book to HTML...')
         self.opts = opts
         try:
-            self.book_title = unicode(oeb_book.metadata.title[0])
+            self.book_title = str(oeb_book.metadata.title[0])
         except Exception:
             self.book_title = _('Unknown')
         self.links = {}
@@ -58,7 +60,7 @@ class OEB2HTML(object):
 
     def mlize_spine(self, oeb_book):
         output = [
-            u'<html><head><meta http-equiv="Content-Type" content="text/html;charset=utf-8" /><title>%s</title></head><body>' % (
+            '<html><head><meta http-equiv="Content-Type" content="text/html;charset=utf-8" /><title>%s</title></head><body>' % (
                 prepare_string_for_xml(self.book_title))
         ]
         for item in oeb_book.spine:
@@ -78,7 +80,7 @@ class OEB2HTML(object):
         if id:
             href += '#%s' % id
         if href not in self.links:
-            self.links[href] = '#calibre_link-%s' % len(self.links.keys())
+            self.links[href] = '#calibre_link-%s' % len(list(self.links.keys()))
         return self.links[href]
 
     def map_resources(self, oeb_book):
@@ -97,7 +99,7 @@ class OEB2HTML(object):
                 for el in root.iter():
                     attribs = el.attrib
                     try:
-                        if not isinstance(el.tag, basestring):
+                        if not isinstance(el.tag, str):
                             continue
                     except:
                         continue
@@ -139,10 +141,10 @@ class OEB2HTML(object):
 
     def prepare_string_for_html(self, raw):
         raw = prepare_string_for_xml(raw)
-        raw = raw.replace(u'\u00ad', '&shy;')
-        raw = raw.replace(u'\u2014', '&mdash;')
-        raw = raw.replace(u'\u2013', '&ndash;')
-        raw = raw.replace(u'\u00a0', '&nbsp;')
+        raw = raw.replace('\\u00ad', '&shy;')
+        raw = raw.replace('\\u2014', '&mdash;')
+        raw = raw.replace('\\u2013', '&ndash;')
+        raw = raw.replace('\\u00a0', '&nbsp;')
         return raw
 
 
@@ -158,10 +160,10 @@ class OEB2HTMLNoCSSizer(OEB2HTML):
         '''
 
         # We can only processes tags. If there isn't a tag return any text.
-        if not isinstance(elem.tag, basestring) \
+        if not isinstance(elem.tag, str) \
            or namespace(elem.tag) != XHTML_NS:
             p = elem.getparent()
-            if p is not None and isinstance(p.tag, basestring) and namespace(p.tag) == XHTML_NS \
+            if p is not None and isinstance(p.tag, str) and namespace(p.tag) == XHTML_NS \
                     and elem.tail:
                 return [elem.tail]
             return ['']
@@ -190,7 +192,7 @@ class OEB2HTMLNoCSSizer(OEB2HTML):
 
         # Turn the rest of the attributes into a string we can write with the tag.
         at = ''
-        for k, v in attribs.items():
+        for k, v in list(attribs.items()):
             at += ' %s="%s"' % (k, prepare_string_for_xml(v, attribute=True))
 
         # Write the tag.
@@ -247,10 +249,10 @@ class OEB2HTMLInlineCSSizer(OEB2HTML):
         '''
 
         # We can only processes tags. If there isn't a tag return any text.
-        if not isinstance(elem.tag, basestring) \
+        if not isinstance(elem.tag, str) \
            or namespace(elem.tag) != XHTML_NS:
             p = elem.getparent()
-            if p is not None and isinstance(p.tag, basestring) and namespace(p.tag) == XHTML_NS \
+            if p is not None and isinstance(p.tag, str) and namespace(p.tag) == XHTML_NS \
                     and elem.tail:
                 return [elem.tail]
             return ['']
@@ -282,7 +284,7 @@ class OEB2HTMLInlineCSSizer(OEB2HTML):
 
         # Turn the rest of the attributes into a string we can write with the tag.
         at = ''
-        for k, v in attribs.items():
+        for k, v in list(attribs.items()):
             at += ' %s="%s"' % (k, prepare_string_for_xml(v, attribute=True))
 
         # Turn style into strings for putting in the tag.
@@ -335,12 +337,12 @@ class OEB2HTMLClassCSSizer(OEB2HTML):
             output += self.dump_text(item.data.find(XHTML('body')), stylizer, item)
             output.append('\n\n')
         if self.opts.htmlz_class_style == 'external':
-            css = u'<link href="style.css" rel="stylesheet" type="text/css" />'
+            css = '<link href="style.css" rel="stylesheet" type="text/css" />'
         else:
-            css =  u'<style type="text/css">' + self.get_css(oeb_book) + u'</style>'
-        title = u'<title>%s</title>' % prepare_string_for_xml(self.book_title)
-        output = [u'<html><head><meta http-equiv="Content-Type" content="text/html;charset=utf-8" />'] + \
-            [css] + [title, u'</head><body>'] + output + [u'</body></html>']
+            css =  '<style type="text/css">' + self.get_css(oeb_book) + '</style>'
+        title = '<title>%s</title>' % prepare_string_for_xml(self.book_title)
+        output = ['<html><head><meta http-equiv="Content-Type" content="text/html;charset=utf-8" />'] + \
+            [css] + [title, '</head><body>'] + output + ['</body></html>']
         return ''.join(output)
 
     def dump_text(self, elem, stylizer, page):
@@ -350,10 +352,10 @@ class OEB2HTMLClassCSSizer(OEB2HTML):
         '''
 
         # We can only processes tags. If there isn't a tag return any text.
-        if not isinstance(elem.tag, basestring) \
+        if not isinstance(elem.tag, str) \
            or namespace(elem.tag) != XHTML_NS:
             p = elem.getparent()
-            if p is not None and isinstance(p.tag, basestring) and namespace(p.tag) == XHTML_NS \
+            if p is not None and isinstance(p.tag, str) and namespace(p.tag) == XHTML_NS \
                     and elem.tail:
                 return [elem.tail]
             return ['']
@@ -374,7 +376,7 @@ class OEB2HTMLClassCSSizer(OEB2HTML):
 
         # Turn the rest of the attributes into a string we can write with the tag.
         at = ''
-        for k, v in attribs.items():
+        for k, v in list(attribs.items()):
             at += ' %s="%s"' % (k, prepare_string_for_xml(v, attribute=True))
 
         # Write the tag.

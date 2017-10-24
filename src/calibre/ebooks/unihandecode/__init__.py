@@ -27,13 +27,13 @@ class Unihandecoder(object):
     def __init__(self, lang="zh", encoding='utf-8'):
         self.preferred_encoding = encoding
         lang = lang.lower()
-        if lang[:2] == u'ja':
+        if lang[:2] == 'ja':
             from calibre.ebooks.unihandecode.jadecoder import Jadecoder
             self.decoder = Jadecoder()
-        elif lang[:2] == u'kr' or lang == u'korean':
+        elif lang[:2] == 'kr' or lang == 'korean':
             from calibre.ebooks.unihandecode.krdecoder import Krdecoder
             self.decoder = Krdecoder()
-        elif lang[:2] == u'vn' or lang == u'vietnum':
+        elif lang[:2] == 'vn' or lang == 'vietnum':
             from calibre.ebooks.unihandecode.vndecoder import Vndecoder
             self.decoder = Vndecoder()
         else:  # zh and others
@@ -42,10 +42,10 @@ class Unihandecoder(object):
 
     def decode(self, text):
         try:
-            unicode  # python2
-            if not isinstance(text, unicode):
+            str  # python2
+            if not isinstance(text, str):
                 try:
-                    text = unicode(text)
+                    text = str(text)
                 except:
                     try:
                         text = text.decode(self.preferred_encoding)

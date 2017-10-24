@@ -4,17 +4,16 @@ __license__ = 'GPL 3'
 __copyright__ = '2011, John Schember <john@nachtimwald.com>, 2012 Eli Algranti <idea00@hotmail.com>'
 __docformat__ = 'restructuredtext en'
 
-import codecs, json
+import codecs
+import json
 
-from PyQt5.Qt import Qt, QTableWidgetItem
-
-from calibre.gui2.convert.search_and_replace_ui import Ui_Form
-from calibre.gui2.convert import Widget
-from calibre.gui2 import (error_dialog, question_dialog, choose_files,
-        choose_save_file)
 from calibre import as_unicode
-from calibre.utils.localization import localize_user_manual_link
 from calibre.ebooks.conversion.search_replace import compile_regular_expression
+from calibre.gui2 import choose_files, choose_save_file, error_dialog, question_dialog
+from calibre.gui2.convert import Widget
+from calibre.gui2.convert.search_and_replace_ui import Ui_Form
+from calibre.utils.localization import localize_user_manual_link
+from PyQt5.Qt import Qt, QTableWidgetItem
 
 
 class SearchAndReplaceWidget(Widget, Ui_Form):
@@ -133,7 +132,7 @@ class SearchAndReplaceWidget(Widget, Ui_Form):
         if filename:
             with codecs.open(filename, 'w', 'utf-8') as f:
                 for search, replace in self.get_definitions():
-                    f.write(search + u'\n' + replace + u'\n\n')
+                    f.write(search + '\n' + replace + '\n\n')
 
     def sr_up_clicked(self):
         self.cell_rearrange(-1)
@@ -143,7 +142,7 @@ class SearchAndReplaceWidget(Widget, Ui_Form):
 
     def cell_rearrange(self, i):
         row = self.search_replace.currentRow()
-        for col in xrange(0, self.search_replace.columnCount()):
+        for col in range(0, self.search_replace.columnCount()):
             item1 = self.search_replace.item(row, col)
             item2 = self.search_replace.item(row+i, col)
             value = item1.text()
@@ -193,7 +192,7 @@ class SearchAndReplaceWidget(Widget, Ui_Form):
         edit_search = self.sr_search.regex
 
         if edit_search:
-            edit_replace = unicode(self.sr_replace.text())
+            edit_replace = str(self.sr_replace.text())
             found = False
             for search, replace in definitions:
                 if search == edit_search and replace == edit_replace:
@@ -231,10 +230,10 @@ class SearchAndReplaceWidget(Widget, Ui_Form):
 
     def get_definitions(self):
         ans = []
-        for row in xrange(0, self.search_replace.rowCount()):
+        for row in range(0, self.search_replace.rowCount()):
             colItems = []
-            for col in xrange(0, self.search_replace.columnCount()):
-                colItems.append(unicode(self.search_replace.item(row, col).text()))
+            for col in range(0, self.search_replace.columnCount()):
+                colItems.append(str(self.search_replace.item(row, col).text()))
             ans.append(colItems)
         return ans
 
@@ -270,7 +269,7 @@ class SearchAndReplaceWidget(Widget, Ui_Form):
         new_val = None
         legacy = {}
         rest = {}
-        for name, val in recs.items():
+        for name, val in list(recs.items()):
             if name == 'search_replace':
                 new_val = val
                 if name in getattr(recs, 'disabled_options', []):

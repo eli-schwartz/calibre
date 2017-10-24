@@ -1,26 +1,25 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
-
 import textwrap
-from future_builtins import map
-
-# from lxml.etree import Element
 
 from calibre import force_unicode
 from calibre.ebooks.oeb.base import (
-    serialize, OEB_DOCS, barename, OEB_STYLES, XPNSMAP, XHTML, SVG)
+	OEB_DOCS, OEB_STYLES, SVG, XHTML, XPNSMAP, barename, serialize
+)
 from calibre.ebooks.oeb.polish.container import OPF_NAMESPACES
 from calibre.ebooks.oeb.polish.utils import guess_type
 from calibre.utils.icu import sort_key
 
 
+__license__ = 'GPL v3'
+__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+# from lxml.etree import Element
+
+
+
 def isspace(x):
-    return not x.strip('\u0009\u000a\u000c\u000d\u0020')
+    return not x.strip('\\u0009\\u000a\\u000c\\u000d\\u0020')
 
 
 def pretty_xml_tree(elem, level=0, indent='  '):
@@ -91,12 +90,12 @@ def pretty_opf(root):
 
 SVG_TAG = SVG('svg')
 
-BLOCK_TAGS = frozenset(map(XHTML, (
+BLOCK_TAGS = frozenset(list(map(XHTML, (
     'address', 'article', 'aside', 'audio', 'blockquote', 'body', 'canvas', 'dd',
     'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'li',
     'noscript', 'ol', 'output', 'p', 'pre', 'script', 'section', 'style', 'table', 'tbody', 'td',
-    'tfoot', 'thead', 'tr', 'ul', 'video', 'img'))) | {SVG_TAG}
+    'tfoot', 'thead', 'tr', 'ul', 'video', 'img')))) | {SVG_TAG}
 
 
 def isblock(x):
@@ -224,7 +223,7 @@ def pretty_xml(container, name, raw):
 
 def fix_all_html(container):
     ' Fix any parsing errors in all HTML files in the container. Fixing is done using the HTML5 parsing algorithm. '
-    for name, mt in container.mime_map.iteritems():
+    for name, mt in container.mime_map.items():
         if mt in OEB_DOCS:
             container.parsed(name)
             container.dirty(name)
@@ -232,7 +231,7 @@ def fix_all_html(container):
 
 def pretty_all(container):
     ' Pretty print all HTML/CSS/XML files in the container '
-    for name, mt in container.mime_map.iteritems():
+    for name, mt in container.mime_map.items():
         prettied = False
         if mt in OEB_DOCS:
             pretty_html_tree(container, container.parsed(name))
@@ -250,5 +249,3 @@ def pretty_all(container):
             prettied = True
         if prettied:
             container.dirty(name)
-
-

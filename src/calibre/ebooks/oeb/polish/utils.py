@@ -1,15 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import re
+from bisect import bisect
+
+from calibre import guess_type as _guess_type, replace_entities
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re, os
-from bisect import bisect
 
-from calibre import guess_type as _guess_type, replace_entities
 
 
 def guess_type(x):
@@ -146,7 +146,7 @@ def lead_text(top_elem, num_words=10):
     def get_text(x, attr='text'):
         ans = getattr(x, attr)
         if ans:
-            words.extend(filter(None, pat.split(ans)))
+            words.extend([_f for _f in pat.split(ans) if _f])
 
     stack = [(top_elem, 'text')]
     while stack and len(words) < num_words:

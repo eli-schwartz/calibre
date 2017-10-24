@@ -1,29 +1,31 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import sys, os, re
+import os
+import re
+import sys
 from functools import partial
-
-from PyQt5.Qt import (
-    QGridLayout, QToolButton, QIcon, QRadioButton, QMenu, QApplication, Qt,
-    QSize, QWidget, QLabel, QStackedLayout, QPainter, QRect, QVBoxLayout,
-    QCursor, QEventLoop, QKeySequence, pyqtSignal, QTimer, QHBoxLayout)
 
 from calibre.ebooks.oeb.polish.container import Container
 from calibre.ebooks.oeb.polish.utils import guess_type
 from calibre.gui2 import info_dialog
 from calibre.gui2.progress_indicator import ProgressIndicator
-from calibre.gui2.tweak_book.editor import syntax_from_mime
 from calibre.gui2.tweak_book.diff.view import DiffView
+from calibre.gui2.tweak_book.editor import syntax_from_mime
 from calibre.gui2.tweak_book.widgets import Dialog
 from calibre.gui2.widgets2 import HistoryLineEdit2
 from calibre.utils.filenames import samefile
 from calibre.utils.icu import numeric_sort_key
+from PyQt5.Qt import (
+	QApplication, QCursor, QEventLoop, QGridLayout, QHBoxLayout, QIcon,
+	QKeySequence, QLabel, QMenu, QPainter, QRadioButton, QRect, QSize,
+	QStackedLayout, Qt, QTimer, QToolButton, QVBoxLayout, QWidget, pyqtSignal
+)
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 
 class BusyWidget(QWidget):  # {{{
@@ -79,11 +81,11 @@ def changed_files(list_of_names1, list_of_names2, get_data1, get_data2):
     removals = list_of_names1 - common_names
     adds = set(list_of_names2 - common_names)
     adata, rdata = {a:get_data2(a) for a in adds}, {r:get_data1(r) for r in removals}
-    ahash = {a:hash(d) for a, d in adata.iteritems()}
-    rhash = {r:hash(d) for r, d in rdata.iteritems()}
+    ahash = {a:hash(d) for a, d in adata.items()}
+    rhash = {r:hash(d) for r, d in rdata.items()}
     renamed_names, removed_names, added_names = {}, set(), set()
-    for name, rh in rhash.iteritems():
-        for n, ah in ahash.iteritems():
+    for name, rh in rhash.items():
+        for n, ah in ahash.items():
             if ah == rh:
                 renamed_names[name] = n
                 adds.discard(n)
@@ -129,7 +131,7 @@ def get_decoded_raw(name):
 
 
 def string_diff(left, right, left_syntax=None, right_syntax=None, left_name='left', right_name='right'):
-    left, right = unicode(left), unicode(right)
+    left, right = str(left), str(right)
     cache = Cache()
     cache.set_left(left_name, left), cache.set_right(right_name, right)
     changed_names = {} if left == right else {left_name:right_name}
@@ -137,7 +139,7 @@ def string_diff(left, right, left_syntax=None, right_syntax=None, left_name='lef
 
 
 def file_diff(left, right):
-    (raw1, syntax1), (raw2, syntax2) = map(get_decoded_raw, (left, right))
+    (raw1, syntax1), (raw2, syntax2) = list(map(get_decoded_raw, (left, right)))
     if type(raw1) is not type(raw2):
         raw1, raw2 = open(left, 'rb').read(), open(right, 'rb').read()
     cache = Cache()
@@ -316,7 +318,7 @@ class Diff(Dialog):
                 pass
 
     def do_search(self, reverse):
-        text = unicode(self.search.text())
+        text = str(self.search.text())
         if not text.strip():
             return
         v = self.view.view.left if self.lb.isChecked() else self.view.view.right
@@ -419,7 +421,7 @@ class Diff(Dialog):
         kwargs = lambda name: {'context':self.context, 'beautify':self.beautify, 'syntax':syntax_map.get(name, None)}
 
         if isinstance(changed_names, dict):
-            for name, other_name in sorted(changed_names.iteritems(), key=lambda x:numeric_sort_key(x[0])):
+            for name, other_name in sorted(iter(changed_names.items()), key=lambda x:numeric_sort_key(x[0])):
                 args = (name, other_name, cache.left(name), cache.right(other_name))
                 add(args, kwargs(name))
         else:
@@ -435,7 +437,7 @@ class Diff(Dialog):
             args = (name, _('[%s was removed]') % name, cache.left(name), None)
             add(args, kwargs(name))
 
-        for name, new_name in sorted(renamed_names.iteritems(), key=lambda x:numeric_sort_key(x[0])):
+        for name, new_name in sorted(iter(renamed_names.items()), key=lambda x:numeric_sort_key(x[0])):
             args = (name, new_name, None, None)
             add(args, kwargs(name))
 

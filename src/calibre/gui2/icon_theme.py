@@ -1,42 +1,49 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import os, errno, json, importlib, math, httplib, bz2, shutil, sys
-from itertools import count
+import bz2
+import errno
+import http.client
+import importlib
+import json
+import math
+import os
+import shutil
+import sys
 from io import BytesIO
-from future_builtins import map
-from Queue import Queue, Empty
-from threading import Thread, Event
+from itertools import count
+from lzma.xz import compress, decompress
 from multiprocessing.pool import ThreadPool
+from queue import Empty, Queue
+from threading import Event, Thread
 
-from PyQt5.Qt import (
-    QImageReader, QFormLayout, QVBoxLayout, QSplitter, QGroupBox, QListWidget,
-    QLineEdit, QSpinBox, QTextEdit, QSize, QListWidgetItem, QIcon, QImage,
-    pyqtSignal, QStackedLayout, QWidget, QLabel, Qt, QComboBox, QPixmap,
-    QGridLayout, QStyledItemDelegate, QApplication, QStaticText,
-    QStyle, QPen, QProgressDialog
-)
-
-from calibre import walk, fit_image, human_readable, detect_ncpus as cpu_count
+from calibre import detect_ncpus as cpu_count, fit_image, human_readable, walk
 from calibre.constants import cache_dir, config_dir
 from calibre.customize.ui import interface_actions
-from calibre.gui2 import must_use_qt, gprefs, choose_dir, error_dialog, choose_save_file, question_dialog, empty_index
+from calibre.gui2 import (
+	choose_dir, choose_save_file, empty_index,
+	error_dialog, gprefs, must_use_qt, question_dialog
+)
 from calibre.gui2.dialogs.progress import ProgressDialog
 from calibre.gui2.progress_indicator import ProgressIndicator
 from calibre.gui2.widgets2 import Dialog
 from calibre.utils.date import utcnow
-from calibre.utils.filenames import ascii_filename
-from calibre.utils.https import get_https_resource_securely, HTTPError
+from calibre.utils.filenames import ascii_filename, atomic_rename
+from calibre.utils.https import HTTPError, get_https_resource_securely
 from calibre.utils.icu import numeric_sort_key as sort_key
-from calibre.utils.img import image_from_data, Canvas, optimize_png, optimize_jpeg
-from calibre.utils.zipfile import ZipFile, ZIP_STORED
-from calibre.utils.filenames import atomic_rename
-from lzma.xz import compress, decompress
+from calibre.utils.img import Canvas, image_from_data, optimize_jpeg, optimize_png
+from calibre.utils.zipfile import ZIP_STORED, ZipFile
+from PyQt5.Qt import (
+	QApplication, QComboBox, QFormLayout, QGridLayout, QGroupBox, QIcon, QImage,
+	QImageReader, QLabel, QLineEdit, QListWidget, QListWidgetItem, QPen, QPixmap,
+	QProgressDialog, QSize, QSpinBox, QSplitter, QStackedLayout, QStaticText,
+	QStyle, QStyledItemDelegate, Qt, QTextEdit, QVBoxLayout, QWidget, pyqtSignal
+)
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 THEME_COVER = 'icon-theme-cover.jpg'
@@ -189,7 +196,7 @@ def create_cover(report, icons=(), cols=5, size=120, padding=16):
 def verify_theme(report):
     must_use_qt()
     report.bad = bad = {}
-    for name, path in report.name_map.iteritems():
+    for name, path in report.name_map.items():
         reader = QImageReader(os.path.join(report.path, path))
         img = reader.read()
         if img.isNull():
@@ -362,13 +369,13 @@ def create_themeball(report, progress=None, abort=None):
         except Exception:
             return sys.exc_info()
 
-    errors = tuple(filter(None, pool.map(optimize, tuple(report.name_map.iterkeys()))))
+    errors = tuple([_f for _f in pool.map(optimize, tuple(report.name_map.keys())) if _f])
     pool.close(), pool.join()
     if abort is not None and abort.is_set():
         return
     if errors:
         e = errors[0]
-        raise e[0], e[1], e[2]
+        raise e[0](e[1]).with_traceback(e[2])
 
     if progress is not None:
         progress(next(num), _('Creating theme file'))
@@ -439,7 +446,7 @@ def download_cover(cover_url, etag=None, cached=b''):
         etag = response.getheader('ETag', None) or None
         return cached, etag
     except HTTPError as e:
-        if etag and e.code == httplib.NOT_MODIFIED:
+        if etag and e.code == http.client.NOT_MODIFIED:
             return cached, etag
         raise
 
@@ -454,7 +461,7 @@ def get_cover(metadata):
 
     def path(ext):
         return os.path.join(cdir, metadata['name'] + '.' + ext)
-    etag_file, cover_file = map(path, 'etag jpg'.split())
+    etag_file, cover_file = list(map(path, 'etag jpg'.split()))
 
     def safe_read(path):
         try:
@@ -494,7 +501,7 @@ def get_covers(themes, callback, num_of_workers=8):
             else:
                 callback(metadata, cdata)
 
-    for w in xrange(num_of_workers):
+    for w in range(num_of_workers):
         t = Thread(name='IconThemeCover', target=run)
         t.daemon = True
         t.start()
@@ -701,7 +708,7 @@ class ChooseTheme(Dialog):
         get_covers(self.themes, self.cover_downloaded.emit)
 
     def __iter__(self):
-        for i in xrange(self.theme_list.count()):
+        for i in range(self.theme_list.count()):
             yield self.theme_list.item(i)
 
     def item_from_name(self, name):

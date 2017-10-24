@@ -1,24 +1,26 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import copy
+import json
+import re
+import sys
+from collections import defaultdict
+from itertools import repeat
+
+from calibre import prints
+from calibre.ebooks.metadata import check_doi, check_isbn
+from calibre.ebooks.metadata.book.base import Metadata
+from calibre.ebooks.metadata.opf2 import dump_dict
+from calibre.utils.date import isoformat, now, parse_date
+from calibre.utils.localization import canonicalize_lang, lang_as_iso639_1
+from lxml import etree
+from lxml.builder import ElementMaker
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re, sys, copy, json
-from itertools import repeat
-from collections import defaultdict
 
-from lxml import etree
-from lxml.builder import ElementMaker
 
-from calibre import prints
-from calibre.ebooks.metadata import check_isbn, check_doi
-from calibre.ebooks.metadata.book.base import Metadata
-from calibre.ebooks.metadata.opf2 import dump_dict
-from calibre.utils.date import parse_date, isoformat, now
-from calibre.utils.localization import canonicalize_lang, lang_as_iso639_1
 
 _xml_declaration = re.compile(r'<\?xml[^<>]+encoding\s*=\s*[\'"](.*?)[\'"][^<>]*>', re.IGNORECASE)
 
@@ -65,7 +67,7 @@ def parse_xmp_packet(raw_bytes):
     pat = r'''<?xpacket\s+[^>]*?begin\s*=\s*['"]([^'"]*)['"]'''
     encodings = ('8', '16-le', '16-be', '32-le', '32-be')
     header = raw_bytes[:1024]
-    emap = {'\ufeff'.encode('utf-'+x):'utf-'+x for x in encodings}
+    emap = {'\\ufeff'.encode('utf-'+x):'utf-'+x for x in encodings}
     emap[b''] = 'utf-8'
     for q in encodings:
         m = re.search(pat.encode('utf-'+q), header)
@@ -81,7 +83,7 @@ def parse_xmp_packet(raw_bytes):
 def serialize_xmp_packet(root, encoding='utf-8'):
     root.tail = '\n' + '\n'.join(repeat(' '*100, 30))  # Adobe spec recommends inserting padding at the end of the packet
     raw_bytes = etree.tostring(root, encoding=encoding, pretty_print=True, with_tail=True, method='xml')
-    return b'<?xpacket begin="%s" id="W5M0MpCehiHzreSzNTczkc9d"?>\n%s\n<?xpacket end="w"?>' % ('\ufeff'.encode(encoding), raw_bytes)
+    return b'<?xpacket begin="%s" id="W5M0MpCehiHzreSzNTczkc9d"?>\n%s\n<?xpacket end="w"?>' % ('\\ufeff'.encode(encoding), raw_bytes)
 
 
 def read_simple_property(elem):
@@ -124,7 +126,7 @@ def multiple_sequences(expr, root):
     ans = []
     for item in XPath(expr)(root):
         ans += list(read_sequence(item))
-    return filter(None, uniq(ans))
+    return [_f for _f in uniq(ans) if _f]
 
 
 def first_alt(expr, root):
@@ -298,7 +300,7 @@ def metadata_from_xmp_packet(raw_bytes):
 
     languages = multiple_sequences('//dc:language', root)
     if languages:
-        languages = filter(None, map(canonicalize_lang, languages))
+        languages = [_f for _f in map(canonicalize_lang, languages) if _f]
         if languages:
             mi.languages = languages
 
@@ -321,7 +323,7 @@ def metadata_from_xmp_packet(raw_bytes):
                     identifiers[scheme] = val
 
     # Check Dublin Core for recognizable identifier types
-    for scheme, check_func in {'doi':check_doi, 'isbn':check_isbn}.iteritems():
+    for scheme, check_func in {'doi':check_doi, 'isbn':check_isbn}.items():
         if scheme not in identifiers:
             val = check_func(first_simple('//dc:identifier', root))
             if val:
@@ -405,7 +407,7 @@ def create_identifiers(xmp, identifiers):
     xmp.append(xmpid)
     bag = xmpid.makeelement(expand('rdf:Bag'))
     xmpid.append(bag)
-    for scheme, value in identifiers.iteritems():
+    for scheme, value in identifiers.items():
         li = bag.makeelement(expand('rdf:li'))
         li.set(expand('rdf:parseType'), 'Resource')
         bag.append(li)
@@ -441,7 +443,7 @@ def create_user_metadata(calibre, all_user_metadata):
     calibre.append(s)
     bag = s.makeelement(expand('rdf:Bag'))
     s.append(bag)
-    for name, fm in all_user_metadata.iteritems():
+    for name, fm in all_user_metadata.items():
         try:
             fm = copy.copy(fm)
             encode_is_multiple(fm)
@@ -471,20 +473,20 @@ def metadata_to_xmp_packet(mi):
     dc = rdf.makeelement(expand('rdf:Description'), nsmap=nsmap('dc'))
     dc.set(expand('rdf:about'), '')
     rdf.append(dc)
-    for prop, tag in {'title':'dc:title', 'comments':'dc:description'}.iteritems():
+    for prop, tag in {'title':'dc:title', 'comments':'dc:description'}.items():
         val = mi.get(prop) or ''
         create_alt_property(dc, tag, val)
     for prop, (tag, ordered) in {
         'authors':('dc:creator', True), 'tags':('dc:subject', False), 'publisher':('dc:publisher', False),
-    }.iteritems():
+    }.items():
         val = mi.get(prop) or ()
-        if isinstance(val, basestring):
+        if isinstance(val, str):
             val = [val]
         create_sequence_property(dc, tag, val, ordered)
     if not mi.is_null('pubdate'):
         create_sequence_property(dc, 'dc:date', [isoformat(mi.pubdate, as_utc=False)])  # Adobe spec recommends local time
     if not mi.is_null('languages'):
-        langs = filter(None, map(lambda x:lang_as_iso639_1(x) or canonicalize_lang(x), mi.languages))
+        langs = [_f for _f in [lang_as_iso639_1(x) or canonicalize_lang(x) for x in mi.languages] if _f]
         if langs:
             create_sequence_property(dc, 'dc:language', langs, ordered=False)
 
@@ -500,9 +502,9 @@ def metadata_to_xmp_packet(mi):
     identifiers = mi.get_identifiers()
     if identifiers:
         create_identifiers(xmp, identifiers)
-        for scheme, val in identifiers.iteritems():
+        for scheme, val in identifiers.items():
             if scheme in {'isbn', 'doi'}:
-                for prefix, parent in extra_ids.iteritems():
+                for prefix, parent in extra_ids.items():
                     ie = parent.makeelement(expand('%s:%s'%(prefix, scheme)))
                     ie.text = val
                     parent.append(ie)
@@ -550,7 +552,7 @@ def find_used_namespaces(elem):
 
 def find_preferred_prefix(namespace, elems):
     for elem in elems:
-        ans = {v:k for k, v in elem.nsmap.iteritems()}.get(namespace, None)
+        ans = {v:k for k, v in elem.nsmap.items()}.get(namespace, None)
         if ans is not None:
             return ans
         return find_preferred_prefix(namespace, elem.iterchildren(etree.Element))
@@ -562,7 +564,7 @@ def find_nsmap(elems):
         used_namespaces |= find_used_namespaces(elem)
     ans = {}
     used_namespaces -= {NS_MAP['xml'], NS_MAP['x'], None, NS_MAP['rdf']}
-    rmap = {v:k for k, v in NS_MAP.iteritems()}
+    rmap = {v:k for k, v in NS_MAP.items()}
     i = 0
     for ns in used_namespaces:
         if ns in rmap:
@@ -641,5 +643,4 @@ if __name__ == '__main__':
     xmp_packet = get_xmp_metadata(sys.argv[-1])
     mi = metadata_from_xmp_packet(xmp_packet)
     np = metadata_to_xmp_packet(mi)
-    print (merge_xmp_packet(xmp_packet, np))
-
+    print((merge_xmp_packet(xmp_packet, np)))

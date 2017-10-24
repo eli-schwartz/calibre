@@ -1,15 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.utils.config import JSONConfig
+from PyQt5.Qt import QHBoxLayout, QLabel, QLineEdit, QWidget
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QWidget, QHBoxLayout, QLabel, QLineEdit
 
-from calibre.utils.config import JSONConfig
 
 # This is where all preferences for this plugin will be stored
 # Remember that this name (i.e. plugins/interface_demo) is also
@@ -37,5 +35,4 @@ class ConfigWidget(QWidget):
         self.label.setBuddy(self.msg)
 
     def save_settings(self):
-        prefs['hello_world_msg'] = unicode(self.msg.text())
-
+        prefs['hello_world_msg'] = str(self.msg.text())

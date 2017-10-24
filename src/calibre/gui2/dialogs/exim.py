@@ -1,26 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import stat
 from functools import partial
-from threading import Thread, Event
-import os, stat
+from threading import Event, Thread
 
-from PyQt5.Qt import (
-    QSize, QStackedLayout, QWidget, QVBoxLayout, QLabel, QPushButton,
-    QListWidget, QListWidgetItem, QIcon, Qt, pyqtSignal, QGridLayout,
-    QProgressBar, QDialog, QDialogButtonBox, QScrollArea, QLineEdit, QFrame
-)
-
-from calibre import human_readable, as_unicode
+from calibre import as_unicode, human_readable
 from calibre.constants import iswindows
 from calibre.db.legacy import LibraryDatabase
 from calibre.gui2 import choose_dir, error_dialog, question_dialog
 from calibre.gui2.widgets2 import Dialog
-from calibre.utils.exim import all_known_libraries, export, Importer, import_data
+from calibre.utils.exim import Importer, all_known_libraries, export, import_data
 from calibre.utils.icu import numeric_sort_key
+from PyQt5.Qt import (
+	QDialog, QDialogButtonBox, QFrame, QGridLayout, QIcon, QLabel, QLineEdit,
+	QListWidget, QListWidgetItem, QProgressBar, QPushButton, QScrollArea,
+	QSize, QStackedLayout, Qt, QVBoxLayout, QWidget, pyqtSignal
+)
 
 
 def disk_usage(path_to_dir, abort=None):
@@ -214,7 +211,7 @@ class EximDialog(Dialog):
             lambda i, sz: self.lib_list.item(i).setText(self.export_lib_text(self.lib_list.item(i).data(Qt.UserRole), sz))), type=Qt.QueuedConnection)
 
     def get_lib_sizes(self):
-        for i in xrange(self.lib_list.count()):
+        for i in range(self.lib_list.count()):
             path = self.lib_list.item(i).data(Qt.UserRole)
             try:
                 sz = disk_usage(path, abort=self.abort_disk_usage)

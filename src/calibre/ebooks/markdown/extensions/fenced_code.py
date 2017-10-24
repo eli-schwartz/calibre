@@ -15,12 +15,11 @@ All changes Copyright 2008-2014 The Python Markdown Project
 License: [BSD](http://www.opensource.org/licenses/bsd-license.php)
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import re
+
 from . import Extension
 from ..preprocessors import Preprocessor
 from .codehilite import CodeHilite, CodeHiliteExtension, parse_hl_lines
-import re
 
 
 class FencedCodeExtension(Extension):

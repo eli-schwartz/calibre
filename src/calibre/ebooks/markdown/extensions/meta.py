@@ -15,12 +15,12 @@ License: [BSD](http://www.opensource.org/licenses/bsd-license.php)
 
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import logging
+import re
+
 from . import Extension
 from ..preprocessors import Preprocessor
-import re
-import logging
+
 
 log = logging.getLogger('MARKDOWN')
 

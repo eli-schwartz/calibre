@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import json
 import os
@@ -13,6 +10,7 @@ from calibre import prints
 from calibre.db.cli.utils import str_width
 from calibre.ebooks.metadata import authors_to_string
 from calibre.utils.date import isoformat
+
 
 readonly = True
 version = 0  # change this if you change signature of implementation()
@@ -64,7 +62,7 @@ def implementation(
                 continue
             if field == 'isbn':
                 x = db.all_field_for('identifiers', book_ids, default_value={})
-                data[field] = {k: v.get('isbn') or '' for k, v in x.iteritems()}
+                data[field] = {k: v.get('isbn') or '' for k, v in x.items()}
                 continue
             field = field.replace('*', '#')
             metadata[field] = fm[field]
@@ -80,37 +78,37 @@ def implementation(
 
 
 def stringify(data, metadata, for_machine):
-    for field, m in metadata.iteritems():
+    for field, m in metadata.items():
         if field == 'authors':
             data[field] = {
                 k: authors_to_string(v)
-                for k, v in data[field].iteritems()
+                for k, v in data[field].items()
             }
         else:
             dt = m['datatype']
             if dt == 'datetime':
                 data[field] = {
                     k: isoformat(v, as_utc=for_machine) if v else 'None'
-                    for k, v in data[field].iteritems()
+                    for k, v in data[field].items()
                 }
             elif not for_machine:
                 ism = m['is_multiple']
                 if ism:
                     data[field] = {
                         k: ism['list_to_ui'].join(v)
-                        for k, v in data[field].iteritems()
+                        for k, v in data[field].items()
                     }
                     if field == 'formats':
                         data[field] = {
                             k: '[' + v + ']'
-                            for k, v in data[field].iteritems()
+                            for k, v in data[field].items()
                         }
 
 
 def as_machine_data(book_ids, data, metadata):
     for book_id in book_ids:
         ans = {'id': book_id}
-        for field, val_map in data.iteritems():
+        for field, val_map in data.items():
             val = val_map.get(book_id)
             if val is not None:
                 ans[field.replace('#', '*')] = val
@@ -170,7 +168,7 @@ def do_list(
     from calibre.utils.terminal import ColoredStream, geometry
 
     output_table = prepare_output_table(fields, book_ids, data, metadata)
-    widths = list(map(lambda x: 0, fields))
+    widths = list([0 for x in fields])
 
     for record in output_table:
         for j in range(len(fields)):
@@ -180,7 +178,7 @@ def do_list(
     if not screen_width:
         screen_width = 80
     field_width = screen_width // len(fields)
-    base_widths = map(lambda x: min(x + 1, field_width), widths)
+    base_widths = [min(x + 1, field_width) for x in widths]
 
     while sum(base_widths) < screen_width:
         adjusted = False
@@ -195,10 +193,10 @@ def do_list(
             break
 
     widths = list(base_widths)
-    titles = map(
+    titles = list(map(
         lambda x, y: '%-*s%s' % (x - len(separator), y, separator), widths,
         fields
-    )
+    ))
     with ColoredStream(sys.stdout, fg='green'):
         prints(''.join(titles))
 
@@ -208,13 +206,13 @@ def do_list(
         text = [
             wrappers[i](record[i]) for i, field in enumerate(fields)
         ]
-        lines = max(map(len, text))
+        lines = max(list(map(len, text)))
         for l in range(lines):
             for i, field in enumerate(text):
-                ft = text[i][l] if l < len(text[i]) else u''
+                ft = text[i][l] if l < len(text[i]) else ''
                 sys.stdout.write(ft.encode('utf-8'))
                 if i < len(text) - 1:
-                    filler = (u'%*s' % (widths[i] - str_width(ft) - 1, u''))
+                    filler = ('%*s' % (widths[i] - str_width(ft) - 1, ''))
                     sys.stdout.write((filler + separator).encode('utf-8'))
             print()
 

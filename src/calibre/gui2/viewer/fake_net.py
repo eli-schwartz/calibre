@@ -1,18 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
 import os
 
-from PyQt5.Qt import QNetworkReply, QNetworkAccessManager, QUrl, QNetworkRequest, QTimer, pyqtSignal, QByteArray
-
 from calibre import guess_type as _guess_type, prints
-from calibre.constants import FAKE_HOST, FAKE_PROTOCOL, DEBUG
+from calibre.constants import DEBUG, FAKE_HOST, FAKE_PROTOCOL
 from calibre.ebooks.oeb.base import OEB_DOCS
 from calibre.ebooks.oeb.display.webview import cleanup_html, load_as_html
 from calibre.utils.short_uuid import uuid4
+from PyQt5.Qt import (
+	QByteArray, QNetworkAccessManager, QNetworkReply,
+	QNetworkRequest, QTimer, QUrl, pyqtSignal
+)
 
 
 def guess_type(x):

@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,17 +6,16 @@ __docformat__ = 'restructuredtext en'
 
 from functools import partial
 
-from PyQt5.Qt import (QIcon, Qt, QWidget, QSize, QFrame,
-    pyqtSignal, QToolButton, QMenu, QLineEdit, QCoreApplication,
-    QObject, QVBoxLayout, QSizePolicy, QLabel, QHBoxLayout, QActionGroup)
-
-
+from calibre import human_readable
 from calibre.constants import __appname__
-from calibre.gui2.search_box import SearchBox2, SavedSearchBox
 from calibre.gui2.bars import BarsManager
+from calibre.gui2.search_box import SavedSearchBox, SearchBox2
 from calibre.gui2.widgets2 import RightClickButton
 from calibre.utils.config_base import tweaks
-from calibre import human_readable
+from PyQt5.Qt import (
+	QActionGroup, QCoreApplication, QFrame, QHBoxLayout, QIcon, QLabel, QLineEdit, QMenu,
+	QObject, QSize, QSizePolicy, Qt, QToolButton, QVBoxLayout, QWidget, pyqtSignal
+)
 
 
 class LocationManager(QObject):  # {{{
@@ -128,7 +126,7 @@ class LocationManager(QObject):  # {{{
         had_device = self.has_device
         if cp is None:
             cp = (None, None)
-        if isinstance(cp, (str, unicode)):
+        if isinstance(cp, str):
             cp = (cp, None)
         if len(fs) < 3:
             fs = list(fs) + [0]
@@ -149,7 +147,7 @@ class LocationManager(QObject):  # {{{
         for i, loc in enumerate(('main', 'carda', 'cardb')):
             t = self.tooltips[loc]
             if self.free[i] > -1:
-                t += u'\n\n%s '%human_readable(self.free[i]) + _('available')
+                t += '\n\n%s '%human_readable(self.free[i]) + _('available')
             ac = getattr(self, 'location_'+loc)
             ac.setToolTip(t)
             ac.setWhatsThis(t)

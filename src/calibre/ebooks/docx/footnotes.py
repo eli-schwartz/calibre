@@ -1,12 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import OrderedDict
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from collections import OrderedDict
 
 
 class Note(object):
@@ -57,10 +55,9 @@ class Footnotes(object):
         return None, None
 
     def __iter__(self):
-        for anchor, (counter, note) in self.notes.iteritems():
+        for anchor, (counter, note) in self.notes.items():
             yield anchor, counter, note
 
     @property
     def has_notes(self):
         return bool(self.notes)
-

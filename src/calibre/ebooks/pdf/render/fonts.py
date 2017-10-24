@@ -1,23 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+import textwrap
+from collections import Counter, OrderedDict
+from itertools import groupby
+from operator import itemgetter
+
+from calibre import as_unicode
+from calibre.ebooks.pdf.render.common import Array, Dictionary, Name, Stream, String
+from calibre.utils.fonts.sfnt.subset import NoGlyphs, UnsupportedFont, pdf_subset
+from calibre.utils.short_uuid import uuid4
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re
-from itertools import izip, groupby
-from operator import itemgetter
-from collections import Counter, OrderedDict
-from future_builtins import map
 
-from calibre import as_unicode
-from calibre.ebooks.pdf.render.common import (Array, String, Stream,
-    Dictionary, Name)
-from calibre.utils.fonts.sfnt.subset import pdf_subset, UnsupportedFont, NoGlyphs
-from calibre.utils.short_uuid import uuid4
 
 STANDARD_FONTS = {
     'Times-Roman', 'Helvetica', 'Courier', 'Symbol', 'Times-Bold',
@@ -46,7 +44,6 @@ first. Each number gets mapped to a glyph id equal to itself by the
 
 '''
 
-import textwrap
 
 
 class FontStream(Stream):
@@ -106,7 +103,7 @@ class CMap(Stream):
             maps.append(current_map)
         mapping = []
         for m in maps:
-            meat = '\n'.join('%s %s'%(k, v) for k, v in m.iteritems())
+            meat = '\n'.join('%s %s'%(k, v) for k, v in m.items())
             mapping.append('%d beginbfchar\n%s\nendbfchar'%(len(m), meat))
         self.write(self.skeleton.format(name=name, mapping='\n'.join(mapping)))
 
@@ -187,17 +184,17 @@ class Font(object):
 
     def write_widths(self, objects):
         glyphs = sorted(self.used_glyphs|{0})
-        widths = {g:self.metrics.pdf_scale(w) for g, w in izip(glyphs,
+        widths = {g:self.metrics.pdf_scale(w) for g, w in zip(glyphs,
                                         self.metrics.glyph_widths(glyphs))}
         counter = Counter()
-        for g, w in widths.iteritems():
+        for g, w in widths.items():
             counter[w] += 1
         most_common = counter.most_common(1)[0][0]
         self.descendant_font['DW'] = most_common
-        widths = {g:w for g, w in widths.iteritems() if w != most_common}
+        widths = {g:w for g, w in widths.items() if w != most_common}
 
         groups = Array()
-        for k, g in groupby(enumerate(widths.iterkeys()), lambda i_x:i_x[0]-i_x[1]):
+        for k, g in groupby(enumerate(widths.keys()), lambda i_x:i_x[0]-i_x[1]):
             group = list(map(itemgetter(1), g))
             gwidths = [widths[g] for g in group]
             if len(set(gwidths)) == 1 and len(group) > 1:

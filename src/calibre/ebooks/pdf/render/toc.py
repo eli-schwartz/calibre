@@ -1,15 +1,14 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+
+from lxml.html import tostring
+from lxml.html.builder import BODY, H2, HEAD, HTML, STYLE, TABLE, TD, TR
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os
 
-from lxml.html import tostring
-from lxml.html.builder import (HTML, HEAD, BODY, TABLE, TR, TD, H2, STYLE)
 
 
 def convert_node(toc, table, level, pdf):
@@ -42,7 +41,7 @@ def process_children(toc, table, level, pdf):
 def toc_as_html(toc, pdf, opts):
     pdf = pdf.engine.pdf
     indents = []
-    for i in xrange(1, 7):
+    for i in range(1, 7):
         indents.extend((i, 1.4*i))
     html = HTML(
         HEAD(

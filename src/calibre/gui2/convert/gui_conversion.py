@@ -6,9 +6,9 @@ __docformat__ = 'restructuredtext en'
 
 from optparse import OptionParser
 
-from calibre.customize.conversion import OptionRecommendation, DummyReporter
-from calibre.ebooks.conversion.plumber import Plumber
+from calibre.customize.conversion import DummyReporter, OptionRecommendation
 from calibre.customize.ui import plugin_for_catalog_format
+from calibre.ebooks.conversion.plumber import Plumber
 from calibre.utils.logging import Log
 
 
@@ -69,5 +69,3 @@ def gui_catalog(fmt, title, dbspec, ids, out_file_name, sync, fmt_options, conne
     # Returns 0 if successful, 1 if no catalog built
     plugin = plugin_for_catalog_format(fmt)
     return plugin.run(out_file_name, opts, db, notification=notification)
-
-

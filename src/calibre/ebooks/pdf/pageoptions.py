@@ -5,6 +5,7 @@ __docformat__ = 'restructuredtext en'
 
 from PyQt5.Qt import QPrinter
 
+
 UNITS = {
             'millimeter' : QPrinter.Millimeter,
             'point' : QPrinter.Point,

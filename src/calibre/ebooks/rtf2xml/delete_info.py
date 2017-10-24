@@ -10,7 +10,8 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import sys, os
+import os
+import sys
 
 from calibre.ebooks.rtf2xml import copy
 from calibre.ptempfile import better_mktemp
@@ -126,7 +127,7 @@ class DeleteInfo:
                 # believe I have a '{\*}
                 if self.__run_level > 3:
                     msg = 'Flag problem\n'
-                    raise self.__bug_handler, msg
+                    raise self.__bug_handler(msg)
                 return True
         elif self.__token_info in self.__allowable :
             if self.__ob:
@@ -150,7 +151,7 @@ class DeleteInfo:
             if self.__run_level > 5:
                 msg = ('After an asterisk, and found neither an allowable or non-allowable token\n\
                             token is "%s"\n') % self.__token_info
-                raise self.__bug_handler, msg
+                raise self.__bug_handler(msg)
             if not self.__ob:
                 self.__write_cb = True
             self.__ob = 0

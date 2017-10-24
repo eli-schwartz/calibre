@@ -1,15 +1,15 @@
 '''
 OPF manifest trimming transform.
 '''
-from __future__ import with_statement
+from urllib.parse import urldefrag
+
+from calibre.ebooks.oeb.base import CSS_MIME, OEB_DOCS, iterlinks, urlnormalize
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2008, Marshall T. Vandegrift <llasram@gmail.com>'
 
-from urlparse import urldefrag
 
-from calibre.ebooks.oeb.base import CSS_MIME, OEB_DOCS
-from calibre.ebooks.oeb.base import urlnormalize, iterlinks
 
 
 class ManifestTrimmer(object):
@@ -33,7 +33,7 @@ class ManifestTrimmer(object):
                     used.add(oeb.manifest.hrefs[item.value])
                 elif item.value in oeb.manifest.ids:
                     used.add(oeb.manifest.ids[item.value])
-        for ref in oeb.guide.values():
+        for ref in list(oeb.guide.values()):
             path, _ = urldefrag(ref.href)
             if path in oeb.manifest.hrefs:
                 used.add(oeb.manifest.hrefs[path])
@@ -68,7 +68,7 @@ class ManifestTrimmer(object):
                                 new.add(found)
             used.update(new)
             unchecked = new
-        for item in oeb.manifest.values():
+        for item in list(oeb.manifest.values()):
             if item not in used:
                 oeb.logger.info('Trimming %r from manifest' % item.href)
                 oeb.manifest.remove(item)

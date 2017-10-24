@@ -378,6 +378,7 @@ smartypants.py license::
 
 import re
 
+
 # style added by Kovid
 tags_to_skip_regex = re.compile(r"<(/)?(style|pre|code|kbd|script|math)[^>]*>", re.I)
 self_closing_regex = re.compile(r'/\s*>$')

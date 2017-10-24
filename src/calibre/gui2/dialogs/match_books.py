@@ -1,19 +1,19 @@
 #!/usr/bin/env  python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.gui2 import error_dialog, gprefs
+from calibre.gui2.dialogs.match_books_ui import Ui_MatchBooks
+from calibre.utils.icu import sort_key
+from PyQt5.Qt import (
+	QAbstractItemView, QApplication, QByteArray, QCursor, QDialog, Qt, QTableWidgetItem
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
 
 
-from PyQt5.Qt import (Qt, QDialog, QAbstractItemView, QTableWidgetItem,
-                      QByteArray, QApplication, QCursor)
 
-from calibre.gui2 import gprefs, error_dialog
-from calibre.gui2.dialogs.match_books_ui import Ui_MatchBooks
-from calibre.utils.icu import sort_key
 
 
 class TableItem(QTableWidgetItem):
@@ -125,7 +125,7 @@ class MatchBooks(QDialog, Ui_MatchBooks):
             QDialog.keyPressEvent(self, e)
 
     def do_search(self):
-        query = unicode(self.search_text.text())
+        query = str(self.search_text.text())
         if not query:
             d = error_dialog(self.gui, _('Match books'),
                      _('You must enter a search expression into the search box'))
@@ -217,4 +217,3 @@ class MatchBooks(QDialog, Ui_MatchBooks):
     def reject(self):
         self.close()
         QDialog.reject(self)
-

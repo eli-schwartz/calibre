@@ -1,4 +1,12 @@
-from __future__ import with_statement
+import io
+import sys
+import traceback
+from functools import partial
+from threading import Lock
+
+from calibre import as_unicode, force_unicode, isbytestring, prints
+
+
 __license__ = 'GPL 3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
@@ -10,18 +18,14 @@ INFO  = 1
 WARN  = 2
 ERROR = 3
 
-import sys, traceback, cStringIO
-from functools import partial
-from threading import Lock
 
-from calibre import isbytestring, force_unicode, as_unicode, prints
 
 
 class Stream(object):
 
     def __init__(self, stream=None):
         if stream is None:
-            stream = cStringIO.StringIO()
+            stream = io.StringIO()
         self.stream = stream
         self._prints = partial(prints, safe_encode=True, file=stream)
 
@@ -37,10 +41,10 @@ class ANSIStream(Stream):
     def __init__(self, stream=sys.stdout):
         Stream.__init__(self, stream)
         self.color = {
-                      DEBUG: u'green',
+                      DEBUG: 'green',
                       INFO: None,
-                      WARN: u'yellow',
-                      ERROR: u'red',
+                      WARN: 'yellow',
+                      ERROR: 'red',
                       }
 
     def prints(self, level, *args, **kwargs):
@@ -100,13 +104,13 @@ class UnicodeHTMLStream(HTMLStream):
             self.data.append(col)
             self.last_col = col
 
-        sep  = kwargs.get(u'sep', u' ')
-        end  = kwargs.get(u'end', u'\n')
+        sep  = kwargs.get('sep', ' ')
+        end  = kwargs.get('end', '\n')
 
         for arg in args:
             if isbytestring(arg):
                 arg = force_unicode(arg)
-            elif not isinstance(arg, unicode):
+            elif not isinstance(arg, str):
                 arg = as_unicode(arg)
             self.data.append(arg+sep)
             self.plain_text.append(arg+sep)
@@ -120,8 +124,8 @@ class UnicodeHTMLStream(HTMLStream):
 
     @property
     def html(self):
-        end = self.normal if self.data else u''
-        return u''.join(self.data) + end
+        end = self.normal if self.data else ''
+        return ''.join(self.data) + end
 
     def dump(self):
         return [self.data, self.plain_text, self.last_col]
@@ -241,7 +245,7 @@ class GUILog(ThreadSafeLog):
 
     @property
     def plain_text(self):
-        return u''.join(self.outputs[0].plain_text)
+        return ''.join(self.outputs[0].plain_text)
 
     def dump(self):
         return self.outputs[0].dump()

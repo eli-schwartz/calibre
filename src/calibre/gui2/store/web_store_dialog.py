@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+from calibre import url_slash_cleaner
+from calibre.gui2.store.web_store_dialog_ui import Ui_Dialog
+from PyQt5.Qt import QDialog, QUrl
+
 
 __license__ = 'GPL 3'
 __copyright__ = '2011, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QDialog, QUrl
 
-from calibre import url_slash_cleaner
-from calibre.gui2.store.web_store_dialog_ui import Ui_Dialog
 
 
 class WebStoreDialog(QDialog, Ui_Dialog):

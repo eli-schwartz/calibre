@@ -1,15 +1,19 @@
-from __future__ import with_statement
+import collections
+import os
+import re
+
+from calibre import isbytestring
+from calibre.constants import filesystem_encoding
+from calibre.customize.ui import get_file_type_metadata, set_file_type_metadata
+from calibre.ebooks.metadata import MetaInformation, string_to_authors
+from calibre.ebooks.metadata.opf2 import OPF
+from calibre.utils.config import prefs
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, re, collections
 
-from calibre.utils.config import prefs
-from calibre.constants import filesystem_encoding
-from calibre.ebooks.metadata.opf2 import OPF
-from calibre import isbytestring
-from calibre.customize.ui import get_file_type_metadata, set_file_type_metadata
-from calibre.ebooks.metadata import MetaInformation, string_to_authors
 
 _METADATA_PRIORITIES = [
                        'html', 'htm', 'xhtml', 'xhtm',
@@ -203,7 +207,7 @@ def metadata_from_filename(name, pat=None, fallback_pat=None):
 def opf_metadata(opfpath):
     if hasattr(opfpath, 'read'):
         f = opfpath
-        opfpath = getattr(f, 'name', os.getcwdu())
+        opfpath = getattr(f, 'name', os.getcwd())
     else:
         f = open(opfpath, 'rb')
     try:
@@ -241,4 +245,3 @@ def forked_read_metadata(path, tdir):
     opf = metadata_to_opf(mi, default_lang='und')
     with lopen(os.path.join(tdir, 'metadata.opf'), 'wb') as f:
         f.write(opf)
-

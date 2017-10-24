@@ -1,13 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.gui2.convert import Widget
+from calibre.gui2.convert.docx_input_ui import Ui_Form
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from calibre.gui2.convert.docx_input_ui import Ui_Form
-from calibre.gui2.convert import Widget
 
 
 class PluginWidget(Widget, Ui_Form):

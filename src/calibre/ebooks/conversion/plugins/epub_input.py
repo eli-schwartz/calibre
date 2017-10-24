@@ -1,12 +1,16 @@
-from __future__ import with_statement
+import os
+import posixpath
+import re
+from itertools import cycle
+
+from calibre.customize.conversion import InputFormatPlugin, OptionRecommendation
+
+
 __license__ = 'GPL 3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, re, posixpath
-from itertools import cycle
 
-from calibre.customize.conversion import InputFormatPlugin, OptionRecommendation
 
 ADOBE_OBFUSCATION =  'http://ns.adobe.com/pdf/enc#RC'
 IDPF_OBFUSCATION = 'http://www.idpf.org/2008/embedding'
@@ -17,7 +21,7 @@ def decrypt_font_data(key, data, algorithm):
     crypt_len = 1024 if is_adobe else 1040
     crypt = bytearray(data[:crypt_len])
     key = cycle(iter(bytearray(key)))
-    decrypt = bytes(bytearray(x^key.next() for x in crypt))
+    decrypt = bytes(bytearray(x^next(key) for x in crypt))
     return decrypt + data[crypt_len:]
 
 
@@ -42,12 +46,12 @@ class EPUBInput(InputFormatPlugin):
         import uuid, hashlib
         idpf_key = opf.raw_unique_identifier
         if idpf_key:
-            idpf_key = re.sub(u'[\u0020\u0009\u000d\u000a]', u'', idpf_key)
+            idpf_key = re.sub('[\\u0020\\u0009\\u000d\\u000a]', '', idpf_key)
             idpf_key = hashlib.sha1(idpf_key.encode('utf-8')).digest()
         key = None
         for item in opf.identifier_iter():
             scheme = None
-            for xkey in item.attrib.keys():
+            for xkey in list(item.attrib.keys()):
                 if xkey.endswith('scheme'):
                     scheme = item.get(xkey)
             if (scheme and scheme.lower() == 'uuid') or \
@@ -212,7 +216,7 @@ class EPUBInput(InputFormatPlugin):
         from lxml import etree
 
         def attr(n, attr):
-            for k, v in n.attrib.items():
+            for k, v in list(n.attrib.items()):
                 if k.endswith(attr):
                     return v
         try:
@@ -224,7 +228,7 @@ class EPUBInput(InputFormatPlugin):
                     path = attr(r, 'full-path')
                     if not path:
                         continue
-                    path = os.path.join(os.getcwdu(), *path.split('/'))
+                    path = os.path.join(os.getcwd(), *path.split('/'))
                     if os.path.exists(path):
                         return path
         except:
@@ -238,7 +242,7 @@ class EPUBInput(InputFormatPlugin):
         from calibre.ebooks.metadata.opf2 import OPF
         try:
             zf = ZipFile(stream)
-            zf.extractall(os.getcwdu())
+            zf.extractall(os.getcwd())
         except:
             log.exception('EPUB appears to be invalid ZIP file, trying a'
                     ' more forgiving ZIP parser')
@@ -248,7 +252,7 @@ class EPUBInput(InputFormatPlugin):
         encfile = os.path.abspath(os.path.join('META-INF', 'encryption.xml'))
         opf = self.find_opf()
         if opf is None:
-            for f in walk(u'.'):
+            for f in walk('.'):
                 if f.lower().endswith('.opf') and '__MACOSX' not in f and \
                         not os.path.basename(f).startswith('.'):
                     opf = os.path.abspath(f)
@@ -258,7 +262,7 @@ class EPUBInput(InputFormatPlugin):
         if opf is None:
             raise ValueError('%s is not a valid EPUB file (could not find opf)'%path)
 
-        opf = os.path.relpath(opf, os.getcwdu())
+        opf = os.path.relpath(opf, os.getcwd())
         parts = os.path.split(opf)
         opf = OPF(opf, os.path.dirname(os.path.abspath(opf)))
 
@@ -314,7 +318,7 @@ class EPUBInput(InputFormatPlugin):
         with lopen('content.opf', 'wb') as nopf:
             nopf.write(opf.render())
 
-        return os.path.abspath(u'content.opf')
+        return os.path.abspath('content.opf')
 
     def convert_epub3_nav(self, nav_path, opf, log):
         from lxml import etree
@@ -335,7 +339,7 @@ class EPUBInput(InputFormatPlugin):
         def add_from_li(li, parent):
             href = text = None
             for x in li.iterchildren(XHTML('a'), XHTML('span')):
-                text = etree.tostring(x, method='text', encoding=unicode, with_tail=False).strip() or ' '.join(x.xpath('descendant-or-self::*/@title')).strip()
+                text = etree.tostring(x, method='text', encoding=str, with_tail=False).strip() or ' '.join(x.xpath('descendant-or-self::*/@title')).strip()
                 href = x.get('href')
                 if href:
                     if href.startswith('#'):

@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import functools
 import os
@@ -11,11 +8,10 @@ import sys
 import time
 from threading import Thread
 
-from PyQt5.Qt import QEventLoop
-
 from calibre import force_unicode
-from calibre.constants import filesystem_encoding, preferred_encoding, DEBUG
+from calibre.constants import DEBUG, filesystem_encoding, preferred_encoding
 from calibre.utils.config import dynamic
+from PyQt5.Qt import QEventLoop
 
 
 def dialog_name(name, title):
@@ -67,7 +63,7 @@ def get_initial_dir(name, title, default_dir, no_save_dir):
         return ensure_dir(process_path(default_dir))
     key = dialog_name(name, title)
     saved = dynamic.get(key)
-    if not isinstance(saved, basestring):
+    if not isinstance(saved, str):
         saved = None
     if saved and os.path.isdir(saved):
         return ensure_dir(process_path(saved))
@@ -83,7 +79,7 @@ def save_initial_dir(name, title, ans, no_save_dir, is_file=False):
 
 
 def encode_arg(title):
-    if isinstance(title, unicode):
+    if isinstance(title, str):
         try:
             title = title.encode(preferred_encoding)
         except UnicodeEncodeError:
@@ -173,7 +169,7 @@ def kdialog_choose_files(
     filters=[],
     all_files=True,
     select_only_single_file=False,
-    default_dir=u'~'):
+    default_dir='~'):
     initial_dir = get_initial_dir(name, title, default_dir, False)
     args = []
     if not select_only_single_file:
@@ -250,7 +246,7 @@ def zenity_choose_files(
     filters=[],
     all_files=True,
     select_only_single_file=False,
-    default_dir=u'~'):
+    default_dir='~'):
     initial_dir = get_initial_dir(name, title, default_dir, False)
     args = ['--filename=' + os.path.join(initial_dir, '.fgdfg.gdfhjdhf*&^839')]
     args += zenity_filters(filters, all_files)
@@ -314,7 +310,7 @@ def linux_native_dialog(name):
             t.start()
             loop.exec_(QEventLoop.ExcludeUserInputEvents)
             if ret[1] is not None:
-                raise ret[1][0], ret[1][1], ret[1][2]
+                raise ret[1][0](ret[1][1]).with_traceback(ret[1][2])
             return ret[0]
         except Exception:
             linux_native_dialog.native_failed = True
@@ -346,8 +342,8 @@ def check_for_linux_native_dialogs():
 
 if __name__ == '__main__':
     # print(repr(kdialog_choose_dir(None, 'testkddcd', 'Testing choose dir...')))
-    print(repr(kdialog_choose_files(None, 'testkddcf', 'Testing choose files...', select_only_single_file=False, filters=[
-        ('moo', 'epub png'.split()), ('boo', 'docx'.split())], all_files=True)))
+    print((repr(kdialog_choose_files(None, 'testkddcf', 'Testing choose files...', select_only_single_file=False, filters=[
+        ('moo', 'epub png'.split()), ('boo', 'docx'.split())], all_files=True))))
     # print(repr(kdialog_choose_images(None, 'testkddci', 'Testing choose images...')))
     # print(repr(kdialog_choose_save_file(None, 'testkddcs', 'Testing choose save file...', initial_filename='moo.x')))
     # print(repr(zenity_choose_dir(None, 'testzcd', 'Testing choose dir...')))

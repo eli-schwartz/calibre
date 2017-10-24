@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import base64
 
@@ -13,14 +10,14 @@ from calibre.utils.imghdr import what
 
 
 def ensure_unicode(obj, enc=preferred_encoding):
-    if isinstance(obj, unicode):
+    if isinstance(obj, str):
         return obj
     if isinstance(obj, bytes):
         return obj.decode(enc, 'replace')
     if isinstance(obj, (list, tuple)):
         return [ensure_unicode(x) for x in obj]
     if isinstance(obj, dict):
-        return {ensure_unicode(k): ensure_unicode(v) for k, v in obj.iteritems()}
+        return {ensure_unicode(k): ensure_unicode(v) for k, v in obj.items()}
     return obj
 
 
@@ -58,7 +55,7 @@ def metadata_as_dict(mi, encode_cover_data=False):
 
 def metadata_from_dict(src):
     ans = Metadata('Unknown')
-    for key, value in src.iteritems():
+    for key, value in src.items():
         if key == 'user_metadata':
             ans.set_all_user_metadata(value)
         else:

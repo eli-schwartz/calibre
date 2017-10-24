@@ -1,19 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from io import BytesIO
+
+from calibre.ebooks.docx.container import DOCX
+from calibre.ebooks.docx.writer.container import update_doc_props, xml2str
+from calibre.utils.imghdr import identify
+from lxml import etree
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from io import BytesIO
 
-from lxml import etree
 
-from calibre.ebooks.docx.container import DOCX
-from calibre.ebooks.docx.writer.container import update_doc_props, xml2str
-from calibre.utils.imghdr import identify
 
 
 def get_cover(docx):
@@ -80,4 +79,4 @@ def set_metadata(stream, mi):
 if __name__ == '__main__':
     import sys
     with open(sys.argv[-1], 'rb') as stream:
-        print (get_metadata(stream))
+        print((get_metadata(stream)))

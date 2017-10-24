@@ -1,17 +1,14 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.customize.ui import enable_plugin
+from calibre.gui2.preferences import ConfigWidgetBase, test_widget
+from PyQt5.Qt import QIcon, QLabel, QListWidget, QListWidgetItem, Qt, QVBoxLayout
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import (QLabel, QVBoxLayout, QListWidget, QListWidgetItem, Qt,
-                      QIcon)
 
-from calibre.customize.ui import enable_plugin
-from calibre.gui2.preferences import ConfigWidgetBase, test_widget
 
 
 class ConfigWidget(ConfigWidgetBase):
@@ -54,7 +51,7 @@ class ConfigWidget(ConfigWidgetBase):
         self.devices.blockSignals(True)
         self.devices.clear()
         for dev in self.gui.device_manager.devices:
-            for d, name in dev.get_user_blacklisted_devices().iteritems():
+            for d, name in dev.get_user_blacklisted_devices().items():
                 item = QListWidgetItem('%s [%s]'%(name, d), self.devices)
                 item.setData(Qt.UserRole, (dev, d))
                 item.setFlags(Qt.ItemIsEnabled|Qt.ItemIsUserCheckable|Qt.ItemIsSelectable)
@@ -78,7 +75,7 @@ class ConfigWidget(ConfigWidgetBase):
 
     def commit(self):
         devs = {}
-        for i in xrange(0, self.devices.count()):
+        for i in range(0, self.devices.count()):
             e = self.devices.item(i)
             dev, uid = e.data(Qt.UserRole)
             if dev not in devs:
@@ -86,10 +83,10 @@ class ConfigWidget(ConfigWidgetBase):
             if e.checkState() == Qt.Checked:
                 devs[dev].append(uid)
 
-        for dev, bl in devs.iteritems():
+        for dev, bl in devs.items():
             dev.set_user_blacklisted_devices(bl)
 
-        for i in xrange(self.device_plugins.count()):
+        for i in range(self.device_plugins.count()):
             e = self.device_plugins.item(i)
             dev = e.data(Qt.UserRole)
             if e.checkState() == Qt.Unchecked:
@@ -101,4 +98,3 @@ if __name__ == '__main__':
     from PyQt5.Qt import QApplication
     app = QApplication([])
     test_widget('Sharing', 'Ignored Devices')
-

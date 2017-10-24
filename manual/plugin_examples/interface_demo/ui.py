@@ -1,7 +1,8 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+# The class that all interface action plugins must inherit from
+from calibre.gui2.actions import InterfaceAction
+from calibre_plugins.interface_demo.main import DemoDialog
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
@@ -13,9 +14,6 @@ if False:
     # You do not need this code in your plugins
     get_icons = get_resources = None
 
-# The class that all interface action plugins must inherit from
-from calibre.gui2.actions import InterfaceAction
-from calibre_plugins.interface_demo.main import DemoDialog
 
 class InterfacePlugin(InterfaceAction):
 
@@ -68,4 +66,3 @@ class InterfacePlugin(InterfaceAction):
         # In an actual non trivial plugin, you would probably need to
         # do something based on the settings in prefs
         prefs
-

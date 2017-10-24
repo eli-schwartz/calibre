@@ -1,33 +1,32 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import itertools, operator
-from functools import partial
-from future_builtins import map
+import itertools
+import operator
 from collections import OrderedDict
+from functools import partial
 
-from PyQt5.Qt import (
-    QTableView, Qt, QAbstractItemView, QMenu, pyqtSignal, QFont, QModelIndex,
-    QIcon, QItemSelection, QMimeData, QDrag, QStyle, QPoint, QUrl, QHeaderView,
-    QStyleOptionHeader, QItemSelectionModel, QSize, QFontMetrics)
-
-from calibre.constants import islinux
-from calibre.gui2.library.delegates import (RatingDelegate, PubDateDelegate,
-    TextDelegate, DateDelegate, CompleteDelegate, CcTextDelegate, CcLongTextDelegate,
-    CcBoolDelegate, CcCommentsDelegate, CcDateDelegate, CcTemplateDelegate,
-    CcEnumDelegate, CcNumberDelegate, LanguagesDelegate)
-from calibre.gui2.library.models import BooksModel, DeviceBooksModel
-from calibre.gui2.library.alternate_views import AlternateViews, setup_dnd_interface
-from calibre.gui2.gestures import GestureManager
-from calibre.utils.config import tweaks, prefs
-from calibre.gui2 import error_dialog, gprefs, FunctionDispatcher
-from calibre.gui2.library import DEFAULT_SORT
-from calibre.constants import filesystem_encoding
 from calibre import force_unicode
+from calibre.constants import filesystem_encoding, islinux
+from calibre.gui2 import FunctionDispatcher, error_dialog, gprefs
+from calibre.gui2.gestures import GestureManager
+from calibre.gui2.library import DEFAULT_SORT
+from calibre.gui2.library.alternate_views import AlternateViews, setup_dnd_interface
+from calibre.gui2.library.delegates import (
+	CcBoolDelegate, CcCommentsDelegate, CcDateDelegate, CcEnumDelegate, CcLongTextDelegate,
+	CcNumberDelegate, CcTemplateDelegate, CcTextDelegate, CompleteDelegate, DateDelegate,
+	LanguagesDelegate, PubDateDelegate, RatingDelegate, TextDelegate
+)
+from calibre.gui2.library.models import BooksModel, DeviceBooksModel
+from calibre.utils.config import prefs, tweaks
+from PyQt5.Qt import (
+	QAbstractItemView, QDrag, QFont, QFontMetrics, QHeaderView, QIcon,
+	QItemSelection, QItemSelectionModel, QMenu, QMimeData, QModelIndex, QPoint,
+	QSize, QStyle, QStyleOptionHeader, Qt, QTableView, QUrl, pyqtSignal
+)
 
 
 class HeaderView(QHeaderView):  # {{{
@@ -55,7 +54,7 @@ class HeaderView(QHeaderView):  # {{{
         opt.orientation = self.orientation()
         opt.fontMetrics = self.fm
         model = self.parent().model()
-        opt.text = unicode(model.headerData(logical_index, opt.orientation, Qt.DisplayRole) or '')
+        opt.text = str(model.headerData(logical_index, opt.orientation, Qt.DisplayRole) or '')
         if opt.orientation == Qt.Vertical:
             try:
                 val = model.headerData(logical_index, opt.orientation, Qt.DecorationRole)
@@ -82,7 +81,7 @@ class HeaderView(QHeaderView):  # {{{
         if self.isSortIndicatorShown() and self.sortIndicatorSection() == logical_index:
             opt.sortIndicator = QStyleOptionHeader.SortDown if self.sortIndicatorOrder() == Qt.AscendingOrder else QStyleOptionHeader.SortUp
             margin += style.pixelMetric(style.PM_HeaderMarkSize, None, self)
-        opt.text = unicode(model.headerData(logical_index, opt.orientation, Qt.DisplayRole) or '')
+        opt.text = str(model.headerData(logical_index, opt.orientation, Qt.DisplayRole) or '')
         if self.textElideMode() != Qt.ElideNone:
             opt.text = opt.fontMetrics.elidedText(opt.text, Qt.ElideRight, rect.width() - margin)
         if self.isEnabled():
@@ -176,7 +175,7 @@ class PreserveViewState(object):  # {{{
                 'vscroll', 'hscroll')}
 
         def fset(self, state):
-            for k, v in state.iteritems():
+            for k, v in state.items():
                 setattr(self, k, v)
             self.__exit__()
         return property(fget=fget, fset=fset)
@@ -342,7 +341,7 @@ class BooksView(QTableView):  # {{{
         idx = self.column_header.logicalIndexAt(pos)
         if idx > -1 and idx < len(self.column_map):
             col = self.column_map[idx]
-            name = unicode(self.model().headerData(idx, Qt.Horizontal,
+            name = str(self.model().headerData(idx, Qt.Horizontal,
                     Qt.DisplayRole) or '')
             self.column_header_context_menu = QMenu(self)
             if col != 'ondevice':
@@ -400,7 +399,7 @@ class BooksView(QTableView):  # {{{
                 m = self.column_header_context_menu.addMenu(_('Show column'))
                 for col in hidden_cols:
                     hidx = self.column_map.index(col)
-                    name = unicode(self.model().headerData(hidx, Qt.Horizontal,
+                    name = str(self.model().headerData(hidx, Qt.Horizontal,
                             Qt.DisplayRole) or '')
                     m.addAction(name,
                         partial(self.column_header_context_handler,
@@ -486,7 +485,7 @@ class BooksView(QTableView):  # {{{
                 return
 
         for n,d in reversed(fields):
-            if n in self._model.db.field_metadata.keys():
+            if n in list(self._model.db.field_metadata.keys()):
                 sh.insert(0, (n, d))
         sh = self.cleanup_sort_history(sh, ignore_column_map=True)
         self._model.sort_history = [tuple(x) for x in sh]
@@ -535,7 +534,7 @@ class BooksView(QTableView):  # {{{
 
     def write_state(self, state):
         db = getattr(self.model(), 'db', None)
-        name = unicode(self.objectName())
+        name = str(self.objectName())
         if name and db is not None:
             db.new_api.set_pref(name + ' books view state', state)
 
@@ -580,7 +579,7 @@ class BooksView(QTableView):  # {{{
 
         positions = state.get('column_positions', {})
         pmap = {}
-        for col, pos in positions.items():
+        for col, pos in list(positions.items()):
             if col in cmap:
                 pmap[pos] = col
         for pos in sorted(pmap.keys()):
@@ -593,13 +592,13 @@ class BooksView(QTableView):  # {{{
         # Because of a bug in Qt 5 we have to ensure that the header is actually
         # relaid out by changing this value, without this sometimes ghost
         # columns remain visible when changing libraries
-        for i in xrange(h.count()):
+        for i in range(h.count()):
             val = h.isSectionHidden(i)
             h.setSectionHidden(i, not val)
             h.setSectionHidden(i, val)
 
         sizes = state.get('column_sizes', {})
-        for col, size in sizes.items():
+        for col, size in list(sizes.items()):
             if col in cmap:
                 sz = sizes[col]
                 if sz < 3:
@@ -609,7 +608,7 @@ class BooksView(QTableView):  # {{{
         self.apply_sort_history(state.get('sort_history', None),
                 max_sort_levels=max_sort_levels)
 
-        for col, alignment in state.get('column_alignment', {}).items():
+        for col, alignment in list(state.get('column_alignment', {}).items()):
             self._model.change_alignment(col, alignment)
 
         for i in range(h.count()):
@@ -645,7 +644,7 @@ class BooksView(QTableView):  # {{{
 
     def get_old_state(self):
         ans = None
-        name = unicode(self.objectName())
+        name = str(self.objectName())
         if name:
             name += ' books view state'
             db = getattr(self.model(), 'db', None)
@@ -860,7 +859,7 @@ class BooksView(QTableView):  # {{{
     @property
     def visible_columns(self):
         h = self.horizontalHeader()
-        logical_indices = (x for x in xrange(h.count()) if not h.isSectionHidden(x))
+        logical_indices = (x for x in range(h.count()) if not h.isSectionHidden(x))
         rmap = {i:x for i, x in enumerate(self.column_map)}
         return (rmap[h.visualIndex(x)] for x in logical_indices if h.visualIndex(x) > -1)
 
@@ -989,7 +988,7 @@ class BooksView(QTableView):  # {{{
         row_map = OrderedDict()
         ids = frozenset(ids)
         m = self.model()
-        for row in xrange(m.rowCount(QModelIndex())):
+        for row in range(m.rowCount(QModelIndex())):
             if len(row_map) >= len(ids):
                 break
             c = m.id(row)
@@ -1009,7 +1008,7 @@ class BooksView(QTableView):  # {{{
             rows = set([])
             identifiers = set(identifiers)
             m = self.model()
-            for row in xrange(m.rowCount(QModelIndex())):
+            for row in range(m.rowCount(QModelIndex())):
                 if m.id(row) in identifiers:
                     rows.add(row)
         rows = list(sorted(rows))
@@ -1026,7 +1025,7 @@ class BooksView(QTableView):  # {{{
         # Create a range based selector for each set of contiguous rows
         # as supplying selectors for each individual row causes very poor
         # performance if a large number of rows has to be selected.
-        for k, g in itertools.groupby(enumerate(rows), lambda (i,x):i-x):
+        for k, g in itertools.groupby(enumerate(rows), lambda i_x:i_x[0]-i_x[1]):
             group = list(map(operator.itemgetter(1), g))
             sel.merge(QItemSelection(m.index(min(group), 0),
                 m.index(max(group), max_col)), sm.Select)
@@ -1055,7 +1054,7 @@ class BooksView(QTableView):  # {{{
             if val is None:
                 return
             m = self.model()
-            for row in xrange(m.rowCount(QModelIndex())):
+            for row in range(m.rowCount(QModelIndex())):
                 if m.id(row) == val:
                     self.set_current_row(row, select=False)
                     break
@@ -1074,7 +1073,7 @@ class BooksView(QTableView):  # {{{
             i.isValid()])
         column = ci.column()
 
-        for i in xrange(ci.row()+1, self.row_count()):
+        for i in range(ci.row()+1, self.row_count()):
             if i in selected_rows:
                 continue
             try:
@@ -1083,7 +1082,7 @@ class BooksView(QTableView):  # {{{
                 pass
 
         # No unselected rows after the current row, look before
-        for i in xrange(ci.row()-1, -1, -1):
+        for i in range(ci.row()-1, -1, -1):
             if i in selected_rows:
                 continue
             try:
@@ -1190,14 +1189,14 @@ class DeviceBooksView(BooksView):  # {{{
 
     def get_old_state(self):
         ans = None
-        name = unicode(self.objectName())
+        name = str(self.objectName())
         if name:
             name += ' books view state'
             ans = gprefs.get(name, None)
         return ans
 
     def write_state(self, state):
-        name = unicode(self.objectName())
+        name = str(self.objectName())
         if name:
             gprefs.set(name + ' books view state', state)
 

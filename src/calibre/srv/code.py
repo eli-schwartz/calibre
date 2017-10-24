@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import cPickle
 import hashlib
@@ -17,11 +14,9 @@ from calibre import as_unicode
 from calibre.customize.ui import available_input_formats
 from calibre.db.view import sanitize_sort_field_name
 from calibre.srv.ajax import search_result
-from calibre.srv.errors import (
-    BookNotFound, HTTPBadRequest, HTTPForbidden, HTTPNotFound
-)
+from calibre.srv.errors import BookNotFound, HTTPBadRequest, HTTPForbidden, HTTPNotFound
 from calibre.srv.metadata import (
-    book_as_json, categories_as_json, categories_settings, icon_map
+	book_as_json, categories_as_json, categories_settings, icon_map
 )
 from calibre.srv.routes import endpoint, json
 from calibre.srv.utils import get_library_data, get_use_roman
@@ -29,6 +24,7 @@ from calibre.utils.config import prefs, tweaks
 from calibre.utils.icu import sort_key
 from calibre.utils.localization import get_lang
 from calibre.utils.search_query_parser import ParseException
+
 
 POSTABLE = frozenset({'GET', 'POST', 'HEAD'})
 

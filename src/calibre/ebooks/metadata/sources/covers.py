@@ -1,22 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import time
+from io import BytesIO
+from queue import Empty, Queue
+from threading import Event, Thread
+
+from calibre.customize.ui import metadata_plugins
+from calibre.ebooks.metadata.sources.base import create_log
+from calibre.ebooks.metadata.sources.prefs import msprefs
+from calibre.utils.img import (
+	image_from_data, image_to_data, remove_borders_from_image, save_cover_data_to
+)
+from calibre.utils.imghdr import identify
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import time
-from Queue import Queue, Empty
-from threading import Thread, Event
-from io import BytesIO
 
-from calibre.customize.ui import metadata_plugins
-from calibre.ebooks.metadata.sources.base import create_log
-from calibre.ebooks.metadata.sources.prefs import msprefs
-from calibre.utils.img import save_cover_data_to, remove_borders_from_image, image_to_data, image_from_data
-from calibre.utils.imghdr import identify
 
 
 class Worker(Thread):
@@ -192,7 +193,3 @@ def download_cover(log,
     results.sort(key=keygen)
 
     return results[0] if results else None
-
-
-
-

@@ -1,22 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import textwrap, re
+import re
+import textwrap
 
-from PyQt5.Qt import QAbstractTableModel, QFont, Qt
-
-
-from calibre.gui2.preferences import ConfigWidgetBase, test_widget, \
-        AbortCommit
+from calibre.gui2 import gprefs
+from calibre.gui2.preferences import AbortCommit, ConfigWidgetBase, test_widget
 from calibre.gui2.preferences.email_ui import Ui_Form
 from calibre.utils.config import ConfigProxy
 from calibre.utils.icu import numeric_sort_key
-from calibre.gui2 import gprefs
 from calibre.utils.smtp import config as smtp_prefs
+from PyQt5.Qt import QAbstractTableModel, QFont, Qt
 
 
 class EmailAccounts(QAbstractTableModel):  # {{{
@@ -28,14 +25,14 @@ class EmailAccounts(QAbstractTableModel):  # {{{
         self.aliases = aliases
         self.tags = tags
         self.sorted_on = (0, True)
-        self.account_order = self.accounts.keys()
+        self.account_order = list(self.accounts.keys())
         self.do_sort()
-        self.headers  = map(unicode, [_('Email'), _('Formats'), _('Subject'),
-            _('Auto send'), _('Alias'), _('Auto send only tags')])
+        self.headers  = list(map(str, [_('Email'), _('Formats'), _('Subject'),
+            _('Auto send'), _('Alias'), _('Auto send only tags')]))
         self.default_font = QFont()
         self.default_font.setBold(True)
         self.default_font = (self.default_font)
-        self.tooltips =[None] + list(map(unicode, map(textwrap.fill,
+        self.tooltips =[None] + list(map(str, list(map(textwrap.fill,
             [_('Formats to email. The first matching format will be sent.'),
              _('Subject of the email to use when sending. When left blank '
                'the title will be used for the subject. Also, the same '
@@ -49,7 +46,7 @@ class EmailAccounts(QAbstractTableModel):  # {{{
                ' this email address. All news downloads have their title as a'
                ' tag, so you can use this to easily control which news downloads'
                ' are sent to this email address.')
-             ])))
+             ]))))
 
     def do_sort(self):
         col = self.sorted_on[0]
@@ -64,7 +61,7 @@ class EmailAccounts(QAbstractTableModel):  # {{{
                 return numeric_sort_key(self.subjects.get(account_key) or '')
         elif col == 3:
             def key(account_key):
-                return numeric_sort_key(type(u'')(self.accounts[account_key][0]) or '')
+                return numeric_sort_key(type('')(self.accounts[account_key][0]) or '')
         elif col == 4:
             def key(account_key):
                 return numeric_sort_key(self.aliases.get(account_key) or '')
@@ -136,21 +133,21 @@ class EmailAccounts(QAbstractTableModel):  # {{{
         if col == 3:
             self.accounts[account][1] ^= True
         elif col == 2:
-            self.subjects[account] = unicode(value or '')
+            self.subjects[account] = str(value or '')
         elif col == 4:
             self.aliases.pop(account, None)
-            aval = unicode(value or '').strip()
+            aval = str(value or '').strip()
             if aval:
                 self.aliases[account] = aval
         elif col == 5:
             self.tags.pop(account, None)
-            aval = unicode(value or '').strip()
+            aval = str(value or '').strip()
             if aval:
                 self.tags[account] = aval
         elif col == 1:
-            self.accounts[account][0] = re.sub(',+', ',', re.sub(r'\s+', ',', unicode(value or '').upper()))
+            self.accounts[account][0] = re.sub(',+', ',', re.sub(r'\s+', ',', str(value or '').upper()))
         elif col == 0:
-            na = unicode(value or '')
+            na = str(value or '')
             from email.utils import parseaddr
             addr = parseaddr(na)[-1]
             if not addr:
@@ -168,7 +165,7 @@ class EmailAccounts(QAbstractTableModel):  # {{{
         if index.isValid():
             self.beginResetModel()
             row = index.row()
-            for x in self.accounts.values():
+            for x in list(self.accounts.values()):
                 x[2] = False
             self.accounts[self.account_order[row]][2] = True
             self.endResetModel()
@@ -184,7 +181,7 @@ class EmailAccounts(QAbstractTableModel):  # {{{
         self.beginResetModel()
         self.accounts[y] = ['MOBI, EPUB', auto_send,
                                                 len(self.account_order) == 0]
-        self.account_order = self.accounts.keys()
+        self.account_order = list(self.accounts.keys())
         self.do_sort()
         self.endResetModel()
         return self.index(self.account_order.index(y), 0)

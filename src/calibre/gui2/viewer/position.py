@@ -1,17 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import json
+import time
+
+from calibre.constants import DEBUG
+from PyQt5.Qt import QApplication, QEventLoop
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import json, time
 
-from PyQt5.Qt import QApplication, QEventLoop
 
-from calibre.constants import DEBUG
 
 
 class PagePosition(object):
@@ -53,7 +53,7 @@ class PagePosition(object):
             if jid in self.pending_scrolls:
                 self.pending_scrolls.discard(jid)
                 if DEBUG:
-                    print ('jump_to_cfi() failed to complete after %s seconds' % WAIT)
+                    print(('jump_to_cfi() failed to complete after %s seconds' % WAIT))
 
     @property
     def current_pos(self):

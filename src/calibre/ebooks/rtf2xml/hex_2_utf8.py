@@ -10,9 +10,11 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import sys, os, cStringIO
+import io
+import os
+import sys
 
-from calibre.ebooks.rtf2xml import get_char_map, copy
+from calibre.ebooks.rtf2xml import copy, get_char_map
 from calibre.ebooks.rtf2xml.char_set import char_set
 from calibre.ptempfile import better_mktemp
 
@@ -63,7 +65,7 @@ class Hex2Utf8:
             'in module "hex_2_utf8.py\n'
             '"area_to_convert" must be "body" or "preamble"\n'
             )
-            raise self.__bug_handler, msg
+            raise self.__bug_handler(msg)
         self.__char_file = char_file
         self.__area_to_convert = area_to_convert
         self.__default_char_map = default_char_map
@@ -118,7 +120,7 @@ class Hex2Utf8:
             'in module "hex_2_utf8.py\n'
             '"area_to_convert" must be "body" or "preamble"\n'
             )
-            raise self.__bug_handler, msg
+            raise self.__bug_handler(msg)
         self.__area_to_convert = area_to_convert
         self.__symbol = symbol
         self.__wingdings = wingdings
@@ -148,7 +150,7 @@ class Hex2Utf8:
         # 128, and the encoding system for Microsoft characters.
         # New on 2004-05-8: the self.__char_map is not in directory with other
         # modules
-        self.__char_file = cStringIO.StringIO(char_set)
+        self.__char_file = io.StringIO(char_set)
         char_map_obj =  get_char_map.GetCharMap(
                 char_file=self.__char_file,
                 bug_handler=self.__bug_handler,
@@ -261,7 +263,7 @@ class Hex2Utf8:
                     # msg += 'the hexidecimal num is "%s"\n' % (hex_num)
                     # msg += 'dictionary is %s\n' % self.__current_dict_name
                     msg = 'Character "&#x%s;" does not appear to be valid (or is a control character)\n' % token
-                    raise self.__bug_handler, msg
+                    raise self.__bug_handler(msg)
 
     def __found_body_func(self, line):
         self.__state = 'body'

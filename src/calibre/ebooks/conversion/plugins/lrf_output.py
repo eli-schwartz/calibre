@@ -1,15 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import os
+import sys
+
+from calibre.customize.conversion import OptionRecommendation, OutputFormatPlugin
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, os
 
-from calibre.customize.conversion import OutputFormatPlugin
-from calibre.customize.conversion import OptionRecommendation
 
 
 class LRFOptions(object):
@@ -17,7 +17,7 @@ class LRFOptions(object):
     def __init__(self, output, opts, oeb):
         def f2s(f):
             try:
-                return unicode(f[0])
+                return str(f[0])
             except:
                 return ''
         m = oeb.metadata
@@ -31,13 +31,13 @@ class LRFOptions(object):
         self.title_sort = self.author_sort = ''
         for x in m.creator:
             if x.role == 'aut':
-                self.author = unicode(x)
-                fa = unicode(getattr(x, 'file_as', ''))
+                self.author = str(x)
+                fa = str(getattr(x, 'file_as', ''))
                 if fa:
                     self.author_sort = fa
         for x in m.title:
-            if unicode(x.file_as):
-                self.title_sort = unicode(x.file_as)
+            if str(x.file_as):
+                self.title_sort = str(x.file_as)
         self.freetext = f2s(m.description)
         self.category = f2s(m.subject)
         self.cover = None
@@ -54,7 +54,7 @@ class LRFOptions(object):
         self.ignore_colors = False
         from calibre.ebooks.lrf import PRS500_PROFILE
         self.profile = PRS500_PROFILE
-        self.link_levels = sys.maxint
+        self.link_levels = sys.maxsize
         self.link_exclude = '@'
         self.no_links_in_toc = True
         self.disable_chapter_detection = True
@@ -187,7 +187,7 @@ class LRFOutput(OutputFormatPlugin):
         self.flatten_toc()
 
         from calibre.ptempfile import TemporaryDirectory
-        with TemporaryDirectory(u'_lrf_output') as tdir:
+        with TemporaryDirectory('_lrf_output') as tdir:
             from calibre.customize.ui import plugin_for_output_format
             oeb_output = plugin_for_output_format('oeb')
             oeb_output.convert(oeb, tdir, input_plugin, opts, log)

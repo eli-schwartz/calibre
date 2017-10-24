@@ -1,7 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import math
+import os
+import re
+from functools import partial
+
+from calibre import guess_type, prepare_string_for_xml
+from calibre.ebooks.metadata.opf2 import OPF
+from calibre.ebooks.oeb.base import urlparse, urlunquote
+from calibre.ebooks.oeb.iterator.bookmarks import BookmarksMixin
+from calibre.ebooks.oeb.iterator.spine import SpineItem, create_indexing_data
+from calibre.ebooks.oeb.transforms.cover import CoverManager
+from calibre.ptempfile import TemporaryDirectory
+from calibre.utils.config import DynamicConfig
+from calibre.utils.logging import default_log
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
@@ -12,18 +24,7 @@ __docformat__ = 'restructuredtext en'
 Iterate over the HTML files in an ebook. Useful for writing viewers.
 '''
 
-import re, os, math
-from functools import partial
 
-from calibre.ebooks.metadata.opf2 import OPF
-from calibre.ptempfile import TemporaryDirectory
-from calibre.utils.config import DynamicConfig
-from calibre.utils.logging import default_log
-from calibre import guess_type, prepare_string_for_xml
-from calibre.ebooks.oeb.transforms.cover import CoverManager
-from calibre.ebooks.oeb.iterator.spine import (SpineItem, create_indexing_data)
-from calibre.ebooks.oeb.iterator.bookmarks import BookmarksMixin
-from calibre.ebooks.oeb.base import urlparse, urlunquote
 
 TITLEPAGE = CoverManager.SVG_TEMPLATE.decode('utf-8').replace(
         '__ar__', 'none').replace('__viewbox__', '0 0 600 800'

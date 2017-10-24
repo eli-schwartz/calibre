@@ -1,25 +1,27 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import pickle
+import os
+from binascii import hexlify
+from functools import partial
+
+from calibre import force_unicode, prepare_string_for_xml
+from calibre.constants import filesystem_encoding
+from calibre.ebooks.metadata import fmt_sidx, rating_to_stars
+from calibre.ebooks.metadata.search_internet import (
+	DEFAULT_AUTHOR_SOURCE, name_for, qquote, url_for_author_search, url_for_book_search
+)
+from calibre.ebooks.metadata.sources.identify import urls_from_identifiers
+from calibre.library.comments import comments_to_html, markdown
+from calibre.utils.date import is_date_undefined
+from calibre.utils.formatter import EvalFormatter
+from calibre.utils.icu import sort_key
+from calibre.utils.localization import calibre_langcode_to_name
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, cPickle
-from functools import partial
-from binascii import hexlify
 
-from calibre import prepare_string_for_xml, force_unicode
-from calibre.ebooks.metadata import fmt_sidx, rating_to_stars
-from calibre.ebooks.metadata.search_internet import name_for, url_for_author_search, url_for_book_search, qquote, DEFAULT_AUTHOR_SOURCE
-from calibre.ebooks.metadata.sources.identify import urls_from_identifiers
-from calibre.constants import filesystem_encoding
-from calibre.library.comments import comments_to_html, markdown
-from calibre.utils.icu import sort_key
-from calibre.utils.formatter import EvalFormatter
-from calibre.utils.date import is_date_undefined
-from calibre.utils.localization import calibre_langcode_to_name
 
 default_sort = ('title', 'title_sort', 'authors', 'author_sort', 'series', 'rating', 'pubdate', 'tags', 'publisher', 'identifiers')
 
@@ -78,7 +80,7 @@ def author_search_href(which, title=None, author=None):
 
 
 def item_data(field_name, value, book_id):
-    return hexlify(cPickle.dumps((field_name, value, book_id), -1))
+    return hexlify(pickle.dumps((field_name, value, book_id), -1))
 
 
 def mi_to_html(mi, field_list=None, default_author_link=None, use_roman_numbers=True, rating_font='Liberation Serif', rtl=False):
@@ -87,7 +89,7 @@ def mi_to_html(mi, field_list=None, default_author_link=None, use_roman_numbers=
     ans = []
     comment_fields = []
     isdevice = not hasattr(mi, 'id')
-    row = u'<td class="title">%s</td><td class="value">%s</td>'
+    row = '<td class="title">%s</td><td class="value">%s</td>'
     p = prepare_string_for_xml
     a = partial(prepare_string_for_xml, attribute=True)
     book_id = getattr(mi, 'id', 0)
@@ -136,7 +138,7 @@ def mi_to_html(mi, field_list=None, default_author_link=None, use_roman_numbers=
             if val:
                 star_string = rating_to_stars(val, disp.get('allow_half_stars', False))
                 ans.append((field,
-                    u'<td class="title">%s</td><td class="rating value" '
+                    '<td class="title">%s</td><td class="rating value" '
                     'style=\'font-family:"%s"\'>%s</td>'%(
                         name, rating_font, star_string)))
         elif metadata['datatype'] == 'composite':
@@ -161,9 +163,9 @@ def mi_to_html(mi, field_list=None, default_author_link=None, use_roman_numbers=
         elif field == 'path':
             if mi.path:
                 path = force_unicode(mi.path, filesystem_encoding)
-                scheme = u'devpath' if isdevice else u'path'
+                scheme = 'devpath' if isdevice else 'path'
                 url = prepare_string_for_xml(path if isdevice else
-                        unicode(book_id), True)
+                        str(book_id), True)
                 pathstr = _('Click to open')
                 extra = ''
                 if isdevice:
@@ -172,7 +174,7 @@ def mi_to_html(mi, field_list=None, default_author_link=None, use_roman_numbers=
                         durl = ':::'.join((durl.split(':::'))[2:])
                     extra = '<br><span style="font-size:smaller">%s</span>'%(
                             prepare_string_for_xml(durl))
-                link = u'<a href="%s:%s" title="%s">%s</a>%s' % (scheme, url,
+                link = '<a href="%s:%s" title="%s">%s</a>%s' % (scheme, url,
                         prepare_string_for_xml(path, True), pathstr, extra)
                 ans.append((field, row % (name, link)))
         elif field == 'formats':
@@ -187,14 +189,14 @@ def mi_to_html(mi, field_list=None, default_author_link=None, use_roman_numbers=
                 'fmt':x, 'path':a(path or ''), 'fname':a(mi.format_files.get(x, '')),
                 'ext':x.lower(), 'id':book_id, 'bpath':bpath, 'sep':os.sep
             } for x in mi.formats)
-            fmts = [u'<a data-full-path="{path}{sep}{fname}.{ext}" title="{bpath}{sep}{fname}.{ext}" href="format:{id}:{fmt}">{fmt}</a>'.format(**x)
+            fmts = ['<a data-full-path="{path}{sep}{fname}.{ext}" title="{bpath}{sep}{fname}.{ext}" href="format:{id}:{fmt}">{fmt}</a>'.format(**x)
                     for x in data]
-            ans.append((field, row % (name, u', '.join(fmts))))
+            ans.append((field, row % (name, ', '.join(fmts))))
         elif field == 'identifiers':
             urls = urls_from_identifiers(mi.identifiers)
-            links = [u'<a href="%s" title="%s:%s" data-item="%s">%s</a>' % (a(url), a(id_typ), a(id_val), a(item_data(field, id_typ, book_id)), p(namel))
+            links = ['<a href="%s" title="%s:%s" data-item="%s">%s</a>' % (a(url), a(id_typ), a(id_val), a(item_data(field, id_typ, book_id)), p(namel))
                     for namel, id_typ, id_val, url in urls]
-            links = u', '.join(links)
+            links = ', '.join(links)
             if links:
                 ans.append((field, row % (_('Ids')+':', links)))
         elif field == 'authors':
@@ -219,17 +221,17 @@ def mi_to_html(mi, field_list=None, default_author_link=None, use_roman_numbers=
                         link = lt = formatter.safe_format(default_author_link, vals, '', vals)
                 aut = p(aut)
                 if link:
-                    authors.append(u'<a calibre-data="authors" title="%s" href="%s">%s</a>'%(a(lt), a(link), aut))
+                    authors.append('<a calibre-data="authors" title="%s" href="%s">%s</a>'%(a(lt), a(link), aut))
                 else:
                     authors.append(aut)
-            ans.append((field, row % (name, u' & '.join(authors))))
+            ans.append((field, row % (name, ' & '.join(authors))))
         elif field == 'languages':
             if not mi.languages:
                 continue
-            names = filter(None, map(calibre_langcode_to_name, mi.languages))
+            names = [_f for _f in map(calibre_langcode_to_name, mi.languages) if _f]
             names = ['<a href="%s" title="%s">%s</a>' % (search_href('languages', n), _(
                 'Search calibre for books with the language: {}').format(n), n) for n in names]
-            ans.append((field, row % (name, u', '.join(names))))
+            ans.append((field, row % (name, ', '.join(names))))
         elif field == 'publisher':
             if not mi.publisher:
                 continue
@@ -296,7 +298,7 @@ def mi_to_html(mi, field_list=None, default_author_link=None, use_roman_numbers=
 
     dc = getattr(mi, 'device_collections', [])
     if dc:
-        dc = u', '.join(sorted(dc, key=sort_key))
+        dc = ', '.join(sorted(dc, key=sort_key))
         ans.append(('device_collections',
             row % (_('Collections')+':', dc)))
 
@@ -307,11 +309,11 @@ def mi_to_html(mi, field_list=None, default_author_link=None, use_roman_numbers=
             dt = 'text'
         return 'datatype_%s'%dt
 
-    ans = [u'<tr id="%s" class="%s">%s</tr>'%(fieldl.replace('#', '_'),
+    ans = ['<tr id="%s" class="%s">%s</tr>'%(fieldl.replace('#', '_'),
         classname(fieldl), html) for fieldl, html in ans]
     # print '\n'.join(ans)
     direction = 'rtl' if rtl else 'ltr'
     margin = 'left' if rtl else 'right'
-    return u'<style>table.fields td { vertical-align:middle}</style>' + \
-           u'<table class="fields" style="direction: %s; margin-%s:auto">%s</table>'%(
-               direction, margin, u'\n'.join(ans)), comment_fields
+    return '<style>table.fields td { vertical-align:middle}</style>' + \
+           '<table class="fields" style="direction: %s; margin-%s:auto">%s</table>'%(
+               direction, margin, '\n'.join(ans)), comment_fields

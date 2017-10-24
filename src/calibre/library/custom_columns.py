@@ -1,19 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
-
-__license__   = 'GPL v3'
-__copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
-__docformat__ = 'restructuredtext en'
-
-import json, re
+import json
+import re
 from functools import partial
 
 from calibre import prints
 from calibre.constants import preferred_encoding
 from calibre.library.field_metadata import FieldMetadata
-from calibre.utils.date import parse_date
 from calibre.utils.config import tweaks
+from calibre.utils.date import parse_date
+
+
+__license__   = 'GPL v3'
+__copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
+__docformat__ = 'restructuredtext en'
+
+
 
 
 class CustomColumns(object):
@@ -130,23 +131,23 @@ class CustomColumns(object):
             if d['is_multiple']:
                 if x is None:
                     return []
-                if isinstance(x, (str, unicode, bytes)):
+                if isinstance(x, (str, bytes)):
                     x = x.split(d['multiple_seps']['ui_to_list'])
                 x = [y.strip() for y in x if y.strip()]
                 x = [y.decode(preferred_encoding, 'replace') if not isinstance(y,
-                    unicode) else y for y in x]
-                return [u' '.join(y.split()) for y in x]
+                    str) else y for y in x]
+                return [' '.join(y.split()) for y in x]
             else:
-                return x if x is None or isinstance(x, unicode) else \
+                return x if x is None or isinstance(x, str) else \
                         x.decode(preferred_encoding, 'replace')
 
         def adapt_datetime(x, d):
-            if isinstance(x, (str, unicode, bytes)):
+            if isinstance(x, (str, bytes)):
                 x = parse_date(x, assume_utc=False, as_utc=False)
             return x
 
         def adapt_bool(x, d):
-            if isinstance(x, (str, unicode, bytes)):
+            if isinstance(x, (str, bytes)):
                 x = x.lower()
                 if x == 'true':
                     x = True
@@ -167,7 +168,7 @@ class CustomColumns(object):
         def adapt_number(x, d):
             if x is None:
                 return None
-            if isinstance(x, (str, unicode, bytes)):
+            if isinstance(x, (str, bytes)):
                 if x.lower() == 'none':
                     return None
             if d['datatype'] == 'int':
@@ -613,7 +614,7 @@ class CustomColumns(object):
         st = ('DELETE FROM {table} WHERE (SELECT COUNT(id) FROM {lt} WHERE'
            ' {lt}.value={table}.id) < 1;')
         statements = []
-        for data in self.custom_column_num_map.values():
+        for data in list(self.custom_column_num_map.values()):
             if data['normalized']:
                 table, lt = self.custom_table_names(data['num'])
                 statements.append(st.format(lt=lt, table=table))
@@ -623,7 +624,7 @@ class CustomColumns(object):
 
     def custom_columns_in_meta(self):
         lines = {}
-        for data in self.custom_column_label_map.values():
+        for data in list(self.custom_column_label_map.values()):
             table, lt = self.custom_table_names(data['num'])
             if data['normalized']:
                 query = '%s.value'
@@ -809,5 +810,3 @@ class CustomColumns(object):
         self.conn.executescript(script)
         self.conn.commit()
         return num
-
-

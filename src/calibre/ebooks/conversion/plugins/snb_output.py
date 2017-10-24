@@ -4,11 +4,12 @@ __license__ = 'GPL 3'
 __copyright__ = '2010, Li Fanxi <lifanxi@freemindworld.com>'
 __docformat__ = 'restructuredtext en'
 
-import os, string
+import os
+import string
 
-from calibre.customize.conversion import OutputFormatPlugin, OptionRecommendation
-from calibre.ptempfile import TemporaryDirectory
 from calibre.constants import __appname__, __version__
+from calibre.customize.conversion import OptionRecommendation, OutputFormatPlugin
+from calibre.ptempfile import TemporaryDirectory
 
 
 class SNBOutput(OutputFormatPlugin):
@@ -72,20 +73,20 @@ class SNBOutput(OutputFormatPlugin):
             # Process Meta data
             meta = oeb_book.metadata
             if meta.title:
-                title = unicode(meta.title[0])
+                title = str(meta.title[0])
             else:
                 title = ''
-            authors = [unicode(x) for x in meta.creator if x.role == 'aut']
+            authors = [str(x) for x in meta.creator if x.role == 'aut']
             if meta.publisher:
-                publishers = unicode(meta.publisher[0])
+                publishers = str(meta.publisher[0])
             else:
                 publishers = ''
             if meta.language:
-                lang = unicode(meta.language[0]).upper()
+                lang = str(meta.language[0]).upper()
             else:
                 lang = ''
             if meta.description:
-                abstract = unicode(meta.description[0])
+                abstract = str(meta.description[0])
             else:
                 abstract = ''
 
@@ -123,10 +124,10 @@ class SNBOutput(OutputFormatPlugin):
             if oeb_book.toc.count() == 0:
                 log.warn('This SNB file has no Table of Contents. '
                     'Creating a default TOC')
-                first = iter(oeb_book.spine).next()
+                first = next(iter(oeb_book.spine))
                 oeb_book.toc.add(_('Start page'), first.href)
             else:
-                first = iter(oeb_book.spine).next()
+                first = next(iter(oeb_book.spine))
                 if oeb_book.toc[0].href != first.href:
                     # The pages before the fist item in toc will be stored as
                     # "Cover Pages".

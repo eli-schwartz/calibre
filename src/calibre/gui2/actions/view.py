@@ -1,23 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, time
+import os
+import time
 from functools import partial
-
-from PyQt5.Qt import Qt, QAction, pyqtSignal
 
 from calibre.constants import isosx, iswindows
 from calibre.gui2 import (
-    error_dialog, Dispatcher, question_dialog, config, open_local_file,
-    info_dialog, elided_text)
-from calibre.gui2.dialogs.choose_format import ChooseFormatDialog
-from calibre.utils.config import prefs, tweaks
-from calibre.ptempfile import PersistentTemporaryFile
+	Dispatcher, config, elided_text, error_dialog,
+	info_dialog, open_local_file, question_dialog
+)
 from calibre.gui2.actions import InterfaceAction
+from calibre.gui2.dialogs.choose_format import ChooseFormatDialog
+from calibre.ptempfile import PersistentTemporaryFile
+from calibre.utils.config import prefs, tweaks
+from PyQt5.Qt import QAction, Qt, pyqtSignal
 
 
 class HistoryAction(QAction):

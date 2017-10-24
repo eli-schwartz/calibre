@@ -2,9 +2,11 @@ __license__ = 'GPL 3'
 __copyright__ = '2010, sengian <sengian1@gmail.com>'
 __docformat__ = 'restructuredtext en'
 
-import re, htmlentitydefs
-from future_builtins import map
+import html.entities
+import re
+
 from calibre.constants import plugins, preferred_encoding
+
 
 try:
     _ncxc = plugins['speedup'][0].clean_xml_chars
@@ -28,16 +30,16 @@ def clean_ascii_chars(txt, charlist=None):
         return ''
     global _ascii_pat
     if _ascii_pat is None:
-        chars = set(xrange(32))
+        chars = set(range(32))
         chars.add(127)
         for x in (9, 10, 13):
             chars.remove(x)
-        _ascii_pat = re.compile(u'|'.join(map(unichr, chars)))
+        _ascii_pat = re.compile('|'.join(map(chr, chars)))
 
     if charlist is None:
         pat = _ascii_pat
     else:
-        pat = re.compile(u'|'.join(map(unichr, charlist)))
+        pat = re.compile('|'.join(map(chr, charlist)))
     return pat.sub('', txt)
 
 
@@ -47,14 +49,14 @@ def allowed(x):
 
 
 def py_clean_xml_chars(unicode_string):
-    return u''.join(filter(allowed, unicode_string))
+    return ''.join(filter(allowed, unicode_string))
 
 clean_xml_chars = native_clean_xml_chars or py_clean_xml_chars
 
 
 def test_clean_xml_chars():
-    raw = u'asd\x02a\U00010437x\ud801b\udffe\ud802'
-    if native_clean_xml_chars(raw) != u'asda\U00010437xb':
+    raw = 'asd\x02a\\U00010437x\\ud801b\\udffe\\ud802'
+    if native_clean_xml_chars(raw) != 'asda\\U00010437xb':
         raise ValueError('Failed to XML clean: %r' % raw)
 
 
@@ -64,26 +66,25 @@ def test_clean_xml_chars():
 # @param text The HTML (or XML) source text.
 # @return The plain text, as a Unicode string, if necessary.
 
-def unescape(text, rm=False, rchar=u''):
+def unescape(text, rm=False, rchar=''):
     def fixup(m, rm=rm, rchar=rchar):
         text = m.group(0)
         if text[:2] == "&#":
             # character reference
             try:
                 if text[:3] == "&#x":
-                    return unichr(int(text[3:-1], 16))
+                    return chr(int(text[3:-1], 16))
                 else:
-                    return unichr(int(text[2:-1]))
+                    return chr(int(text[2:-1]))
             except ValueError:
                 pass
         else:
             # named entity
             try:
-                text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
+                text = chr(html.entities.name2codepoint[text[1:-1]])
             except KeyError:
                 pass
         if rm:
             return rchar  # replace by char
         return text  # leave as is
     return re.sub("&#?\w+;", fixup, text)
-

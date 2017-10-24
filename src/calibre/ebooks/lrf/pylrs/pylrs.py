@@ -36,27 +36,33 @@
 #                           Plot, Image (outside of ImageBlock),
 #                           EmpLine, EmpDots
 
-import os, re, codecs, operator
-from xml.sax.saxutils import escape
+import codecs
+import operator
+import os
+import re
 from datetime import date
+from xml.sax.saxutils import escape
+
+from calibre import __appname__, __version__, entity_to_unicode
+from calibre.utils.date import isoformat
+from .elements import ElementWriter
+from .pylrf import (
+	BINDING_DIRECTION_ENCODING, IMAGE_TYPE_ENCODING, LINE_TYPE_ENCODING,
+	STREAM_COMPRESSED, STREAM_FORCE_COMPRESSED, LrfFileStream,
+	LrfObject, LrfStreamBase, LrfTag, LrfTagStream, LrfToc, LrfWriter
+)
+
+
 try:
     from elementtree.ElementTree import (Element, SubElement)
     Element, SubElement
 except ImportError:
     from xml.etree.ElementTree import (Element, SubElement)
 
-from elements import ElementWriter
-from pylrf import (LrfWriter, LrfObject, LrfTag, LrfToc,
-        STREAM_COMPRESSED, LrfTagStream, LrfStreamBase, IMAGE_TYPE_ENCODING,
-        BINDING_DIRECTION_ENCODING, LINE_TYPE_ENCODING, LrfFileStream,
-        STREAM_FORCE_COMPRESSED)
-from calibre.utils.date import isoformat
 
 DEFAULT_SOURCE_ENCODING = "cp1252"      # defualt is us-windows character set
 DEFAULT_GENREADING      = "fs"          # default is yes to both lrf and lrs
 
-from calibre import __appname__, __version__
-from calibre import entity_to_unicode
 
 
 class LrsError(Exception):
@@ -95,7 +101,7 @@ def ElementWithReading(tag, text, reading=False):
 
     if text is None:
         readingText = ""
-    elif isinstance(text, basestring):
+    elif isinstance(text, str):
         readingText = text
     else:
         # assumed to be a sequence of (name, sortas)
@@ -182,7 +188,7 @@ class Delegator(object):
         return applied
 
     def applySettings(self, settings, testValid=False):
-        for (setting, value) in settings.items():
+        for (setting, value) in list(settings.items()):
             self.applySetting(setting, value, testValid)
             """
             if setting not in self.delegatedSettingsDict:
@@ -227,7 +233,7 @@ class LrsAttributes(object):
         if alsoAllow is None:
             alsoAllow = []
         self.attrs = defaults.copy()
-        for (name, value) in settings.items():
+        for (name, value) in list(settings.items()):
             if name not in self.attrs and name not in alsoAllow:
                 raise LrsError("%s does not support setting %s" %
                         (self.__class__.__name__, name))
@@ -292,7 +298,7 @@ class LrsContainer(object):
                     (content.__class__.__name__,
                     self.__class__.__name__))
 
-        if convertText and isinstance(content, basestring):
+        if convertText and isinstance(content, str):
             content = Text(content)
 
         content.setParent(self)
@@ -424,7 +430,7 @@ class Book(Delegator):
         LrsObject.nextObjId += 1
 
         styledefault = StyleDefault()
-        if settings.has_key('setdefault'):  # noqa
+        if 'setdefault' in settings:  # noqa
             styledefault = settings.pop('setdefault')
         Delegator.__init__(self, [BookInformation(), Main(),
             Template(), Style(styledefault), Solos(), Objects()])
@@ -561,10 +567,10 @@ class Book(Delegator):
             length = len(text.text)
             fonts[fs] = fonts.get(fs, 0) + length
         if not fonts:
-            print 'WARNING: LRF seems to have no textual content. Cannot rationalize font sizes.'
+            print('WARNING: LRF seems to have no textual content. Cannot rationalize font sizes.')
             return
 
-        old_base_font_size = float(max(fonts.items(), key=operator.itemgetter(1))[0])
+        old_base_font_size = float(max(list(fonts.items()), key=operator.itemgetter(1))[0])
         factor = base_font_size / old_base_font_size
 
         def rescale(old):
@@ -572,12 +578,12 @@ class Book(Delegator):
 
         text_blocks = list(main.get_all(lambda x: isinstance(x, TextBlock)))
         for tb in text_blocks:
-            if tb.textSettings.has_key('fontsize'):  # noqa
+            if 'fontsize' in tb.textSettings:  # noqa
                 tb.textSettings['fontsize'] = rescale(tb.textSettings['fontsize'])
             for span in tb.get_all(lambda x: isinstance(x, Span)):
-                if span.attrs.has_key('fontsize'):  # noqa
+                if 'fontsize' in span.attrs:  # noqa
                     span.attrs['fontsize'] = rescale(span.attrs['fontsize'])
-                if span.attrs.has_key('baselineskip'):  # noqa
+                if 'baselineskip' in span.attrs:  # noqa
                     span.attrs['baselineskip'] = rescale(span.attrs['baselineskip'])
 
         text_styles = set(tb.textStyle for tb in text_blocks)
@@ -586,14 +592,14 @@ class Book(Delegator):
             ts.attrs['baselineskip'] = rescale(ts.attrs['baselineskip'])
 
     def renderLrs(self, lrsFile, encoding="UTF-8"):
-        if isinstance(lrsFile, basestring):
+        if isinstance(lrsFile, str):
             lrsFile = codecs.open(lrsFile, "wb", encoding=encoding)
         self.render(lrsFile, outputEncodingName=encoding)
         lrsFile.close()
 
     def renderLrf(self, lrfFile):
         self.appendReferencedObjects(self)
-        if isinstance(lrfFile, basestring):
+        if isinstance(lrfFile, str):
             lrfFile = file(lrfFile, "wb")
         lrfWriter = LrfWriter(self.sourceencoding)
 
@@ -1104,7 +1110,7 @@ class LrsStyle(LrsObject, LrsAttributes, LrsContainer):
         # self.parent = None
 
     def update(self, settings):
-        for name, value in settings.items():
+        for name, value in list(settings.items()):
             if name not in self.__class__.validSettings:
                 raise LrsError("%s not a valid setting for %s" % (name, self.__class__.__name__))
             self.attrs[name] = value
@@ -1159,7 +1165,7 @@ class TextStyle(LrsStyle):
                  "rubyadjust", "rubyalign", "rubyoverhang",
                  "empdotsposition", 'emplinetype', 'emplineposition']
 
-    validSettings = baseDefaults.keys() + alsoAllow
+    validSettings = list(baseDefaults.keys()) + alsoAllow
 
     defaults = baseDefaults.copy()
 
@@ -1190,7 +1196,7 @@ class BlockStyle(LrsStyle):
             framewidth="0", framecolor="0x00000000", topskip="0",
             sidemargin="0", footskip="0", bgcolor="0xFF000000")
 
-    validSettings = baseDefaults.keys()
+    validSettings = list(baseDefaults.keys())
     defaults = baseDefaults.copy()
 
     def __init__(self, **overrides):
@@ -1220,7 +1226,7 @@ class PageStyle(LrsStyle):
     alsoAllow = ["header", "evenheader", "oddheader",
                  "footer", "evenfooter", "oddfooter"]
 
-    validSettings = baseDefaults.keys() + alsoAllow
+    validSettings = list(baseDefaults.keys()) + alsoAllow
     defaults = baseDefaults.copy()
 
     @classmethod
@@ -1277,7 +1283,7 @@ class Page(LrsObject, LrsContainer):
 
         self.pageStyle = pageStyle
 
-        for settingName in settings.keys():
+        for settingName in list(settings.keys()):
             if settingName not in PageStyle.defaults and \
                     settingName not in PageStyle.alsoAllow:
                 raise LrsError("setting %s not allowed on Page" % settingName)
@@ -1383,7 +1389,7 @@ class TextBlock(LrsObject, LrsContainer):
         self.textSettings = {}
         self.blockSettings = {}
 
-        for name, value in settings.items():
+        for name, value in list(settings.items()):
             if name in TextStyle.validSettings:
                 self.textSettings[name] = value
             elif name in BlockStyle.validSettings:
@@ -1492,9 +1498,9 @@ class Paragraph(LrsContainer):
 
     def __init__(self, text=None):
         LrsContainer.__init__(self, [Text, CR, DropCaps, CharButton,
-                                     LrsSimpleChar1, basestring])
+                                     LrsSimpleChar1, str])
         if text is not None:
-            if isinstance(text, basestring):
+            if isinstance(text, str):
                 text = Text(text)
             self.append(text)
 
@@ -1527,7 +1533,7 @@ class Paragraph(LrsContainer):
 class LrsTextTag(LrsContainer):
 
     def __init__(self, text, validContents):
-        LrsContainer.__init__(self, [Text, basestring] + validContents)
+        LrsContainer.__init__(self, [Text, str] + validContents)
         if text is not None:
             self.append(text)
 
@@ -1677,8 +1683,8 @@ class Plot(LrsSimpleChar1, LrsContainer):
             raise LrsError('Sizes must be positive semi-definite')
         self.xsize = int(xsize)
         self.ysize = int(ysize)
-        if adjustment and adjustment not in Plot.ADJUSTMENT_VALUES.keys():
-            raise LrsError('adjustment must be one of' + Plot.ADJUSTMENT_VALUES.keys())
+        if adjustment and adjustment not in list(Plot.ADJUSTMENT_VALUES.keys()):
+            raise LrsError('adjustment must be one of' + list(Plot.ADJUSTMENT_VALUES.keys()))
         self.adjustment = adjustment
 
     def setObj(self, obj):
@@ -1791,7 +1797,7 @@ class Box(LrsSimpleChar1, LrsContainer):
     """
 
     def __init__(self, linetype="solid"):
-        LrsContainer.__init__(self, [Text, basestring])
+        LrsContainer.__init__(self, [Text, str])
         if linetype not in LINE_TYPE_ENCODING:
             raise LrsError(linetype + " is not a valid line type")
         self.linetype = linetype
@@ -1811,13 +1817,13 @@ class Box(LrsSimpleChar1, LrsContainer):
 class Span(LrsSimpleChar1, LrsContainer):
 
     def __init__(self, text=None, **attrs):
-        LrsContainer.__init__(self, [LrsSimpleChar1, Text, basestring])
+        LrsContainer.__init__(self, [LrsSimpleChar1, Text, str])
         if text is not None:
-            if isinstance(text, basestring):
+            if isinstance(text, str):
                 text = Text(text)
             self.append(text)
 
-        for attrname in attrs.keys():
+        for attrname in list(attrs.keys()):
             if attrname not in TextStyle.defaults and \
                     attrname not in TextStyle.alsoAllow:
                 raise LrsError("setting %s not allowed on Span" % attrname)
@@ -1841,7 +1847,7 @@ class Span(LrsSimpleChar1, LrsContainer):
         oldTextStyle = self.findCurrentTextStyle()
 
         # set the attributes we want changed
-        for (name, value) in self.attrs.items():
+        for (name, value) in list(self.attrs.items()):
             if name in oldTextStyle.attrs and oldTextStyle.attrs[name] == self.attrs[name]:
                 self.attrs.pop(name)
             else:
@@ -1858,12 +1864,12 @@ class Span(LrsSimpleChar1, LrsContainer):
         # put the attributes back the way we found them
         # the attributes persist beyond the next </P>
         # if self.hasFollowingContent():
-        for name in self.attrs.keys():
+        for name in list(self.attrs.keys()):
             container.appendLrfTag(LrfTag(name, oldTextStyle.attrs[name]))
 
     def toElement(self, se):
         element = Element('Span')
-        for (key, value) in self.attrs.items():
+        for (key, value) in list(self.attrs.items()):
             element.set(key, str(value))
 
         appendTextElements(element, self.contents, se)
@@ -1955,7 +1961,7 @@ class CharButton(LrsSimpleChar1, LrsContainer):
     """
 
     def __init__(self, button, text=None):
-        LrsContainer.__init__(self, [basestring, Text, LrsSimpleChar1])
+        LrsContainer.__init__(self, [str, Text, LrsSimpleChar1])
         self.button = None
         if button is not None:
             self.setButton(button)

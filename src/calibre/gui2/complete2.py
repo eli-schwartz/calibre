@@ -1,24 +1,24 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import weakref
+
+import sip
+from calibre.constants import get_osx_version, isosx
+from calibre.gui2.widgets import EnComboBox, LineEditECM
+from calibre.utils.config import tweaks
+from calibre.utils.icu import primary_contains, primary_startswith, sort_key
+from PyQt5.Qt import (
+	QAbstractListModel, QApplication, QComboBox, QFont, QFontInfo,
+	QKeySequence, QLineEdit, QListView, QModelIndex, QObject,
+	QPoint, QStyle, QStyleOptionComboBox, Qt, QTimer, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import weakref
 
-import sip
-from PyQt5.Qt import (
-    QLineEdit, QAbstractListModel, Qt, pyqtSignal, QObject, QKeySequence,
-    QApplication, QListView, QPoint, QModelIndex, QFont, QFontInfo,
-    QStyleOptionComboBox, QStyle, QComboBox, QTimer)
 
-from calibre.constants import isosx, get_osx_version
-from calibre.utils.icu import sort_key, primary_startswith, primary_contains
-from calibre.gui2.widgets import EnComboBox, LineEditECM
-from calibre.utils.config import tweaks
 
 
 def containsq(x, prefix):
@@ -34,7 +34,7 @@ class CompleteModel(QAbstractListModel):  # {{{
         self.current_prefix = ''
 
     def set_items(self, items):
-        items = [unicode(x.strip()) for x in items]
+        items = [str(x.strip()) for x in items]
         items = [x for x in items if x]
         items = tuple(sorted(items, key=self.sort_func))
         self.beginResetModel()
@@ -108,7 +108,7 @@ class Completer(QListView):  # {{{
             return
         self.hide()
         text = self.model().data(index, Qt.DisplayRole)
-        self.item_selected.emit(unicode(text))
+        self.item_selected.emit(str(text))
 
     def set_items(self, items):
         self.model().set_items(items)
@@ -198,9 +198,9 @@ class Completer(QListView):  # {{{
 
     def debug_event(self, ev):
         from calibre.gui2 import event_type_name
-        print ('Event:', event_type_name(ev))
+        print(('Event:', event_type_name(ev)))
         if ev.type() in (ev.KeyPress, ev.ShortcutOverride, ev.KeyRelease):
-            print ('\tkey:', QKeySequence(ev.key()).toString())
+            print(('\tkey:', QKeySequence(ev.key()).toString()))
 
     def eventFilter(self, obj, e):
         'Redirect key presses from the popup to the widget'
@@ -384,7 +384,7 @@ class LineEdit(QLineEdit, LineEditECM):
     def update_completions(self):
         ' Update the list of completions '
         self.original_cursor_pos = cpos = self.cursorPosition()
-        text = unicode(self.text())
+        text = str(self.text())
         prefix = text[:cpos]
         complete_prefix = prefix.lstrip()
         if self.sep:
@@ -401,7 +401,7 @@ class LineEdit(QLineEdit, LineEditECM):
                 cursor_pos = self.cursorPosition()
             self.original_cursor_pos = None
             # Split text
-            curtext = unicode(self.text())
+            curtext = str(self.text())
             before_text = curtext[:cursor_pos]
             after_text = curtext[cursor_pos:].rstrip()
             # Remove the completion prefix from the before text
@@ -421,7 +421,7 @@ class LineEdit(QLineEdit, LineEditECM):
             return before_text + completed_text, after_text
 
     def completion_selected(self, text):
-        before_text, after_text = self.get_completed_text(unicode(text))
+        before_text, after_text = self.get_completed_text(str(text))
         self.setText(before_text + after_text)
         self.setCursorPosition(len(before_text))
         self.item_selected.emit(text)
@@ -461,7 +461,7 @@ class EditWithComplete(EnComboBox):
         self.lineEdit().set_add_separator(what)
 
     def show_initial_value(self, what):
-        what = unicode(what) if what else u''
+        what = str(what) if what else ''
         self.setText(what)
         self.lineEdit().selectAll()
 
@@ -485,7 +485,7 @@ class EditWithComplete(EnComboBox):
     # }}}
 
     def text(self):
-        return unicode(self.lineEdit().text())
+        return str(self.lineEdit().text())
 
     def selectAll(self):
         self.lineEdit().selectAll()
@@ -527,7 +527,7 @@ if __name__ == '__main__':
     le = EditWithComplete(d)
     d.layout().addWidget(le)
     items = ['one', 'otwo', 'othree', 'ooone', 'ootwo',
-        'oothree', 'a1', 'a2',u'Edgas', u'Èdgar', u'Édgaq', u'Edgar', u'Édgar']
+        'oothree', 'a1', 'a2','Edgas', 'Èdgar', 'Édgaq', 'Edgar', 'Édgar']
     le.update_items_cache(items)
     le.show_initial_value('')
     d.exec_()

@@ -1,16 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import OrderedDict
+from struct import unpack_from
+
+from calibre.utils.fonts.sfnt import UnknownTable
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from struct import unpack_from
-from collections import OrderedDict
 
-from calibre.utils.fonts.sfnt import UnknownTable
 
 ARG_1_AND_2_ARE_WORDS      = 0x0001  # if set args are words otherwise they are bytes
 ARGS_ARE_XY_VALUES         = 0x0002  # if set args are xy values, otherwise they are points
@@ -81,11 +80,10 @@ class GlyfTable(UnknownTable):
         ans = OrderedDict()
         offset = 0
         block = []
-        for glyph_id, glyph in sorted_glyph_map.iteritems():
+        for glyph_id, glyph in sorted_glyph_map.items():
             raw = glyph()
             ans[glyph_id] = (offset, len(raw))
             offset += len(raw)
             block.append(raw)
         self.raw = b''.join(block)
         return ans
-

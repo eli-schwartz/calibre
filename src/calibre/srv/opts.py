@@ -1,19 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import errno
+import os
+from collections import OrderedDict, namedtuple
+from functools import partial
+from itertools import zip_longest
+from operator import attrgetter
+
+from calibre.constants import config_dir
+from calibre.utils.lock import ExclusiveFile
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import errno, os
-from itertools import izip_longest
-from collections import namedtuple, OrderedDict
-from operator import attrgetter
-from functools import partial
 
-from calibre.constants import config_dir
-from calibre.utils.lock import ExclusiveFile
 
 Option = namedtuple('Option', 'name default longdoc shortdoc choices')
 
@@ -193,7 +193,7 @@ options = []
 def grouper(n, iterable, fillvalue=None):
     "grouper(3, 'ABCDEFG', 'x') --> ABC DEF Gxx"
     args = [iter(iterable)] * n
-    return izip_longest(*args, fillvalue=fillvalue)
+    return zip_longest(*args, fillvalue=fillvalue)
 
 
 for shortdoc, name, default, doc in grouper(4, raw_options):
@@ -211,7 +211,7 @@ class Options(object):
     __slots__ = tuple(name for name in options)
 
     def __init__(self, **kwargs):
-        for opt in options.itervalues():
+        for opt in options.values():
             setattr(self, opt.name, kwargs.get(opt.name, opt.default))
 
 
@@ -238,7 +238,7 @@ def boolean_option(add_option, opt):
 def opts_to_parser(usage):
     from calibre.utils.config import OptionParser
     parser =  OptionParser(usage)
-    for opt in options.itervalues():
+    for opt in options.values():
         add_option = partial(parser.add_option, dest=opt.name, help=opt_to_cli_help(opt), default=opt.default)
         if opt.default is True or opt.default is False:
             boolean_option(add_option, opt)
@@ -248,7 +248,7 @@ def opts_to_parser(usage):
         else:
             name = '--' + opt.name.replace('_', '-')
             otype = 'string'
-            if isinstance(opt.default, (int, long, float)):
+            if isinstance(opt.default, (int, float)):
                 otype = type(opt.default).__name__
             add_option(name, type=otype)
 
@@ -278,7 +278,7 @@ def parse_config_file(path=DEFAULT_CONFIG):
         val = rest
         if isinstance(opt.default, bool):
             val = val.lower() in ('true', 'yes', 'y')
-        elif isinstance(opt.default, (int, long, float)):
+        elif isinstance(opt.default, (int, float)):
             try:
                 val = type(opt.default)(rest)
             except Exception:

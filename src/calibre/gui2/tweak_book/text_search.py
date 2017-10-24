@@ -1,23 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
 from functools import partial
-
-from PyQt5.Qt import (
-    QWidget, QHBoxLayout, QVBoxLayout, QLabel, QComboBox, QPushButton, QIcon,
-    pyqtSignal, QFont, QCheckBox, QSizePolicy
-)
-from lxml.etree import tostring
 
 from calibre import prepare_string_for_xml
 from calibre.gui2 import error_dialog
-from calibre.gui2.tweak_book import tprefs, editors, current_container
-from calibre.gui2.tweak_book.search import get_search_regex, InvalidRegex, initialize_search_request
+from calibre.gui2.tweak_book import current_container, editors, tprefs
+from calibre.gui2.tweak_book.search import (
+	InvalidRegex, get_search_regex, initialize_search_request
+)
 from calibre.gui2.tweak_book.widgets import BusyCursor
 from calibre.gui2.widgets2 import HistoryComboBox
+from lxml.etree import tostring
+from PyQt5.Qt import (
+	QCheckBox, QComboBox, QFont, QHBoxLayout, QIcon, QLabel,
+	QPushButton, QSizePolicy, QVBoxLayout, QWidget, pyqtSignal
+)
+
 
 # UI {{{
 
@@ -79,7 +78,7 @@ class WhereBox(QComboBox):
             return wm[self.currentIndex()]
 
         def fset(self, val):
-            self.setCurrentIndex({v:k for k, v in wm.iteritems()}[val])
+            self.setCurrentIndex({v:k for k, v in wm.items()}[val])
         return property(fget=fget, fset=fset)
 
     def showPopup(self):
@@ -172,7 +171,7 @@ def run_text_search(search, current_editor, current_editor_name, searchable_name
                 return True
             if not files and editor.find_text(pat, wrap=True):
                 return True
-        for fname, syntax in files.iteritems():
+        for fname, syntax in files.items():
             ed = editors.get(fname, None)
             if ed is not None:
                 if ed.find_text(pat, complete=True):
@@ -181,7 +180,7 @@ def run_text_search(search, current_editor, current_editor_name, searchable_name
             else:
                 root = current_container().parsed(fname)
                 if hasattr(root, 'xpath'):
-                    raw = tostring(root, method='text', encoding=unicode, with_tail=True)
+                    raw = tostring(root, method='text', encoding=str, with_tail=True)
                 else:
                     raw = current_container().raw_data(fname)
                 if pat.search(raw) is not None:

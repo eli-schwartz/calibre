@@ -1,19 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import textwrap
+
+from calibre.devices.usbms.driver import debug_print
+from calibre.gui2.device_drivers.tabbed_device_config import (
+	DeviceConfigTab, DeviceOptionsGroupBox, TabbedDeviceConfig
+)
+from PyQt5.Qt import (
+	QCheckBox, QDialog, QDialogButtonBox, QGridLayout, QLabel, QLineEdit, QVBoxLayout
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import textwrap
 
-from PyQt5.Qt import (QLabel, QGridLayout, QLineEdit, QVBoxLayout,
-                      QDialog, QDialogButtonBox, QCheckBox)
 
-from calibre.gui2.device_drivers.tabbed_device_config import TabbedDeviceConfig, DeviceConfigTab, DeviceOptionsGroupBox
-from calibre.devices.usbms.driver import debug_print
 
 
 def wrap_msg(msg):
@@ -117,7 +119,7 @@ class KOBOTOUCHConfig(TabbedDeviceConfig):
 
         p['support_newer_firmware'] = self.support_newer_firmware
         p['debugging_title'] = self.debugging_title
-        p['driver_version'] = '.'.join([unicode(i) for i in self.device.version])
+        p['driver_version'] = '.'.join([str(i) for i in self.device.version])
 
         return p
 
@@ -373,7 +375,7 @@ class AdvancedGroupBox(DeviceOptionsGroupBox):
                               'to perform full read-write functionality - Here be Dragons!! '
                               'Enable only if you are comfortable with restoring your kobo '
                               'to factory defaults and testing software. '
-                              'This driver supports firmware V2.x.x and DBVersion up to ') + unicode(
+                              'This driver supports firmware V2.x.x and DBVersion up to ') + str(
                                   device.supported_dbversion), device.get_pref('support_newer_firmware')
                              )
 

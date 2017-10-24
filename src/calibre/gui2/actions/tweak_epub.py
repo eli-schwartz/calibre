@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -8,10 +7,9 @@ __docformat__ = 'restructuredtext en'
 import time
 from functools import partial
 
-from PyQt5.Qt import QTimer, QDialog, QDialogButtonBox, QCheckBox, QVBoxLayout, QLabel, Qt
-
 from calibre.gui2 import error_dialog
 from calibre.gui2.actions import InterfaceAction
+from PyQt5.Qt import QCheckBox, QDialog, QDialogButtonBox, QLabel, Qt, QTimer, QVBoxLayout
 
 
 class Choose(QDialog):

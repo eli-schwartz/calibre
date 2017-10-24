@@ -1,21 +1,22 @@
 #!/usr/bin/env  python2
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre import fit_image
+from calibre.gui2 import NO_URL_FORMATTING, gprefs
+from calibre.gui2.book_details import css, details_context_menu_event, render_html
+from calibre.gui2.widgets import CoverView
+from PyQt5.Qt import (
+	QBrush, QCheckBox, QCoreApplication, QDialog, QGridLayout, QIcon,
+	QKeySequence, QModelIndex, QPalette, QPixmap, QPushButton, QShortcut,
+	QSize, QSplitter, Qt, QTimer, QVBoxLayout, QWidget, pyqtSignal
+)
+from PyQt5.QtWebKitWidgets import QWebView
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
 
 
-from PyQt5.Qt import (
-    QCoreApplication, QModelIndex, QTimer, Qt, pyqtSignal, QWidget,
-    QGridLayout, QDialog, QPixmap, QSize, QPalette, QShortcut, QKeySequence,
-    QSplitter, QVBoxLayout, QCheckBox, QPushButton, QIcon, QBrush)
-from PyQt5.QtWebKitWidgets import QWebView
 
-from calibre.gui2 import gprefs, NO_URL_FORMATTING
-from calibre import fit_image
-from calibre.gui2.book_details import render_html, details_context_menu_event, css
-from calibre.gui2.widgets import CoverView
 
 
 class Details(QWebView):
@@ -79,7 +80,7 @@ class BookInfo(QDialog):
         self.previous_button.clicked.connect(self.previous)
         l2.addWidget(self.previous_button, l2.rowCount(), 0)
         self.next_button = QPushButton(QIcon(I('next.png')), _('&Next'), self)
-        self.next_button.clicked.connect(self.next)
+        self.next_button.clicked.connect(self.__next__)
         l2.addWidget(self.next_button, l2.rowCount() - 1, 1)
 
         self.view = view
@@ -88,13 +89,13 @@ class BookInfo(QDialog):
         self.view.model().new_bookdisplay_data.connect(self.slave)
         self.fit_cover.stateChanged.connect(self.toggle_cover_fit)
         self.ns = QShortcut(QKeySequence('Alt+Right'), self)
-        self.ns.activated.connect(self.next)
+        self.ns.activated.connect(self.__next__)
         self.ps = QShortcut(QKeySequence('Alt+Left'), self)
         self.ps.activated.connect(self.previous)
         self.next_button.setToolTip(_('Next [%s]')%
-                unicode(self.ns.key().toString(QKeySequence.NativeText)))
+                str(self.ns.key().toString(QKeySequence.NativeText)))
         self.previous_button.setToolTip(_('Previous [%s]')%
-                unicode(self.ps.key().toString(QKeySequence.NativeText)))
+                str(self.ps.key().toString(QKeySequence.NativeText)))
 
         geom = QCoreApplication.instance().desktop().availableGeometry(self)
         screen_height = geom.height() - 100
@@ -109,7 +110,7 @@ class BookInfo(QDialog):
                 pass
 
     def link_clicked(self, qurl):
-        link = unicode(qurl.toString(NO_URL_FORMATTING))
+        link = str(qurl.toString(NO_URL_FORMATTING))
         self.link_delegate(link)
 
     def done(self, r):
@@ -153,7 +154,7 @@ class BookInfo(QDialog):
                     self.view.scrollTo(ni)
                 self.view.setCurrentIndex(ni)
 
-    def next(self):
+    def __next__(self):
         self.move()
 
     def previous(self):

@@ -1,15 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.ebooks.oeb.base import OEB_DOCS, OEB_STYLES
+from calibre.ebooks.oeb.polish.container import guess_type
+from PyQt5.Qt import QTextCharFormat
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from PyQt5.Qt import QTextCharFormat
 
-from calibre.ebooks.oeb.base import OEB_DOCS, OEB_STYLES
-from calibre.ebooks.oeb.polish.container import guess_type
 
 _xml_types = {'application/oebps-page-map+xml', 'application/vnd.adobe-page-template+xml', 'application/page-template+xml'} | {
             guess_type('a.'+x) for x in ('ncx', 'opf', 'svg', 'xpgt', 'xml')}

@@ -3,15 +3,19 @@ __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
 ''' Post installation script for linux '''
 
-import sys, os, cPickle, textwrap, stat, errno
-from subprocess import check_call, check_output
+import pickle
+import errno
+import os
+import stat
+import sys
+import textwrap
 from functools import partial
+from subprocess import check_call, check_output
 
-from calibre import __appname__, prints, guess_type
-from calibre.constants import islinux, isbsd
+from calibre import CurrentDir, __appname__, guess_type, prints
+from calibre.constants import isbsd, islinux
 from calibre.customize.ui import all_input_formats
 from calibre.ptempfile import TemporaryDirectory
-from calibre import CurrentDir
 
 
 entry_points = {
@@ -69,7 +73,7 @@ class PreserveMIMEDefaults(object):
                 self.initial_values[x] = None
 
     def __exit__(self, *args):
-        for path, val in self.initial_values.iteritems():
+        for path, val in self.initial_values.items():
             if val is None:
                 try:
                     os.remove(path)
@@ -202,14 +206,14 @@ class ZshCompleter(object):  # {{{
                 lo = [x+'=' for x in lo]
                 so = [x+'+' for x in so]
             ostrings = lo + so
-            ostrings = u'{%s}'%','.join(ostrings) if len(ostrings) > 1 else ostrings[0]
-            exclude = u''
+            ostrings = '{%s}'%','.join(ostrings) if len(ostrings) > 1 else ostrings[0]
+            exclude = ''
             if opt.dest is None:
-                exclude = u"'(- *)'"
+                exclude = "'(- *)'"
             h = opt.help or ''
             h = h.replace('"', "'").replace('[', '(').replace(
                 ']', ')').replace('\n', ' ').replace(':', '\\:').replace('`', "'")
-            h = h.replace('%default', type(u'')(opt.default))
+            h = h.replace('%default', type('')(opt.default))
             arg = ''
             if opt.takes_value():
                 arg = ':"%s":'%h
@@ -233,8 +237,8 @@ class ZshCompleter(object):  # {{{
                     arg += "'_files -g \"%s\"'"%(' '.join('*.%s'%x for x in
                                 tuple(pics) + tuple(x.upper() for x in pics)))
 
-            help_txt = u'"[%s]"'%h
-            yield u'%s%s%s%s '%(exclude, ostrings, help_txt, arg)
+            help_txt = '"[%s]"'%h
+            yield '%s%s%s%s '%(exclude, ostrings, help_txt, arg)
 
     def opts_and_exts(self, name, op, exts, cover_opts=('--cover',),
                       opf_opts=('--opf',), file_map={}):
@@ -274,7 +278,7 @@ class ZshCompleter(object):  # {{{
         w('\n    "--list-recipes:List builtin recipe names"')
         for recipe in sorted(set(get_builtin_recipe_titles())):
             recipe = recipe.replace(':', '\\:').replace('"', '\\"')
-            w(u'\n    "%s.recipe"'%(recipe))
+            w('\n    "%s.recipe"'%(recipe))
         w('\n  ); _describe -t recipes "ebook-convert builtin recipes" extras')
         w('\n  _files -g "%s"'%' '.join(('*.%s'%x for x in iexts)))
         w('\n}\n')
@@ -363,16 +367,16 @@ class ZshCompleter(object):  # {{{
                 lo = [x+'=' for x in lo]
                 so = [x+'+' for x in so]
             ostrings = lo + so
-            ostrings = u'{%s}'%','.join(ostrings) if len(ostrings) > 1 else '"%s"'%ostrings[0]
+            ostrings = '{%s}'%','.join(ostrings) if len(ostrings) > 1 else '"%s"'%ostrings[0]
             h = opt.help or ''
             h = h.replace('"', "'").replace('[', '(').replace(
                 ']', ')').replace('\n', ' ').replace(':', '\\:').replace('`', "'")
-            h = h.replace('%default', type(u'')(opt.default))
-            help_txt = u'"[%s]"'%h
+            h = h.replace('%default', type('')(opt.default))
+            help_txt = '"[%s]"'%h
             opt_lines.append(ostrings + help_txt + ' \\')
         opt_lines = ('\n' + (' ' * 8)).join(opt_lines)
 
-        f.write((ur'''
+        f.write((r'''
 _ebook_edit() {
     local curcontext="$curcontext" state line ebookfile expl
     typeset -A opt_args
@@ -415,13 +419,13 @@ _ebook_edit() {
         f.write('\n_calibredb_cmds() {\n  local commands; commands=(\n')
         f.write('    {-h,--help}":Show help"\n')
         f.write('    "--version:Show version"\n')
-        for command, desc in descs.iteritems():
+        for command, desc in descs.items():
             f.write('    "%s:%s"\n'%(
                 command, desc.replace(':', '\\:').replace('"', '\'')))
         f.write('  )\n  _describe -t commands "calibredb command" commands \n}\n')
 
         subcommands = []
-        for command, parser in parsers.iteritems():
+        for command, parser in parsers.items():
             exts = []
             if command == 'catalog':
                 exts = [x.lower() for x in available_catalog_formats()]
@@ -476,10 +480,10 @@ _ebook_edit() {
                 self.do_calibredb(f)
                 self.do_ebook_edit(f)
                 f.write('case $service in\n')
-                for c, txt in self.commands.iteritems():
-                    if isinstance(txt, type(u'')):
+                for c, txt in self.commands.items():
+                    if isinstance(txt, type('')):
                         txt = txt.encode('utf-8')
-                    if isinstance(c, type(u'')):
+                    if isinstance(c, type('')):
                         c = c.encode('utf-8')
                     f.write(b'%s)\n%s\n;;\n'%(c, txt))
                 f.write('esac\n')
@@ -644,12 +648,12 @@ class PostInstall:
         import traceback
         tb = '\n\t'.join(traceback.format_exc().splitlines())
         self.info('\t'+tb)
-        print
+        print()
 
     def warning(self, *args, **kwargs):
-        print '\n'+'_'*20, 'WARNING','_'*20
+        print('\n'+'_'*20, 'WARNING','_'*20)
         prints(*args, **kwargs)
-        print '_'*50
+        print('_'*50)
         print ('\n')
         self.warnings.append((args, kwargs))
         sys.stdout.flush()
@@ -671,12 +675,12 @@ class PostInstall:
         self.opts.staging_etc = '/etc' if self.opts.staging_root == '/usr' else \
                 os.path.join(self.opts.staging_root, 'etc')
 
-        scripts = cPickle.loads(P('scripts.pickle', data=True))
+        scripts = pickle.loads(P('scripts.pickle', data=True))
         self.manifest = manifest or []
         if getattr(sys, 'frozen_path', False):
             if os.access(self.opts.staging_bindir, os.W_OK):
                 self.info('Creating symlinks...')
-                for exe in scripts.keys():
+                for exe in list(scripts.keys()):
                     dest = os.path.join(self.opts.staging_bindir, exe)
                     if os.path.lexists(dest):
                         os.unlink(dest)
@@ -715,7 +719,7 @@ class PostInstall:
             self.info('\n\nThere were %d warnings\n'%len(self.warnings))
             for args, kwargs in self.warnings:
                 self.info('*', *args, **kwargs)
-                print
+                print()
 
     def create_uninstaller(self):
         base = self.opts.staging_bindir
@@ -753,7 +757,7 @@ class PostInstall:
             write_completion(bash_comp_dest, zsh)
         except TypeError as err:
             if 'resolve_entities' in str(err):
-                print 'You need python-lxml >= 2.0.5 for calibre'
+                print('You need python-lxml >= 2.0.5 for calibre')
                 sys.exit(1)
             raise
         except EnvironmentError as e:
@@ -797,7 +801,7 @@ class PostInstall:
                     for size in sizes:
                         install_single_icon(iconsrc, basename, size, context, is_last_icon and size is sizes[-1])
 
-                icons = filter(None, [x.strip() for x in '''\
+                icons = [_f for _f in [x.strip() for x in '''\
                     mimetypes/lrf.png application-lrf mimetypes
                     mimetypes/lrf.png text-lrs mimetypes
                     mimetypes/mobi.png application-x-mobipocket-ebook mimetypes
@@ -807,7 +811,7 @@ class PostInstall:
                     lt.png calibre-gui apps
                     viewer.png calibre-viewer apps
                     tweak.png calibre-ebook-edit apps
-                    '''.splitlines()])
+                    '''.splitlines()] if _f]
                 for line in icons:
                     iconsrc, basename, context = line.split()
                     install_icons(iconsrc, basename, context, is_last_icon=line is icons[-1])
@@ -1098,7 +1102,7 @@ def write_appdata(key, entry, base, translators):
     description = E.description()
     for para in entry['description']:
         description.append(E.p(para))
-        for lang, t in translators.iteritems():
+        for lang, t in translators.items():
             tp = t.ugettext(para)
             if tp != para:
                 description.append(E.p(tp))
@@ -1115,7 +1119,7 @@ def write_appdata(key, entry, base, translators):
         screenshots,
         type='desktop'
     )
-    for lang, t in translators.iteritems():
+    for lang, t in translators.items():
         tp = t.ugettext(entry['summary'])
         if tp != entry['summary']:
             root.append(E.summary(tp))

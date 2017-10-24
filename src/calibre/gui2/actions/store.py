@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+from functools import partial
+
+from calibre.gui2 import error_dialog
+from calibre.gui2.actions import InterfaceAction
+from calibre.gui2.dialogs.confirm_delete import confirm
+from PyQt5.Qt import QIcon, QSize
+
 
 __license__ = 'GPL 3'
 __copyright__ = '2011, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-from functools import partial
 
-from PyQt5.Qt import QIcon, QSize
 
-from calibre.gui2 import error_dialog
-from calibre.gui2.actions import InterfaceAction
-from calibre.gui2.dialogs.confirm_delete import confirm
 
 
 class StoreAction(InterfaceAction):
@@ -42,7 +43,7 @@ class StoreAction(InterfaceAction):
         self.store_list_menu.clear()
         icon = QIcon()
         icon.addFile(I('donate.png'), QSize(16, 16))
-        for n, p in sorted(self.gui.istores.items(), key=lambda x: x[0].lower()):
+        for n, p in sorted(list(self.gui.istores.items()), key=lambda x: x[0].lower()):
             if p.base_plugin.affiliate:
                 self.store_list_menu.addAction(icon, n,
                                                partial(self.open_store, n))

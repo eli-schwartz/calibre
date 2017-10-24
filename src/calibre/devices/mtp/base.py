@@ -1,17 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__   = 'GPL v3'
-__copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
-__docformat__ = 'restructuredtext en'
-
 from functools import wraps
 
 from calibre import prints
 from calibre.constants import DEBUG
 from calibre.devices.interface import DevicePlugin
+
+
+__license__   = 'GPL v3'
+__copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
+__docformat__ = 'restructuredtext en'
+
+
 
 
 def debug(*args, **kwargs):
@@ -64,5 +63,3 @@ class MTPDeviceBase(DevicePlugin):
 
     def is_customizable(self):
         return True
-
-

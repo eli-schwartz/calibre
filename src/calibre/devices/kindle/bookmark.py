@@ -4,7 +4,7 @@ __license__   = 'GPL v3'
 __docformat__ = 'restructuredtext en'
 
 import os
-from cStringIO import StringIO
+from io import StringIO
 from struct import unpack
 
 
@@ -276,7 +276,7 @@ class Bookmark():  # {{{
                 self.last_read_location = self.last_read - self.pdf_page_offset
 
         else:
-            print "unsupported bookmark_extension: %s" % self.bookmark_extension
+            print("unsupported bookmark_extension: %s" % self.bookmark_extension)
         self.user_notes = user_notes
 
     def get_book_length(self):
@@ -312,6 +312,6 @@ class Bookmark():  # {{{
                 pass
 
         else:
-            print "unsupported bookmark_extension: %s" % self.bookmark_extension
+            print("unsupported bookmark_extension: %s" % self.bookmark_extension)
 
 # }}}

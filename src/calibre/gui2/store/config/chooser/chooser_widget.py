@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+from calibre.gui2.store.config.chooser.adv_search_builder import AdvSearchBuilderDialog
+from calibre.gui2.store.config.chooser.chooser_widget_ui import Ui_Form
+from PyQt5.Qt import QComboBox, QDialog, QIcon, QLineEdit, QWidget
+
 
 __license__ = 'GPL 3'
 __copyright__ = '2011, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QWidget, QIcon, QDialog, QComboBox, QLineEdit
 
-from calibre.gui2.store.config.chooser.adv_search_builder import AdvSearchBuilderDialog
-from calibre.gui2.store.config.chooser.chooser_widget_ui import Ui_Form
 
 
 class StoreChooserWidget(QWidget, Ui_Form):
@@ -31,7 +31,7 @@ class StoreChooserWidget(QWidget, Ui_Form):
         self.results_view.activated.connect(self.results_view.model().toggle_plugin)
 
     def do_search(self):
-        self.results_view.model().search(unicode(self.query.text()))
+        self.results_view.model().search(str(self.query.text()))
 
     def build_adv_search(self):
         adv = AdvSearchBuilderDialog(self)

@@ -1,25 +1,31 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import pickle
+import errno
+import itertools
+import os
+import sys
+import tempfile
+import time
+from binascii import hexlify
+from collections import deque
+from math import ceil
+from multiprocessing.connection import Listener, arbitrary_address
+from queue import Empty, Queue
+from threading import RLock, Thread
+
+from calibre import detect_ncpus as cpu_count
+from calibre.constants import DEBUG, islinux, iswindows
+from calibre.ptempfile import base_dir
+from calibre.utils.ipc import eintr_retry_call
+from calibre.utils.ipc.launch import Worker
+from calibre.utils.ipc.worker import PARALLEL_FUNCS
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, os, cPickle, time, tempfile, errno, itertools
-from math import ceil
-from threading import Thread, RLock
-from Queue import Queue, Empty
-from multiprocessing.connection import Listener, arbitrary_address
-from collections import deque
-from binascii import hexlify
 
-from calibre.utils.ipc import eintr_retry_call
-from calibre.utils.ipc.launch import Worker
-from calibre.utils.ipc.worker import PARALLEL_FUNCS
-from calibre import detect_ncpus as cpu_count
-from calibre.constants import iswindows, DEBUG, islinux
-from calibre.ptempfile import base_dir
 
 _counter = 0
 
@@ -124,7 +130,7 @@ if islinux:
 
     def create_listener(authkey, backlog=4):
         # Use abstract named sockets on linux to avoid creating unnecessary temp files
-        prefix = u'\0calibre-ipc-listener-%d-%%d' % os.getpid()
+        prefix = '\0calibre-ipc-listener-%d-%%d' % os.getpid()
         while True:
             address = (prefix % next(_name_counter)).encode('ascii')
             try:
@@ -175,7 +181,7 @@ else:
 class Server(Thread):
 
     def __init__(self, notify_on_job_done=lambda x: x, pool_size=None,
-            limit=sys.maxint, enforce_cpu_limit=True):
+            limit=sys.maxsize, enforce_cpu_limit=True):
         Thread.__init__(self)
         self.daemon = True
         global _counter
@@ -202,22 +208,22 @@ class Server(Thread):
         with self._worker_launch_lock:
             self.launched_worker_count += 1
             id = self.launched_worker_count
-        fd, rfile = tempfile.mkstemp(prefix=u'ipc_result_%d_%d_'%(self.id, id),
-                dir=base_dir(), suffix=u'.pickle')
+        fd, rfile = tempfile.mkstemp(prefix='ipc_result_%d_%d_'%(self.id, id),
+                dir=base_dir(), suffix='.pickle')
         os.close(fd)
         if redirect_output is None:
             redirect_output = not gui
 
         env = {
-                'CALIBRE_WORKER_ADDRESS' : hexlify(cPickle.dumps(self.listener.address, -1)),
+                'CALIBRE_WORKER_ADDRESS' : hexlify(pickle.dumps(self.listener.address, -1)),
                 'CALIBRE_WORKER_KEY' : hexlify(self.auth_key),
                 'CALIBRE_WORKER_RESULT' : hexlify(rfile.encode('utf-8')),
               }
         cw = self.do_launch(env, gui, redirect_output, rfile, job_name=job_name)
-        if isinstance(cw, basestring):
+        if isinstance(cw, str):
             raise CriticalError('Failed to launch worker process:\n'+cw)
         if DEBUG:
-            print 'Worker Launch took:', time.time() - start
+            print('Worker Launch took:', time.time() - start)
         return cw
 
     def do_launch(self, env, gui, redirect_output, rfile, job_name=None):
@@ -278,7 +284,7 @@ class Server(Thread):
                     job.returncode = worker.returncode
                 elif os.path.exists(worker.rfile):
                     try:
-                        job.result = cPickle.load(open(worker.rfile, 'rb'))
+                        job.result = pickle.load(open(worker.rfile, 'rb'))
                         os.remove(worker.rfile)
                     except:
                         pass
@@ -383,4 +389,3 @@ class Server(Thread):
 
     def __exit__(self, *args):
         self.close()
-

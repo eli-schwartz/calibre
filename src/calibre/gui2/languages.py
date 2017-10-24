@@ -1,16 +1,14 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.gui2 import gui_prefs
+from calibre.gui2.complete2 import EditWithComplete
+from calibre.utils.icu import lower, sort_key
+from calibre.utils.localization import lang_map
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from calibre.gui2 import gui_prefs
-from calibre.gui2.complete2 import EditWithComplete
-from calibre.utils.localization import lang_map
-from calibre.utils.icu import sort_key, lower
 
 _lang_map = None
 
@@ -34,15 +32,15 @@ class LanguagesEdit(EditWithComplete):
         self.setSizeAdjustPolicy(self.AdjustToMinimumContentsLengthWithIcon)
         self.setMinimumContentsLength(20)
         self._lang_map = get_lang_map()
-        self.names_with_commas = [x for x in self._lang_map.itervalues() if ',' in x]
+        self.names_with_commas = [x for x in self._lang_map.values() if ',' in x]
         self.comma_map = {k:k.replace(',', '|') for k in self.names_with_commas}
-        self.comma_rmap = {v:k for k, v in self.comma_map.iteritems()}
-        self._rmap = {lower(v):k for k,v in self._lang_map.iteritems()}
+        self.comma_rmap = {v:k for k, v in self.comma_map.items()}
+        self._rmap = {lower(v):k for k,v in self._lang_map.items()}
         self.init_langs(db)
         self.item_selected.connect(self.update_recently_used)
 
     def init_langs(self, db):
-        self.update_items_cache(self._lang_map.itervalues())
+        self.update_items_cache(iter(self._lang_map.values()))
 
     def refresh_recently_used(self):
         recently_used = self.prefs.get('recently_used_languages') or ()
@@ -64,8 +62,8 @@ class LanguagesEdit(EditWithComplete):
 
     @property
     def vals(self):
-        raw = unicode(self.lineEdit().text())
-        for k, v in self.comma_map.iteritems():
+        raw = str(self.lineEdit().text())
+        for k, v in self.comma_map.items():
             raw = raw.replace(k, v)
         parts = [x.strip() for x in raw.split(',')]
         return [self.comma_rmap.get(x, x) for x in parts]
@@ -114,4 +112,3 @@ class LanguagesEdit(EditWithComplete):
                 if code is None:
                     bad.append(name)
         return bad
-

@@ -1,27 +1,30 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import pickle
+import os
+import re
+import textwrap
+import unicodedata
+from bisect import bisect
+from collections import defaultdict
+from functools import partial
+
+from calibre.constants import cache_dir, plugins
+from calibre.gui2.tweak_book import tprefs
+from calibre.gui2.tweak_book.widgets import BusyCursor, Dialog
+from calibre.gui2.widgets2 import HistoryLineEdit2
+from calibre.utils.icu import character_name_from_code, icu_unicode_version, safe_chr as chr
+from PyQt5.Qt import (
+	QAbstractItemModel, QAbstractListModel, QApplication, QGridLayout, QIcon,
+	QInputMethodEvent, QLabel, QListView, QMenu, QMimeData, QModelIndex, QPen, QPushButton,
+	QSize, QSizePolicy, QSplitter, QStyledItemDelegate, Qt, QToolButton, QTreeView, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import unicodedata, re, os, cPickle, textwrap
-from bisect import bisect
-from functools import partial
-from collections import defaultdict
 
-from PyQt5.Qt import (
-    QAbstractItemModel, QModelIndex, Qt, pyqtSignal, QApplication,
-    QTreeView, QSize, QGridLayout, QAbstractListModel, QListView, QPen, QMenu,
-    QStyledItemDelegate, QSplitter, QLabel, QSizePolicy, QIcon, QMimeData,
-    QPushButton, QToolButton, QInputMethodEvent)
 
-from calibre.constants import plugins, cache_dir
-from calibre.gui2.widgets2 import HistoryLineEdit2
-from calibre.gui2.tweak_book import tprefs
-from calibre.gui2.tweak_book.widgets import Dialog, BusyCursor
-from calibre.utils.icu import safe_chr as chr, icu_unicode_version, character_name_from_code
 
 ROOT = QModelIndex()
 
@@ -43,23 +46,23 @@ def load_search_index():
     path = os.path.join(cache_dir(), 'unicode-name-index.pickle')
     if os.path.exists(path):
         with open(path, 'rb') as f:
-            name_map = cPickle.load(f)
+            name_map = pickle.load(f)
         if name_map.pop('calibre-nm-version:', None) != ver:
             name_map = {}
     if not name_map:
         name_map = defaultdict(set)
-        for x in xrange(1, topchar + 1):
+        for x in range(1, topchar + 1):
             for word in character_name_from_code(x).split():
                 name_map[word.lower()].add(x)
         from calibre.ebooks.html_entities import html5_entities
-        for name, char in html5_entities.iteritems():
+        for name, char in html5_entities.items():
             try:
                 name_map[name.lower()].add(ord(char))
             except TypeError:
                 continue
         name_map['nnbsp'].add(0x202F)
         name_map['calibre-nm-version:'] = ver
-        cPickle.dump(dict(name_map), open(path, 'wb'), -1)
+        pickle.dump(dict(name_map), open(path, 'wb'), -1)
         del name_map['calibre-nm-version:']
     return name_map
 
@@ -461,7 +464,7 @@ class CategoryModel(QAbstractItemModel):
                     return (_('Favorites'), list(tprefs['charmap_favorites']))
             else:
                 item = self.categories[pid - 1][1][index.row()]
-                return (item[0], list(xrange(item[1][0], item[1][1] + 1)))
+                return (item[0], list(range(item[1][0], item[1][1] + 1)))
 
     def get_char_info(self, char_code):
         ipos = bisect(self.starts, char_code) - 1
@@ -563,7 +566,7 @@ class CharModel(QAbstractListModel):
     def dropMimeData(self, md, action, row, column, parent):
         if action != Qt.MoveAction or not md.hasFormat('application/calibre_charcode_indices') or row < 0 or column != 0:
             return False
-        indices = map(int, bytes(md.data('application/calibre_charcode_indices')).split(','))
+        indices = list(map(int, bytes(md.data('application/calibre_charcode_indices')).split(',')))
         codes = [self.chars[x] for x in indices]
         for x in indices:
             self.chars[x] = None
@@ -794,7 +797,7 @@ class CharSelect(Dialog):
         self.char_view.setFocus(Qt.OtherFocusReason)
 
     def do_search(self):
-        text = unicode(self.search.text()).strip()
+        text = str(self.search.text()).strip()
         if not text:
             return self.clear_search()
         with BusyCursor():

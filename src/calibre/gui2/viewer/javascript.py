@@ -1,17 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import zipfile
+
+import calibre
+from calibre.utils.localization import lang_as_iso639_1
+from calibre.utils.resources import compiled_coffeescript
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, zipfile
 
-import calibre
-from calibre.utils.localization import lang_as_iso639_1
-from calibre.utils.resources import compiled_coffeescript
 
 
 class JavaScriptLoader(object):
@@ -26,7 +26,7 @@ class JavaScriptLoader(object):
             'hyphenator':'viewer/hyphenate/Hyphenator.js',
             'images':None
 
-        }.iteritems()}
+        }.items()}
 
     CS = {
             'cfi':'ebooks.oeb.display.cfi',
@@ -103,6 +103,6 @@ class JavaScriptLoader(object):
 
         lang = lang_name(lang)
 
-        evaljs('\n\n'.join(self._hp_cache.itervalues()))
+        evaljs('\n\n'.join(iter(self._hp_cache.values())))
 
         return lang

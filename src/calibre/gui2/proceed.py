@@ -1,21 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import namedtuple
+
+from calibre.constants import __version__
+from calibre.gui2.dialogs.message_box import ViewLog
+from PyQt5.Qt import (
+	QApplication, QCheckBox, QDialogButtonBox, QEasingCurve, QFontMetrics, QHBoxLayout, QIcon,
+	QImage, QLabel, QPainter, QPainterPath, QPixmap, QPlainTextEdit, QPropertyAnimation,
+	QRectF, QSize, QSizePolicy, Qt, QTimer, QVBoxLayout, QWidget, pyqtProperty, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from collections import namedtuple
 
-from PyQt5.Qt import (
-    QWidget, Qt, QLabel, QVBoxLayout, QDialogButtonBox, QApplication, QTimer, QPixmap,
-    QSize, pyqtSignal, QIcon, QPlainTextEdit, QCheckBox, QPainter, QHBoxLayout, QFontMetrics,
-    QPainterPath, QRectF, pyqtProperty, QPropertyAnimation, QEasingCurve, QSizePolicy, QImage)
 
-from calibre.constants import __version__
-from calibre.gui2.dialogs.message_box import ViewLog
 
 Question = namedtuple('Question', 'payload callback cancel_callback '
         'title msg html_log log_viewer_title log_is_file det_msg '
@@ -170,9 +170,9 @@ class ProceedQuestion(QWidget):
     def copy_to_clipboard(self, *args):
         QApplication.clipboard().setText(
                 'calibre, version %s\n%s: %s\n\n%s' %
-                (__version__, unicode(self.windowTitle()),
-                    unicode(self.msg_label.text()),
-                    unicode(self.det_msg.toPlainText())))
+                (__version__, str(self.windowTitle()),
+                    str(self.msg_label.text()),
+                    str(self.det_msg.toPlainText())))
         self.copy_button.setText(_('Copied'))
 
     def action_clicked(self):
@@ -210,7 +210,7 @@ class ProceedQuestion(QWidget):
         self.show_question()
 
     def toggle_det_msg(self, *args):
-        vis = unicode(self.det_msg_toggle.text()) == self.hide_det_msg
+        vis = str(self.det_msg_toggle.text()) == self.hide_det_msg
         self.det_msg_toggle.setText(self.show_det_msg if vis else
                 self.hide_det_msg)
         self.det_msg.setVisible(not vis)

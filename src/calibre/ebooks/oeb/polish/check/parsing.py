@@ -1,23 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+
+import cssutils
+from calibre import force_unicode, human_readable, prepare_string_for_xml
+from calibre.ebooks.chardet import find_declared_encoding, replace_encoding_declarations
+from calibre.ebooks.html_entities import html5_entities
+from calibre.ebooks.oeb.base import OEB_DOCS, URL_SAFE, XHTML, XHTML_NS, urlquote
+from calibre.ebooks.oeb.polish.check.base import ERROR, INFO, WARN, BaseError
+from calibre.ebooks.oeb.polish.pretty import pretty_script_or_style as fix_style_tag
+from calibre.ebooks.oeb.polish.utils import PositionFinder, guess_type
+from lxml.etree import XMLParser, XMLSyntaxError, fromstring
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re
 
-from lxml.etree import XMLParser, fromstring, XMLSyntaxError
-import cssutils
 
-from calibre import force_unicode, human_readable, prepare_string_for_xml
-from calibre.ebooks.chardet import replace_encoding_declarations, find_declared_encoding
-from calibre.ebooks.html_entities import html5_entities
-from calibre.ebooks.oeb.polish.pretty import pretty_script_or_style as fix_style_tag
-from calibre.ebooks.oeb.polish.utils import PositionFinder, guess_type
-from calibre.ebooks.oeb.polish.check.base import BaseError, WARN, ERROR, INFO
-from calibre.ebooks.oeb.base import OEB_DOCS, XHTML_NS, urlquote, URL_SAFE, XHTML
 
 HTML_ENTITTIES = frozenset(html5_entities)
 XML_ENTITIES = {'lt', 'gt', 'amp', 'apos', 'quot'}
@@ -95,7 +94,7 @@ class NamedEntities(BaseError):
         changed = False
         from calibre.ebooks.oeb.polish.check.main import XML_TYPES
         check_types = XML_TYPES | OEB_DOCS
-        for name, mt in container.mime_map.iteritems():
+        for name, mt in container.mime_map.items():
             if mt in check_types:
                 raw = container.raw_data(name)
                 nraw = replace_pat.sub(lambda m:html5_entities[m.group(1)], raw)
@@ -430,7 +429,7 @@ class ErrorHandler(object):
     info = debug = setLevel = getEffectiveLevel = addHandler = removeHandler = __noop
 
     def __handle(self, level, *args):
-        msg = ' '.join(map(unicode, args))
+        msg = ' '.join(map(str, args))
         line = col = None
         for pat in pos_pats:
             m = pat.search(msg)
@@ -481,7 +480,7 @@ valid_id = re.compile(r'^[a-zA-Z][a-zA-Z0-9_:.-]*$')
 def check_ids(container):
     errors = []
     mts = set(OEB_DOCS) | {guess_type('a.opf'), guess_type('a.ncx')}
-    for name, mt in container.mime_map.iteritems():
+    for name, mt in container.mime_map.items():
         if mt in mts:
             root = container.parsed(name)
             seen_ids = {}
@@ -496,13 +495,13 @@ def check_ids(container):
                     seen_ids[eid] = elem.sourceline
                 if eid and valid_id.match(eid) is None:
                     errors.append(InvalidId(name, elem.sourceline, eid))
-            errors.extend(DuplicateId(name, eid, locs) for eid, locs in dups.iteritems())
+            errors.extend(DuplicateId(name, eid, locs) for eid, locs in dups.items())
     return errors
 
 
 def check_markup(container):
     errors = []
-    for name, mt in container.mime_map.iteritems():
+    for name, mt in container.mime_map.items():
         if mt in OEB_DOCS:
             lines = []
             root = container.parsed(name)

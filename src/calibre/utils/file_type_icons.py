@@ -1,9 +1,7 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+
 
 EXT_MAP = {
     'default' : 'unknown',
@@ -55,6 +53,3 @@ EXT_MAP = {
     'docx'    : 'docx',
     'opml'    : 'opml',
 }
-
-
-

@@ -1,19 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
-store_version = 5  # Needed for dynamic plugin loading
-
-__license__ = 'GPL 3'
-__copyright__ = '2013-2016, Tomasz Długosz <tomek3d@gmail.com>'
-__docformat__ = 'restructuredtext en'
-
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from base64 import b64encode
 from contextlib import closing
-
-from lxml import html
-
-from PyQt5.Qt import QUrl
 
 from calibre import browser, url_slash_cleaner
 from calibre.gui2 import open_url
@@ -21,6 +10,19 @@ from calibre.gui2.store import StorePlugin
 from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.gui2.store.search_result import SearchResult
 from calibre.gui2.store.web_store_dialog import WebStoreDialog
+from lxml import html
+from PyQt5.Qt import QUrl
+
+
+store_version = 5  # Needed for dynamic plugin loading
+
+__license__ = 'GPL 3'
+__copyright__ = '2013-2016, Tomasz Długosz <tomek3d@gmail.com>'
+__docformat__ = 'restructuredtext en'
+
+
+
+
 
 
 class KoobeStore(BasicStoreConfig, StorePlugin):
@@ -51,7 +53,7 @@ class KoobeStore(BasicStoreConfig, StorePlugin):
 
         counter = max_results
         while counter:
-            with closing(br.open('http://www.koobe.pl/s,p,' + str(page) + ',szukaj/fraza:' + urllib.quote(query), timeout=timeout)) as f:
+            with closing(br.open('http://www.koobe.pl/s,p,' + str(page) + ',szukaj/fraza:' + urllib.parse.quote(query), timeout=timeout)) as f:
                 doc = html.fromstring(f.read().decode('utf-8'))
                 for data in doc.xpath('//div[@class="seach_result"]/div[@class="result"]'):
                     if counter <= 0:

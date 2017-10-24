@@ -1,17 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import traceback
+import weakref
+from threading import Event, Thread
+
+from calibre import prints
+from calibre.ebooks.metadata.opf2 import metadata_to_opf
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import weakref, traceback
-from threading import Thread, Event
 
-from calibre import prints
-from calibre.ebooks.metadata.opf2 import metadata_to_opf
 
 
 class Abort(Exception):
@@ -118,4 +118,3 @@ class MetadataBackup(Thread):
     def break_cycles(self):
         # Legacy compatibility
         pass
-

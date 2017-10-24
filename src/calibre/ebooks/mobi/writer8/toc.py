@@ -1,16 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.ebooks.oeb.base import XHTML, XHTML_MIME, XHTML_NS, XPath, urlnormalize
+from lxml import etree
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from lxml import etree
 
-from calibre.ebooks.oeb.base import (urlnormalize, XPath, XHTML_NS, XHTML,
-        XHTML_MIME)
 
 DEFAULT_TITLE = __('Table of Contents')
 
@@ -139,5 +136,3 @@ class TOCAdder(object):
         if self.added_toc_guide_entry:
             self.oeb.guide.remove('toc')
             self.added_toc_guide_entry = False
-
-

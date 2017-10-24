@@ -1,21 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
 from collections import OrderedDict
-from future_builtins import map
 
-from calibre.db.adding import compile_glob, filter_filename, compile_rule
-from calibre.gui2 import elided_text, Application, error_dialog
+from calibre.db.adding import compile_glob, compile_rule, filter_filename
+from calibre.gui2 import Application, elided_text, error_dialog
 from calibre.gui2.tag_mapper import (
-    RuleEdit as RuleEditBase, RuleEditDialog as
-    RuleEditDialogBase, RuleItem as RuleItemBase, Rules as RulesBase,
-    Tester as TesterBase, RulesDialog as RulesDialogBase
+	RuleEdit as RuleEditBase, RuleEditDialog as RuleEditDialogBase, RuleItem as RuleItemBase,
+	Rules as RulesBase, RulesDialog as RulesDialogBase, Tester as TesterBase
 )
 from calibre.utils.config import JSONConfig
+
 
 add_filters = JSONConfig('add-filter-rules')
 
@@ -66,12 +61,12 @@ class RuleEdit(RuleEditBase):
     def rule(self, rule):
         def sc(name):
             c = getattr(self, name)
-            idx = c.findData(unicode(rule.get(name, '')))
+            idx = c.findData(str(rule.get(name, '')))
             if idx < 0:
                 idx = 0
             c.setCurrentIndex(idx)
         sc('action'), sc('match_type')
-        self.query.setText(unicode(rule.get('query', '')).strip())
+        self.query.setText(str(rule.get('query', '')).strip())
 
     def validate(self):
         ans = super(RuleEdit, self).validate()
@@ -126,7 +121,7 @@ class Tester(TesterBase):
 
     def do_test(self):
         filename = self.value.strip()
-        allowed = filter_filename(map(compile_rule, self.rules), filename)
+        allowed = filter_filename(list(map(compile_rule, self.rules)), filename)
         if allowed is None:
             self.result.setText(_('The filename %s did not match any rules') % filename)
         else:

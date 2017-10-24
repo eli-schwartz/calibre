@@ -3,23 +3,29 @@ __license__ = 'GPL 3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, re, sys, shutil, pprint, json
+import json
+import os
+import pprint
+import re
+import shutil
+import sys
 from functools import partial
 
-from calibre.customize.conversion import OptionRecommendation, DummyReporter
-from calibre.customize.ui import input_profiles, output_profiles, \
-        plugin_for_input_format, plugin_for_output_format, \
-        available_input_formats, available_output_formats, \
-        run_plugins_on_preprocess, run_plugins_on_postprocess
+from calibre import extract, filesystem_encoding, get_types_map, isbytestring, walk
+from calibre.constants import __version__
+from calibre.customize.conversion import DummyReporter, OptionRecommendation
+from calibre.customize.ui import (
+	available_input_formats, available_output_formats, input_profiles,
+	output_profiles, plugin_for_input_format, plugin_for_output_format,
+	run_plugins_on_postprocess, run_plugins_on_preprocess
+)
 from calibre.ebooks.conversion.preprocess import HTMLPreProcessor
 from calibre.ptempfile import PersistentTemporaryDirectory
 from calibre.utils.date import parse_date
 from calibre.utils.zipfile import ZipFile
-from calibre import (extract, walk, isbytestring, filesystem_encoding,
-        get_types_map)
-from calibre.constants import __version__
 
-DEBUG_README=u'''
+
+DEBUG_README='''
 This debug directory contains snapshots of the e-book as it passes through the
 various stages of conversion. The stages are:
 
@@ -534,8 +540,8 @@ OptionRecommendation(name='asciiize',
             '(characters shared by Chinese and Japanese for instance) the '
             'representation based on the current calibre interface language will be '
             'used.')%
-            u'\u041c\u0438\u0445\u0430\u0438\u043b '
-            u'\u0413\u043e\u0440\u0431\u0430\u0447\u0451\u0432'
+            '\\u041c\\u0438\\u0445\\u0430\\u0438\\u043b '
+            '\\u0413\\u043e\\u0440\\u0431\\u0430\\u0447\\u0451\\u0432'
 )
         ),
 
@@ -794,7 +800,7 @@ OptionRecommendation(name='search_replace',
     def unarchive(self, path, tdir):
         extract(path, tdir)
         files = list(walk(tdir))
-        files = [f if isinstance(f, unicode) else f.decode(filesystem_encoding)
+        files = [f if isinstance(f, str) else f.decode(filesystem_encoding)
                 for f in files]
         from calibre.customize.ui import available_input_formats
         fmts = set(available_input_formats())
@@ -898,14 +904,14 @@ OptionRecommendation(name='search_replace',
                         val = parse_date(val, assume_utc=x=='timestamp')
                     except:
                         self.log.exception(_('Failed to parse date/time') + ' ' +
-                                unicode(val))
+                                str(val))
                         continue
                 setattr(mi, x, val)
 
     def download_cover(self, url):
         from calibre import browser
         from PIL import Image
-        from cStringIO import StringIO
+        from io import StringIO
         from calibre.ptempfile import PersistentTemporaryFile
         self.log('Downloading cover from %r'%url)
         br = browser()
@@ -1004,7 +1010,7 @@ OptionRecommendation(name='search_replace',
 
     def dump_input(self, ret, output_dir):
         out_dir = os.path.join(self.opts.debug_pipeline, 'input')
-        if isinstance(ret, basestring):
+        if isinstance(ret, str):
             shutil.copytree(output_dir, out_dir)
         else:
             if not os.path.exists(out_dir):
@@ -1153,7 +1159,7 @@ OptionRecommendation(name='search_replace',
             fkey = self.opts.dest.fkey
         else:
             try:
-                fkey = map(float, fkey.split(','))
+                fkey = list(map(float, fkey.split(',')))
             except:
                 self.log.error('Invalid font size key: %r ignoring'%fkey)
                 fkey = self.opts.dest.fkey
@@ -1195,7 +1201,7 @@ OptionRecommendation(name='search_replace',
         transform_css_rules = ()
         if self.opts.transform_css_rules:
             transform_css_rules = self.opts.transform_css_rules
-            if isinstance(transform_css_rules, basestring):
+            if isinstance(transform_css_rules, str):
                 transform_css_rules = json.loads(transform_css_rules)
         flattener = CSSFlattener(fbase=fbase, fkey=fkey,
                 lineh=line_height,

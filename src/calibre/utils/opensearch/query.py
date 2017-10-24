@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+from urllib.parse import urlencode
+from urllib.parse import parse_qs, urlparse, urlunparse
+
 
 __license__ = 'GPL 3'
 __copyright__ = '2006, Ed Summers <ehs@pobox.com>'
 __docformat__ = 'restructuredtext en'
 
-from urlparse import urlparse, urlunparse, parse_qs
-from urllib import urlencode
 
 
 class Query(object):
@@ -43,7 +43,7 @@ class Query(object):
         # opensearch names to the service specific ones
         # so q={searchTerms} will result in a mapping between searchTerms and q
         self.macro_map = {}
-        for key,values in self.query_string.items():
+        for key,values in list(self.query_string.items()):
             # TODO eventually optional/required params should be
             # distinguished somehow (the ones with/without trailing ?
             macro = values[0].replace('{', '').replace('}', '').replace('?', '')
@@ -55,7 +55,7 @@ class Query(object):
         query_string = dict(self.query_string)
 
         # iterate through macros and set the position in the querystring
-        for macro, name in self.macro_map.items():
+        for macro, name in list(self.macro_map.items()):
             if hasattr(self, macro):
                 # set the name/value pair
                 query_string[name] = [getattr(self, macro)]
@@ -72,4 +72,3 @@ class Query(object):
 
     def has_macro(self, macro):
         return macro in self.macro_map
-

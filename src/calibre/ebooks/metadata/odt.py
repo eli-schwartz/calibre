@@ -19,39 +19,38 @@
 #
 # Contributor(s):
 #
-from __future__ import division
-
-import zipfile, re
+import re
 import xml.sax.saxutils
-from cStringIO import StringIO
+import zipfile
+from io import StringIO
 
-from odf.namespaces import OFFICENS, DCNS, METANS
-from odf.opendocument import load as odLoad
-from odf.draw import Image as odImage, Frame as odFrame
-
-from calibre.ebooks.metadata import MetaInformation, string_to_authors, check_isbn
-from calibre.utils.imghdr import identify
+from calibre.ebooks.metadata import MetaInformation, check_isbn, string_to_authors
 from calibre.utils.date import parse_date
+from calibre.utils.imghdr import identify
 from calibre.utils.localization import canonicalize_lang
+from odf.draw import Frame as odFrame, Image as odImage
+from odf.namespaces import DCNS, METANS, OFFICENS
+from odf.opendocument import load as odLoad
+
 
 whitespace = re.compile(r'\s+')
 
 fields = {
-'title':            (DCNS,u'title'),
-'description':      (DCNS,u'description'),
-'subject':          (DCNS,u'subject'),
-'creator':          (DCNS,u'creator'),
-'date':             (DCNS,u'date'),
-'language':         (DCNS,u'language'),
-'generator':        (METANS,u'generator'),
-'initial-creator':  (METANS,u'initial-creator'),
-'keyword':          (METANS,u'keyword'),
-'editing-duration': (METANS,u'editing-duration'),
-'editing-cycles':   (METANS,u'editing-cycles'),
-'printed-by':       (METANS,u'printed-by'),
-'print-date':       (METANS,u'print-date'),
-'creation-date':    (METANS,u'creation-date'),
-'user-defined':     (METANS,u'user-defined'),
+'title':            (DCNS,'title'),
+'description':      (DCNS,'description'),
+'subject':          (DCNS,'subject'),
+'creator':          (DCNS,'creator'),
+'date':             (DCNS,'date'),
+'language':         (DCNS,'language'),
+'generator':        (METANS,'generator'),
+'initial-creator':  (METANS,'initial-creator'),
+'keyword':          (METANS,'keyword'),
+'editing-duration': (METANS,'editing-duration'),
+'editing-cycles':   (METANS,'editing-cycles'),
+'printed-by':       (METANS,'printed-by'),
+'print-date':       (METANS,'print-date'),
+'creation-date':    (METANS,'creation-date'),
+'user-defined':     (METANS,'user-defined'),
 # 'template':         (METANS,u'template'),
 }
 
@@ -107,8 +106,8 @@ class odfmetaparser(xml.sax.saxutils.XMLGenerator):
 # location and not at the end
 #       if name == (METANS,u'template'):
 #           self._data = [attrs.get((XLINKNS,u'title'),'')]
-        if name == (METANS,u'user-defined'):
-            field = attrs.get((METANS,u'name'))
+        if name == (METANS,'user-defined'):
+            field = attrs.get((METANS,'name'))
         if field in self.deletefields:
             self.output.dowrite = False
         elif field in self.yieldfields:
@@ -120,15 +119,15 @@ class odfmetaparser(xml.sax.saxutils.XMLGenerator):
 
     def endElementNS(self, name, qname):
         field = name
-        if name == (METANS,u'user-defined'):
+        if name == (METANS,'user-defined'):
             field = self._tag
-        if name == (OFFICENS,u'meta'):
-            for k,v in self.addfields.items():
+        if name == (OFFICENS,'meta'):
+            for k,v in list(self.addfields.items()):
                 if len(v) > 0:
-                    if isinstance(k, basestring):
-                        xml.sax.saxutils.XMLGenerator.startElementNS(self,(METANS,u'user-defined'),None,{(METANS,u'name'):k})
+                    if isinstance(k, str):
+                        xml.sax.saxutils.XMLGenerator.startElementNS(self,(METANS,'user-defined'),None,{(METANS,'name'):k})
                         xml.sax.saxutils.XMLGenerator.characters(self, v)
-                        xml.sax.saxutils.XMLGenerator.endElementNS(self, (METANS,u'user-defined'),None)
+                        xml.sax.saxutils.XMLGenerator.endElementNS(self, (METANS,'user-defined'),None)
                     else:
                         xml.sax.saxutils.XMLGenerator.startElementNS(self, k, None, {})
                         xml.sax.saxutils.XMLGenerator.characters(self, v)
@@ -140,7 +139,7 @@ class odfmetaparser(xml.sax.saxutils.XMLGenerator):
         self.seenfields[texttag] = self.data()
         # OpenOffice has the habit to capitalize custom properties, so we add a
         # lowercase version for easy access
-        if texttag[:4].lower() == u'opf.':
+        if texttag[:4].lower() == 'opf.':
             self.seenfields[texttag.lower()] = self.data()
 
         if field in self.deletefields:
@@ -245,7 +244,7 @@ def read_cover(stream, zin, mi, opfmeta, extract_cover):
         except Exception:
             continue
         imgnum += 1
-        if opfmeta and frm.getAttribute('name').lower() == u'opf.cover':
+        if opfmeta and frm.getAttribute('name').lower() == 'opf.cover':
             cover_href = i_href
             cover_data = (fmt, raw)
             cover_frame = frm.getAttribute('name')  # could have upper case
@@ -270,4 +269,3 @@ def read_cover(stream, zin, mi, opfmeta, extract_cover):
                 else:
                     cover_data = (fmt, raw)
             mi.cover_data = cover_data
-

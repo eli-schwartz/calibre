@@ -1,24 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+import re
+import string
+from operator import attrgetter
+
+from calibre import force_unicode
+from calibre.gui2 import FunctionDispatcher
+from calibre.gui2.store.search.download_thread import CoverThreadPool, DetailsThreadPool
+from calibre.gui2.store.search_result import SearchResult
+from calibre.utils.icu import sort_key
+from calibre.utils.search_query_parser import SearchQueryParser
+from PyQt5.Qt import (
+	QAbstractItemModel, QApplication, QIcon, QModelIndex, QPixmap, QSize, Qt, pyqtSignal
+)
+
 
 __license__ = 'GPL 3'
 __copyright__ = '2011, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-import re, string
-from operator import attrgetter
 
-from PyQt5.Qt import (Qt, QAbstractItemModel, QPixmap, QModelIndex, QSize,
-                      pyqtSignal, QIcon, QApplication)
 
-from calibre import force_unicode
-from calibre.gui2 import FunctionDispatcher
-from calibre.gui2.store.search_result import SearchResult
-from calibre.gui2.store.search.download_thread import DetailsThreadPool, \
-    CoverThreadPool
-from calibre.utils.icu import sort_key
-from calibre.utils.search_query_parser import SearchQueryParser
 
 
 def comparable_price(text):
@@ -249,7 +251,7 @@ class Matches(QAbstractItemModel):
                 return ('<p>%s</p>' % result.formats)
             elif col == 5:
                 if result.downloads:
-                    return ('<p>' + _('The following formats can be downloaded directly: %s.') % ', '.join(result.downloads.keys()) + '</p>')
+                    return ('<p>' + _('The following formats can be downloaded directly: %s.') % ', '.join(list(result.downloads.keys())) + '</p>')
             elif col == 6:
                 if result.affiliate:
                     return ('<p>' + _('Buying from this store supports the calibre developer: %s.') % result.plugin_author + '</p>')
@@ -291,7 +293,7 @@ class Matches(QAbstractItemModel):
             return
         descending = order == Qt.DescendingOrder
         self.all_matches.sort(None,
-            lambda x: sort_key(unicode(self.data_as_text(x, col))),
+            lambda x: sort_key(str(self.data_as_text(x, col))),
             descending)
         self.reorder_matches()
         if reset:

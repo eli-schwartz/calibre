@@ -1,18 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-from __future__ import absolute_import, division, print_function, unicode_literals
-
-import sys, os
+import os
+import sys
 from functools import partial
-
-from PyQt5.Qt import (
-    QApplication, QEvent, QMouseEvent, QObject, QPointF, QScroller, Qt, QTouchDevice,
-    pyqtSignal
-)
+from time import monotonic
 
 from calibre.constants import iswindows
-from time import monotonic
+from PyQt5.Qt import (
+	QApplication, QEvent, QMouseEvent, QObject,
+	QPointF, QScroller, Qt, QTouchDevice, pyqtSignal
+)
+
 
 touch_supported = False
 if iswindows and sys.getwindowsversion()[:2] >= (6, 2):  # At least windows 7
@@ -92,14 +90,14 @@ class State(QObject):
         else:
             self.check_for_holds()
             if Flick in self.possible_gestures:
-                tp = next(self.touch_points.itervalues())
+                tp = next(iter(self.touch_points.values()))
                 self.flicking.emit(tp, False)
 
     def check_for_holds(self):
         if not {TapAndHold} & self.possible_gestures:
             return
         now = monotonic()
-        tp = next(self.touch_points.itervalues())
+        tp = next(iter(self.touch_points.values()))
         if now - tp.time_of_last_move < HOLD_THRESHOLD:
             return
         if self.hold_started:
@@ -117,20 +115,20 @@ class State(QObject):
 
     def finalize(self):
         if Tap in self.possible_gestures:
-            tp = next(self.touch_points.itervalues())
+            tp = next(iter(self.touch_points.values()))
             if tp.total_movement <= TAP_THRESHOLD:
                 self.tapped.emit(tp)
                 return
 
         if Flick in self.possible_gestures:
-            tp = next(self.touch_points.itervalues())
+            tp = next(iter(self.touch_points.values()))
             self.flicking.emit(tp, True)
 
         if not self.hold_started:
             return
 
         if TapAndHold in self.possible_gestures:
-            tp = next(self.touch_points.itervalues())
+            tp = next(iter(self.touch_points.values()))
             self.tap_hold_finished.emit(tp)
             return
 

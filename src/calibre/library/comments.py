@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,11 +6,13 @@ __docformat__ = 'restructuredtext en'
 
 import re
 
-from calibre.constants import preferred_encoding
-from calibre.ebooks.BeautifulSoup import BeautifulSoup, Tag, NavigableString, \
-        CData, Comment, Declaration, ProcessingInstruction
 from calibre import prepare_string_for_xml
+from calibre.constants import preferred_encoding
+from calibre.ebooks.BeautifulSoup import (
+	BeautifulSoup, CData, Comment, Declaration, NavigableString, ProcessingInstruction, Tag
+)
 from calibre.utils.html2text import html2text
+
 
 # Hackish - ignoring sentences ending or beginning in numbers to avoid
 # confusion with decimal points.
@@ -47,8 +48,8 @@ def comments_to_html(comments):
 
     '''
     if not comments:
-        return u'<p></p>'
-    if not isinstance(comments, unicode):
+        return '<p></p>'
+    if not isinstance(comments, str):
         comments = comments.decode(preferred_encoding, 'replace')
 
     if comments.lstrip().startswith('<'):
@@ -57,7 +58,7 @@ def comments_to_html(comments):
 
     if '<' not in comments:
         comments = prepare_string_for_xml(comments)
-        parts = [u'<p class="description">%s</p>'%x.replace(u'\n', u'<br />')
+        parts = ['<p class="description">%s</p>'%x.replace('\n', '<br />')
                 for x in comments.split('\n\n')]
         return '\n'.join(parts)
 
@@ -67,7 +68,7 @@ def comments_to_html(comments):
         except:
             import traceback
             traceback.print_exc()
-            return u'<p></p>'
+            return '<p></p>'
 
     # Explode lost CRs to \n\n
     comments = lost_cr_exception_pat.sub(lambda m: m.group().replace('.',
@@ -78,11 +79,11 @@ def comments_to_html(comments):
                                                     lost_cr.group(2),
                                                     lost_cr.group(3)))
 
-    comments = comments.replace(u'\r', u'')
+    comments = comments.replace('\r', '')
     # Convert \n\n to <p>s
-    comments = comments.replace(u'\n\n', u'<p>')
+    comments = comments.replace('\n\n', '<p>')
     # Convert solo returns to <br />
-    comments = comments.replace(u'\n', '<br />')
+    comments = comments.replace('\n', '<br />')
     # Convert two hyphens to emdash
     comments = comments.replace('--', '&mdash;')
 
@@ -127,7 +128,7 @@ def comments_to_html(comments):
         p['class'] = 'description'
 
     for t in result.findAll(text=True):
-        t.replaceWith(prepare_string_for_xml(unicode(t)))
+        t.replaceWith(prepare_string_for_xml(str(t)))
 
     return result.renderContents(encoding=None)
 
@@ -160,12 +161,12 @@ def test():
             ('a <b>b&c</b>\nf', '<p class="description">a <b>b&amp;c;</b><br />f</p>'),
             ('a <?xml asd> b\n\ncd', '<p class="description">a  b</p><p class="description">cd</p>'),
             ]:
-        print
-        print 'Testing: %r'%pat
+        print()
+        print('Testing: %r'%pat)
         cval = comments_to_html(pat)
-        print 'Value: %r'%cval
+        print('Value: %r'%cval)
         if comments_to_html(pat) != val:
-            print 'FAILED'
+            print('FAILED')
             break
 
 

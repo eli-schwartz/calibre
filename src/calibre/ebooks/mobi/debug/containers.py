@@ -1,14 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from struct import unpack_from
+
+from calibre.ebooks.mobi.debug.headers import EXTHHeader
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from struct import unpack_from
 
-from calibre.ebooks.mobi.debug.headers import EXTHHeader
 
 
 class ContainerHeader(object):
@@ -43,7 +42,7 @@ class ContainerHeader(object):
 
     def add_hrefs(self, data):
         # kindlegen inserts a trailing | after the last href
-        self.hrefs = filter(None, data.decode('utf-8').split('|'))
+        self.hrefs = [_f for _f in data.decode('utf-8').split('|') if _f]
 
     def __str__(self):
         ans = [('*'*10) + ' Container Header ' + ('*'*10)]
@@ -64,4 +63,3 @@ class ContainerHeader(object):
         if len(self.bytes_after_exth) != self.null_bytes_after_exth:
             a('Non-null bytes present after EXTH header!!!!')
         return '\n'.join(ans) + '\n\n' + str(self.exth) + '\n\n' + ('Title: %s' % self.title)
-

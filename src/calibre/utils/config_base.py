@@ -1,17 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, re, cPickle, traceback
-from functools import partial
+import pickle
+import os
+import re
+import traceback
 from collections import defaultdict
 from copy import deepcopy
+from functools import partial
 
+from calibre.constants import CONFIG_DIR_MODE, config_dir
 from calibre.utils.lock import ExclusiveFile
-from calibre.constants import config_dir, CONFIG_DIR_MODE
+
 
 plugin_dir = os.path.join(config_dir, 'plugins')
 
@@ -98,7 +101,7 @@ class OptionSet(object):
         return partial(self.add_opt, group=name)
 
     def update(self, other):
-        for name in other.groups.keys():
+        for name in list(other.groups.keys()):
             self.groups[name] = other.groups[name]
             if name not in self.group_list:
                 self.group_list.append(name)
@@ -143,7 +146,7 @@ class OptionSet(object):
         '''
         pref = Option(name, switches=switches, help=help, type=type, choices=choices,
                  group=group, default=default, action=action, metavar=None)
-        if group is not None and group not in self.groups.keys():
+        if group is not None and group not in list(self.groups.keys()):
             raise ValueError('Group %s has not been added to this section'%group)
         if pref in self.preferences:
             raise ValueError('An option with the name %s already exists in this set.'%name)
@@ -156,13 +159,13 @@ class OptionSet(object):
             if opt.help:
                 opt.help = t(opt.help)
                 if opt.name == 'use_primary_find_in_search':
-                    opt.help = opt.help.format(u'ñ')
+                    opt.help = opt.help.format('ñ')
 
     def option_parser(self, user_defaults=None, usage='', gui_mode=False):
         from calibre.utils.config import OptionParser
         parser = OptionParser(usage, gui_mode=gui_mode)
         groups = defaultdict(lambda : parser)
-        for group, desc in self.groups.items():
+        for group, desc in list(self.groups.items()):
             groups[group] = parser.add_option_group(group.upper(), desc)
 
         for pref in self.preferences:
@@ -197,13 +200,13 @@ class OptionSet(object):
         options = {'cPickle':cPickle}
         if src is not None:
             try:
-                if not isinstance(src, unicode):
+                if not isinstance(src, str):
                     src = src.decode('utf-8')
-                src = src.replace(u'PyQt%d.QtCore' % 4, u'PyQt5.QtCore')
-                exec src in options
+                src = src.replace('PyQt%d.QtCore' % 4, 'PyQt5.QtCore')
+                exec(src, options)
             except:
-                print 'Failed to parse options string:'
-                print repr(src)
+                print('Failed to parse options string:')
+                print(repr(src))
                 traceback.print_exc()
         opts = OptionValues()
         for pref in self.preferences:
@@ -219,12 +222,12 @@ class OptionSet(object):
         prefs = [pref for pref in self.preferences if pref.group == name]
         lines = ['### Begin group: %s'%(name if name else 'DEFAULT')]
         if desc:
-            lines += map(lambda x: '# '+x, desc.split('\n'))
+            lines += ['# '+x for x in desc.split('\n')]
         lines.append(' ')
         for pref in prefs:
             lines.append('# '+pref.name.replace('_', ' '))
             if pref.help:
-                lines += map(lambda x: '# ' + x, pref.help.split('\n'))
+                lines += ['# ' + x for x in pref.help.split('\n')]
             lines.append('%s = %s'%(pref.name,
                             self.serialize_opt(getattr(opts, pref.name, pref.default))))
             lines.append(' ')
@@ -232,9 +235,9 @@ class OptionSet(object):
 
     def serialize_opt(self, val):
         if val is val is True or val is False or val is None or \
-           isinstance(val, (int, float, long, basestring)):
+           isinstance(val, (int, float, str)):
             return repr(val)
-        pickle = cPickle.dumps(val, -1)
+        pickle = pickle.dumps(val, -1)
         return 'cPickle.loads(%s)'%repr(pickle)
 
     def serialize(self, opts):
@@ -282,7 +285,7 @@ class Config(ConfigInterface):
                 try:
                     src = f.read().decode('utf-8')
                 except ValueError:
-                    print "Failed to parse", self.config_file_path
+                    print("Failed to parse", self.config_file_path)
                     traceback.print_exc()
         return self.option_set.parse_string(src)
 
@@ -305,7 +308,7 @@ class Config(ConfigInterface):
             src = self.option_set.serialize(opts)+ '\n\n' + footer + '\n'
             f.seek(0)
             f.truncate()
-            if isinstance(src, unicode):
+            if isinstance(src, str):
                 src = src.encode('utf-8')
             f.write(src)
 
@@ -379,7 +382,7 @@ def create_global_prefs(conf_obj=None):
     c.add_opt('database_path',
               default=os.path.expanduser('~/library1.db'),
               help=_('Path to the database in which books are stored'))
-    c.add_opt('filename_pattern', default=ur'(?P<title>.+) - (?P<author>[^_]+)',
+    c.add_opt('filename_pattern', default=r'(?P<title>.+) - (?P<author>[^_]+)',
               help=_('Pattern to guess metadata from filenames'))
     c.add_opt('isbndb_com_key', default='',
               help=_('Access key for isbndb.com'))
@@ -431,10 +434,10 @@ def create_global_prefs(conf_obj=None):
                 'separated by commas. Only takes effect if you set the option '
                 'to limit search columns above.'))
     c.add_opt('use_primary_find_in_search', default=True,
-            help=_(u'Characters typed in the search box will match their '
+            help=_('Characters typed in the search box will match their '
                    'accented versions, based on the language you have chosen '
                    'for the calibre interface. For example, in '
-                   u'English, searching for n will match both {} and n, but if '
+                   'English, searching for n will match both {} and n, but if '
                    'your language is Spanish it will only match n. Note that '
                    'this is much slower than a simple search on very large '
                    'libraries. Also, this option will have no effect if you turn '
@@ -470,13 +473,13 @@ def read_tweaks():
     default_tweaks, tweaks = read_raw_tweaks()
     l, g = {}, {}
     try:
-        exec tweaks in g, l
+        exec(tweaks, g, l)
     except:
         import traceback
-        print 'Failed to load custom tweaks file'
+        print('Failed to load custom tweaks file')
         traceback.print_exc()
     dl, dg = {}, {}
-    exec default_tweaks in dg, dl
+    exec(default_tweaks, dg, dl)
     dl.update(l)
     return dl
 
@@ -495,7 +498,7 @@ def reset_tweaks_to_default():
     default_tweaks = P('default_tweaks.py', data=True,
             allow_user_override=False)
     dl, dg = {}, {}
-    exec default_tweaks in dg, dl
+    exec(default_tweaks, dg, dl)
     tweaks.clear()
     tweaks.update(dl)
 

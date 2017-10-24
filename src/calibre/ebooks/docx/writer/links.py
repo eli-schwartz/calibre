@@ -1,16 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import posixpath
+import re
+from urllib.parse import urlparse
+from uuid import uuid4
+
+from calibre.utils.filenames import ascii_text
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import posixpath, re
-from uuid import uuid4
-from urlparse import urlparse
 
-from calibre.utils.filenames import ascii_text
 
 
 def start_text(tag, prefix_len=0, top_level=True):

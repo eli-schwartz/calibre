@@ -1,16 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
-import os, re, textwrap
+import os
+import re
+import textwrap
 from functools import partial
 
-from sphinx.util.console import bold
-
-from calibre.linux import entry_points, cli_index_strings
+from calibre.linux import cli_index_strings, entry_points
 from epub import EPUBHelpBuilder
 from latex import LaTeXHelpBuilder
+from sphinx.util.console import bold
 
 
 def substitute(app, doctree):
@@ -198,12 +198,10 @@ def update_cli_doc(name, raw, app):
     old_raw = open(path, 'rb').read() if os.path.exists(path) else ''
     if not os.path.exists(path) or old_raw != raw:
         import difflib
-        print path, 'has changed'
         if old_raw:
             lines = difflib.unified_diff(old_raw.splitlines(), raw.splitlines(),
                     path, path)
             for line in lines:
-                print line
         app.builder.info('creating '+os.path.splitext(os.path.basename(path))[0])
         p = os.path.dirname(path)
         if p and not os.path.exists(p):

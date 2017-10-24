@@ -1,9 +1,10 @@
-from __future__ import with_statement
+from calibre import guess_type
+
+
 __license__ = 'GPL 3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from calibre import guess_type
 
 
 def _mt(path):
@@ -21,4 +22,3 @@ def mime_type_ext(ext):
 
 def mime_type_path(path):
     return _mt(path)
-

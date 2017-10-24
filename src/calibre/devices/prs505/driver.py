@@ -6,14 +6,16 @@ __docformat__ = 'restructuredtext en'
 Device driver for the SONY devices
 '''
 
-import os, time, re
+import os
+import re
+import time
 
-from calibre import fsync
-from calibre.devices.usbms.driver import USBMS, debug_print
-from calibre.devices.prs505 import MEDIA_XML, MEDIA_EXT, CACHE_XML, CACHE_EXT, \
-            MEDIA_THUMBNAIL, CACHE_THUMBNAIL
-from calibre import __appname__, prints
+from calibre import __appname__, fsync, prints
+from calibre.devices.prs505 import (
+	CACHE_EXT, CACHE_THUMBNAIL, CACHE_XML, MEDIA_EXT, MEDIA_THUMBNAIL, MEDIA_XML
+)
 from calibre.devices.usbms.books import CollectionsBookList
+from calibre.devices.usbms.driver import USBMS, debug_print
 
 
 class PRS505(USBMS):
@@ -130,12 +132,12 @@ class PRS505(USBMS):
                     dname = os.path.dirname(cachep)
                     if not os.path.exists(dname):
                         try:
-                            os.makedirs(dname, mode=0777)
+                            os.makedirs(dname, mode=0o777)
                         except:
                             time.sleep(5)
-                            os.makedirs(dname, mode=0777)
+                            os.makedirs(dname, mode=0o777)
                     with lopen(cachep, 'wb') as f:
-                        f.write(u'''<?xml version="1.0" encoding="UTF-8"?>
+                        f.write('''<?xml version="1.0" encoding="UTF-8"?>
                             <cache xmlns="http://www.kinoma.com/FskCache/1">
                             </cache>
                             '''.encode('utf8'))
@@ -227,7 +229,7 @@ class PRS505(USBMS):
 
         if opts.extra_customization[self.OPT_REFRESH_COVERS]:
             debug_print('PRS505: uploading covers in sync_booklists')
-            for idx,bl in blists.items():
+            for idx,bl in list(blists.items()):
                 prefix = self._card_a_prefix if idx == 1 else \
                                 self._card_b_prefix if idx == 2 else self._main_prefix
                 for book in bl:

@@ -3,7 +3,13 @@ __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 '''
 Manage translation of user visible strings.
 '''
-import shutil, tarfile, re, os, subprocess, urllib2
+import os
+import re
+import shutil
+import subprocess
+import tarfile
+import urllib.request, urllib.error, urllib.parse
+
 
 language_codes = {
     'aa':'Afar','ab':'Abkhazian','af':'Afrikaans','am':'Amharic','ar':'Arabic','as':'Assamese','ay':'Aymara','az':'Azerbaijani',
@@ -37,24 +43,24 @@ language_codes = {
 
 def import_from_launchpad(url):
     f = open('/tmp/launchpad_export.tar.gz', 'wb')
-    shutil.copyfileobj(urllib2.urlopen(url), f)
+    shutil.copyfileobj(urllib.request.urlopen(url), f)
     f.close()
     tf = tarfile.open('/tmp/launchpad_export.tar.gz', 'r:gz')
-    next = tf.next()
+    next = next(tf)
     while next is not None:
         if next.isfile() and next.name.endswith('.po'):
             try:
                 po = re.search(r'-([a-z]{2,3}\.po)', next.name).group(1)
             except:
-                next = tf.next()
+                next = next(tf)
                 continue
             out = os.path.abspath(os.path.join('.', os.path.basename(po)))
-            print 'Updating', '%6s'%po, '-->', out
+            print('Updating', '%6s'%po, '-->', out)
             open(out, 'wb').write(tf.extractfile(next).read())
-        next = tf.next()
+        next = next(tf)
     check_for_critical_bugs()
     path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-    print path
+    print(path)
     subprocess.check_call('python setup.py translations'.split(), cwd=path)
     return 0
 
@@ -69,10 +75,9 @@ def check_for_critical_bugs():
     subprocess.check_call(pofilter)
     errs = os.listdir('.errors')
     if errs:
-        print 'WARNING: Translation errors detected'
-        print 'See the .errors directory and http://translate.sourceforge.net/wiki/toolkit/using_pofilter'
+        print('WARNING: Translation errors detected')
+        print('See the .errors directory and http://translate.sourceforge.net/wiki/toolkit/using_pofilter')
 
 if __name__ == '__main__':
     import sys
     import_from_launchpad(sys.argv[1])
-

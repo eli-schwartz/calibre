@@ -1,34 +1,35 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import os, errno
+import errno
+import os
 from binascii import hexlify
+from functools import partial
 from io import BytesIO
 from threading import Lock
-from future_builtins import map
-from functools import partial
 
 from calibre import fit_image
 from calibre.constants import config_dir, iswindows
 from calibre.db.errors import NoSuchFormat
-from calibre.ebooks.covers import cprefs, override_prefs, scale_cover, generate_cover, set_use_roman
+from calibre.ebooks.covers import (
+	cprefs, generate_cover, override_prefs, scale_cover, set_use_roman
+)
 from calibre.ebooks.metadata import authors_to_string
 from calibre.ebooks.metadata.meta import set_metadata
 from calibre.ebooks.metadata.opf2 import metadata_to_opf
 from calibre.library.save_to_disk import find_plugboard
-from calibre.srv.errors import HTTPNotFound, BookNotFound
+from calibre.srv.errors import BookNotFound, HTTPNotFound
 from calibre.srv.routes import endpoint, json
-from calibre.srv.utils import http_date, get_db, get_use_roman
+from calibre.srv.utils import get_db, get_use_roman, http_date
 from calibre.utils.config_base import tweaks
 from calibre.utils.date import timestampfromdt
-from calibre.utils.img import scale_image, image_from_data
 from calibre.utils.filenames import ascii_filename, atomic_rename
+from calibre.utils.img import image_from_data, scale_image
 from calibre.utils.shared_file import share_open
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
 
 plugboard_content_server_value = 'content_server'
 plugboard_content_server_formats = ['epub', 'mobi', 'azw3']
@@ -298,14 +299,14 @@ def get(ctx, rd, what, book_id, library_id):
             if sz is None:
                 if rest:
                     try:
-                        w, h = map(int, rest.split('_'))
+                        w, h = list(map(int, rest.split('_')))
                     except Exception:
                         pass
             elif sz == 'full':
                 w = h = None
             elif 'x' in sz:
                 try:
-                    w, h = map(int, sz.partition('x')[::2])
+                    w, h = list(map(int, sz.partition('x')[::2]))
                 except Exception:
                     pass
             else:

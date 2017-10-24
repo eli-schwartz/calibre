@@ -2,14 +2,20 @@ __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 ''''''
 
-import sys, array, os, re, codecs, logging
+import array
+import codecs
+import logging
+import os
+import re
+import sys
 
 from calibre import setup_cli_handlers
+from calibre.ebooks.lrf.meta import LRFMetaFile
+from calibre.ebooks.lrf.objects import (
+	BookAttr, Font, PageTree, StyleObject, Text, TOCObject, get_object, ruby_tags
+)
 from calibre.utils.config import OptionParser
 from calibre.utils.filenames import ascii_filename
-from calibre.ebooks.lrf.meta import LRFMetaFile
-from calibre.ebooks.lrf.objects import get_object, PageTree, StyleObject, \
-                                         Font, Text, TOCObject, BookAttr, ruby_tags
 
 
 class LRFDocument(LRFMetaFile):
@@ -51,7 +57,7 @@ class LRFDocument(LRFMetaFile):
                 break
             objid, objoff, objsize = obj_array[i*4:i*4+3]
             self._parse_object(objid, objoff, objsize)
-        for obj in self.objects.values():
+        for obj in list(self.objects.values()):
             if not self.keep_parsing:
                 break
             if hasattr(obj, 'initialize'):
@@ -66,7 +72,7 @@ class LRFDocument(LRFMetaFile):
             self.toc = obj
         elif isinstance(obj, BookAttr):
             self.ruby_tags = {}
-            for h in ruby_tags.values():
+            for h in list(ruby_tags.values()):
                 attr = h[0]
                 if hasattr(obj, attr):
                     self.ruby_tags[attr] = getattr(obj, attr)
@@ -76,48 +82,48 @@ class LRFDocument(LRFMetaFile):
             yield pt
 
     def write_files(self):
-        for obj in self.image_map.values() + self.font_map.values():
+        for obj in list(self.image_map.values()) + list(self.font_map.values()):
             open(obj.file, 'wb').write(obj.stream)
 
     def to_xml(self, write_files=True):
-        bookinfo = u'<BookInformation>\n<Info version="1.1">\n<BookInfo>\n'
-        bookinfo += u'<Title reading="%s">%s</Title>\n'%(self.metadata.title_reading, self.metadata.title)
-        bookinfo += u'<Author reading="%s">%s</Author>\n'%(self.metadata.author_reading, self.metadata.author)
-        bookinfo += u'<BookID>%s</BookID>\n'%(self.metadata.book_id,)
-        bookinfo += u'<Publisher reading="">%s</Publisher>\n'%(self.metadata.publisher,)
-        bookinfo += u'<Label reading="">%s</Label>\n'%(self.metadata.label,)
-        bookinfo += u'<Category reading="">%s</Category>\n'%(self.metadata.category,)
-        bookinfo += u'<Classification reading="">%s</Classification>\n'%(self.metadata.classification,)
-        bookinfo += u'<FreeText reading="">%s</FreeText>\n</BookInfo>\n<DocInfo>\n'%(self.metadata.free_text,)
+        bookinfo = '<BookInformation>\n<Info version="1.1">\n<BookInfo>\n'
+        bookinfo += '<Title reading="%s">%s</Title>\n'%(self.metadata.title_reading, self.metadata.title)
+        bookinfo += '<Author reading="%s">%s</Author>\n'%(self.metadata.author_reading, self.metadata.author)
+        bookinfo += '<BookID>%s</BookID>\n'%(self.metadata.book_id,)
+        bookinfo += '<Publisher reading="">%s</Publisher>\n'%(self.metadata.publisher,)
+        bookinfo += '<Label reading="">%s</Label>\n'%(self.metadata.label,)
+        bookinfo += '<Category reading="">%s</Category>\n'%(self.metadata.category,)
+        bookinfo += '<Classification reading="">%s</Classification>\n'%(self.metadata.classification,)
+        bookinfo += '<FreeText reading="">%s</FreeText>\n</BookInfo>\n<DocInfo>\n'%(self.metadata.free_text,)
         th = self.doc_info.thumbnail
         if th:
             prefix = ascii_filename(self.metadata.title)
-            bookinfo += u'<CThumbnail file="%s" />\n'%(prefix+'_thumbnail.'+self.doc_info.thumbnail_extension,)
+            bookinfo += '<CThumbnail file="%s" />\n'%(prefix+'_thumbnail.'+self.doc_info.thumbnail_extension,)
             if write_files:
                 open(prefix+'_thumbnail.'+self.doc_info.thumbnail_extension, 'wb').write(th)
-        bookinfo += u'<Language reading="">%s</Language>\n'%(self.doc_info.language,)
-        bookinfo += u'<Creator reading="">%s</Creator>\n'%(self.doc_info.creator,)
-        bookinfo += u'<Producer reading="">%s</Producer>\n'%(self.doc_info.producer,)
-        bookinfo += u'<SumPage>%s</SumPage>\n</DocInfo>\n</Info>\n%s</BookInformation>\n'%(self.doc_info.page,self.toc)
-        pages = u''
+        bookinfo += '<Language reading="">%s</Language>\n'%(self.doc_info.language,)
+        bookinfo += '<Creator reading="">%s</Creator>\n'%(self.doc_info.creator,)
+        bookinfo += '<Producer reading="">%s</Producer>\n'%(self.doc_info.producer,)
+        bookinfo += '<SumPage>%s</SumPage>\n</DocInfo>\n</Info>\n%s</BookInformation>\n'%(self.doc_info.page,self.toc)
+        pages = ''
         done_main = False
         pt_id = -1
         for page_tree in self:
             if not done_main:
                 done_main = True
-                pages += u'<Main>\n'
-                close = u'</Main>\n'
+                pages += '<Main>\n'
+                close = '</Main>\n'
                 pt_id = page_tree.id
             else:
-                pages += u'<PageTree objid="%d">\n'%(page_tree.id,)
-                close = u'</PageTree>\n'
+                pages += '<PageTree objid="%d">\n'%(page_tree.id,)
+                close = '</PageTree>\n'
             for page in page_tree:
-                pages += unicode(page)
+                pages += str(page)
             pages += close
         traversed_objects = [int(i) for i in re.findall(r'objid="(\w+)"', pages)] + [pt_id]
 
-        objects = u'\n<Objects>\n'
-        styles  = u'\n<Style>\n'
+        objects = '\n<Objects>\n'
+        styles  = '\n<Style>\n'
         for obj in self.objects:
             obj = self.objects[obj]
             if obj.id in traversed_objects:
@@ -125,9 +131,9 @@ class LRFDocument(LRFMetaFile):
             if isinstance(obj, (Font, Text, TOCObject)):
                 continue
             if isinstance(obj, StyleObject):
-                styles += unicode(obj)
+                styles += str(obj)
             else:
-                objects += unicode(obj)
+                objects += str(obj)
         styles += '</Style>\n'
         objects += '</Objects>\n'
         if write_files:
@@ -158,7 +164,7 @@ def main(args=sys.argv, logger=None):
     if opts.out is None:
         opts.out = os.path.join(os.path.dirname(args[1]), os.path.splitext(os.path.basename(args[1]))[0]+".lrs")
     o = codecs.open(os.path.abspath(os.path.expanduser(opts.out)), 'wb', 'utf-8')
-    o.write(u'<?xml version="1.0" encoding="UTF-8"?>\n')
+    o.write('<?xml version="1.0" encoding="UTF-8"?>\n')
     logger.info(_('Parsing LRF...'))
     d = LRFDocument(open(args[1], 'rb'))
     d.parse()

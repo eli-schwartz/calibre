@@ -1,21 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import posixpath
+import time
+import types
+from collections import Counter, defaultdict, namedtuple
+from itertools import chain
+
+from calibre import force_unicode, prepare_string_for_xml
+from calibre.ebooks.oeb.base import XPath, xml2text
+from calibre.ebooks.oeb.polish.container import OEB_DOCS, OEB_FONTS, OEB_STYLES
+from calibre.utils.icu import numeric_sort_key, ord_string, safe_chr
+from calibre.utils.imghdr import identify
+from css_selectors import Select, SelectorError
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import posixpath, os, time, types
-from collections import namedtuple, defaultdict, Counter
-from itertools import chain
 
-from calibre import prepare_string_for_xml, force_unicode
-from calibre.ebooks.oeb.base import XPath, xml2text
-from calibre.ebooks.oeb.polish.container import OEB_DOCS, OEB_STYLES, OEB_FONTS
-from calibre.utils.icu import numeric_sort_key, ord_string, safe_chr
-from calibre.utils.imghdr import identify
-from css_selectors import Select, SelectorError
 
 File = namedtuple('File', 'name dir basename size category')
 
@@ -59,7 +61,7 @@ def safe_img_data(container, name, mt):
 
 
 def files_data(container, *args):
-    for name, path in container.name_path_map.iteritems():
+    for name, path in container.name_path_map.items():
         yield File(name, posixpath.dirname(name), posixpath.basename(name), safe_size(container, name),
                    get_category(name, container.mime_map.get(name, '')))
 
@@ -86,7 +88,7 @@ def safe_href_to_name(container, href, base):
 def images_data(container, *args):
     image_usage = defaultdict(set)
     link_sources = OEB_STYLES | OEB_DOCS
-    for name, mt in container.mime_map.iteritems():
+    for name, mt in container.mime_map.items():
         if mt in link_sources:
             for href, line_number, offset in container.iterlinks(name):
                 target = safe_href_to_name(container, href, name)
@@ -96,7 +98,7 @@ def images_data(container, *args):
                         image_usage[target].add(LinkLocation(name, line_number, href))
 
     image_data = []
-    for name, mt in container.mime_map.iteritems():
+    for name, mt in container.mime_map.items():
         if mt.startswith('image/') and container.exists(name):
             image_data.append(Image(name, mt, sort_locations(container, image_usage.get(name, set())), safe_size(container, name),
                                     posixpath.basename(name), len(image_data), *safe_img_data(container, name, mt)))
@@ -155,7 +157,7 @@ def links_data(container, *args):
     links = []
     anchor_pat = XPath('//*[@id or @name]')
     link_pat = XPath('//h:a[@href]')
-    for name, mt in container.mime_map.iteritems():
+    for name, mt in container.mime_map.items():
         if mt in OEB_DOCS:
             root = container.parsed(name)
             anchor_map[name] = create_anchor_map(root, anchor_pat, name)
@@ -218,7 +220,7 @@ def chars_data(container, *args):
     def sort_key(name):
         return nmap.get(name, len(nmap)), numeric_sort_key(name)
 
-    for i, (codepoint, usage) in enumerate(chars.iteritems()):
+    for i, (codepoint, usage) in enumerate(chars.items()):
         yield Char(i, safe_chr(codepoint), codepoint, sorted(usage, key=sort_key), counter[codepoint])
 
 
@@ -257,7 +259,7 @@ def css_data(container, book_locale, result_data, *args):
     spine_names = {name for name, is_linear in container.spine_names}
     style_path, link_path = XPath('//h:style'), XPath('//h:link/@href')
 
-    for name, mt in container.mime_map.iteritems():
+    for name, mt in container.mime_map.items():
         if mt in OEB_STYLES:
             importable_sheets[name] = css_rules(name, parser.parse_stylesheet(container.raw_data(name)).rules)
         elif mt in OEB_DOCS and name in spine_names:
@@ -293,7 +295,7 @@ def css_data(container, book_locale, result_data, *args):
         if ans is None:
             tag = elem.tag.rpartition('}')[-1]
             if elem.attrib:
-                attribs = ' '.join('%s="%s"' % (k, prepare_string_for_xml(elem.get(k, ''), True)) for k in elem.keys())
+                attribs = ' '.join('%s="%s"' % (k, prepare_string_for_xml(elem.get(k, ''), True)) for k in list(elem.keys()))
                 return '<%s %s>' % (tag, attribs)
             ans = tt_cache[elem] = '<%s>' % tag
 
@@ -312,7 +314,7 @@ def css_data(container, book_locale, result_data, *args):
 
     class_map = defaultdict(lambda : defaultdict(list))
 
-    for name, inline_sheets in html_sheets.iteritems():
+    for name, inline_sheets in html_sheets.items():
         root = container.parsed(name)
         cmap = defaultdict(lambda : defaultdict(list))
         for elem in root.xpath('//*[@class]'):
@@ -322,21 +324,21 @@ def css_data(container, book_locale, result_data, *args):
         for sheet in chain(sheets_for_html(name, root), inline_sheets):
             for rule in rules_in_sheet(sheet):
                 rule_map[rule][name].extend(matches_for_selector(rule.selector, select, cmap, rule))
-        for cls, elem_map in cmap.iteritems():
+        for cls, elem_map in cmap.items():
             class_elements = class_map[cls][name]
-            for elem, usage in elem_map.iteritems():
+            for elem, usage in elem_map.items():
                 class_elements.append(
                     ClassElement(name, elem.sourceline, elem.get('class'), tag_text(elem), tuple(usage)))
 
     result_data['classes'] = ans = []
-    for cls, name_map in class_map.iteritems():
-        la = tuple(ClassFileMatch(name, tuple(class_elements), numeric_sort_key(name)) for name, class_elements in name_map.iteritems() if class_elements)
+    for cls, name_map in class_map.items():
+        la = tuple(ClassFileMatch(name, tuple(class_elements), numeric_sort_key(name)) for name, class_elements in name_map.items() if class_elements)
         num_of_matches = sum(sum(len(ce.matched_rules) for ce in cfm.class_elements) for cfm in la)
         ans.append(ClassEntry(cls, num_of_matches, la, numeric_sort_key(cls)))
 
     ans = []
-    for rule, loc_map in rule_map.iteritems():
-        la = tuple(CSSFileMatch(name, tuple(locations), numeric_sort_key(name)) for name, locations in loc_map.iteritems() if locations)
+    for rule, loc_map in rule_map.items():
+        la = tuple(CSSFileMatch(name, tuple(locations), numeric_sort_key(name)) for name, locations in loc_map.items() if locations)
         count = sum(len(fm.locations) for fm in la)
         ans.append(CSSEntry(rule, count, la, numeric_sort_key(rule.selector)))
 

@@ -1,13 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import functools, re, json
+import functools
+import json
+import re
 
-from calibre import entity_to_unicode, as_unicode
+from calibre import as_unicode, entity_to_unicode
+
 
 XMLDECL_RE    = re.compile(r'^\s*<[?]xml.*?[?]>')
 SVG_NS       = 'http://www.w3.org/2000/svg'
@@ -15,11 +17,11 @@ XLINK_NS     = 'http://www.w3.org/1999/xlink'
 
 convert_entities = functools.partial(entity_to_unicode,
         result_exceptions={
-            u'<' : '&lt;',
-            u'>' : '&gt;',
-            u"'" : '&apos;',
-            u'"' : '&quot;',
-            u'&' : '&amp;',
+            '<' : '&lt;',
+            '>' : '&gt;',
+            "'" : '&apos;',
+            '"' : '&quot;',
+            '&' : '&amp;',
         })
 _span_pat = re.compile('<span.*?</span>', re.DOTALL|re.IGNORECASE)
 
@@ -31,16 +33,16 @@ LIGATURES = {
 #        u'\u0132': u'IJ',
 #        u'\u0133': u'ij',
 #        u'\u1D6B': u'ue',
-        u'\uFB00': u'ff',
-        u'\uFB01': u'fi',
-        u'\uFB02': u'fl',
-        u'\uFB03': u'ffi',
-        u'\uFB04': u'ffl',
-        u'\uFB05': u'ft',
-        u'\uFB06': u'st',
+        '\\uFB00': 'ff',
+        '\\uFB01': 'fi',
+        '\\uFB02': 'fl',
+        '\\uFB03': 'ffi',
+        '\\uFB04': 'ffl',
+        '\\uFB05': 'ft',
+        '\\uFB06': 'st',
         }
 
-_ligpat = re.compile(u'|'.join(LIGATURES))
+_ligpat = re.compile('|'.join(LIGATURES))
 
 
 def sanitize_head(match):
@@ -217,8 +219,8 @@ class Dehyphenator(object):
             wraptags = match.group('wraptags')
         except:
             wraptags = ''
-        hyphenated = unicode(firsthalf) + "-" + unicode(secondhalf)
-        dehyphenated = unicode(firsthalf) + unicode(secondhalf)
+        hyphenated = str(firsthalf) + "-" + str(secondhalf)
+        dehyphenated = str(firsthalf) + str(secondhalf)
         if self.suffixes.match(secondhalf) is None:
             lookupword = self.removesuffixes.sub('', dehyphenated)
         else:
@@ -243,7 +245,7 @@ class Dehyphenator(object):
             else:
                 if self.verbose > 2:
                     self.log("            Cleanup:returning original text "+str(firsthalf)+" + linefeed "+str(secondhalf))
-                return firsthalf+u'\u2014'+wraptags+secondhalf
+                return firsthalf+'\\u2014'+wraptags+secondhalf
 
         else:
             if self.format == 'individual_words' and len(firsthalf) + len(secondhalf) <= 6:
@@ -267,17 +269,17 @@ class Dehyphenator(object):
         self.html = html
         self.format = format
         if format == 'html':
-            intextmatch = re.compile(u'(?<=.{%i})(?P<firstpart>[^\W\-]+)(-|‐)\s*(?=<)(?P<wraptags>(</span>)?\s*(</[iubp]>\s*){1,2}(?P<up2threeblanks><(p|div)[^>]*>\s*(<p[^>]*>\s*</p>\s*)?</(p|div)>\s+){0,3}\s*(<[iubp][^>]*>\s*){1,2}(<span[^>]*>)?)\s*(?P<secondpart>[\w\d]+)' % length)  # noqa
+            intextmatch = re.compile('(?<=.{%i})(?P<firstpart>[^\W\-]+)(-|‐)\s*(?=<)(?P<wraptags>(</span>)?\s*(</[iubp]>\s*){1,2}(?P<up2threeblanks><(p|div)[^>]*>\s*(<p[^>]*>\s*</p>\s*)?</(p|div)>\s+){0,3}\s*(<[iubp][^>]*>\s*){1,2}(<span[^>]*>)?)\s*(?P<secondpart>[\w\d]+)' % length)  # noqa
         elif format == 'pdf':
-            intextmatch = re.compile(u'(?<=.{%i})(?P<firstpart>[^\W\-]+)(-|‐)\s*(?P<wraptags><p>|</[iub]>\s*<p>\s*<[iub]>)\s*(?P<secondpart>[\w\d]+)'% length)
+            intextmatch = re.compile('(?<=.{%i})(?P<firstpart>[^\W\-]+)(-|‐)\s*(?P<wraptags><p>|</[iub]>\s*<p>\s*<[iub]>)\s*(?P<secondpart>[\w\d]+)'% length)
         elif format == 'txt':
-            intextmatch = re.compile(u'(?<=.{%i})(?P<firstpart>[^\W\-]+)(-|‐)(\u0020|\u0009)*(?P<wraptags>(\n(\u0020|\u0009)*)+)(?P<secondpart>[\w\d]+)'% length)  # noqa
+            intextmatch = re.compile('(?<=.{%i})(?P<firstpart>[^\W\-]+)(-|‐)(\\u0020|\\u0009)*(?P<wraptags>(\n(\\u0020|\\u0009)*)+)(?P<secondpart>[\w\d]+)'% length)  # noqa
         elif format == 'individual_words':
-            intextmatch = re.compile(u'(?!<)(?P<firstpart>[^\W\-]+)(-|‐)\s*(?P<secondpart>\w+)(?![^<]*?>)', re.UNICODE)
+            intextmatch = re.compile('(?!<)(?P<firstpart>[^\W\-]+)(-|‐)\s*(?P<secondpart>\w+)(?![^<]*?>)', re.UNICODE)
         elif format == 'html_cleanup':
-            intextmatch = re.compile(u'(?P<firstpart>[^\W\-]+)(-|‐)\s*(?=<)(?P<wraptags></span>\s*(</[iubp]>\s*<[iubp][^>]*>\s*)?<span[^>]*>|</[iubp]>\s*<[iubp][^>]*>)?\s*(?P<secondpart>[\w\d]+)')  # noqa
+            intextmatch = re.compile('(?P<firstpart>[^\W\-]+)(-|‐)\s*(?=<)(?P<wraptags></span>\s*(</[iubp]>\s*<[iubp][^>]*>\s*)?<span[^>]*>|</[iubp]>\s*<[iubp][^>]*>)?\s*(?P<secondpart>[\w\d]+)')  # noqa
         elif format == 'txt_cleanup':
-            intextmatch = re.compile(u'(?P<firstpart>[^\W\-]+)(-|‐)(?P<wraptags>\s+)(?P<secondpart>[\w\d]+)')
+            intextmatch = re.compile('(?P<firstpart>[^\W\-]+)(-|‐)(?P<wraptags>\s+)(?P<secondpart>[\w\d]+)')
 
         html = intextmatch.sub(self.dehyphenate, html)
         return html
@@ -314,7 +316,7 @@ class CSSPreProcessor(object):
         # are commented lines before the first @import or @charset rule. Since
         # the conversion will remove all stylesheets anyway, we don't lose
         # anything
-        data = re.sub(ur'/\*.*?\*/', u'', data, flags=re.DOTALL)
+        data = re.sub(r'/\*.*?\*/', '', data, flags=re.DOTALL)
 
         ans, namespaced = [], False
         for line in data.splitlines():
@@ -325,7 +327,7 @@ class CSSPreProcessor(object):
                 namespaced = True
             ans.append(line)
 
-        return u'\n'.join(ans)
+        return '\n'.join(ans)
 
 
 class HTMLPreProcessor(object):
@@ -348,121 +350,121 @@ class HTMLPreProcessor(object):
     # Fix pdftohtml markup
     PDFTOHTML  = [
                   # Fix umlauts
-                  (re.compile(u'¨\s*(<br.*?>)*\s*a', re.UNICODE), lambda match: u'ä'),
-                  (re.compile(u'¨\s*(<br.*?>)*\s*A', re.UNICODE), lambda match: u'Ä'),
-                  (re.compile(u'¨\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: u'ë'),
-                  (re.compile(u'¨\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: u'Ë'),
-                  (re.compile(u'¨\s*(<br.*?>)*\s*i', re.UNICODE), lambda match: u'ï'),
-                  (re.compile(u'¨\s*(<br.*?>)*\s*I', re.UNICODE), lambda match: u'Ï'),
-                  (re.compile(u'¨\s*(<br.*?>)*\s*o', re.UNICODE), lambda match: u'ö'),
-                  (re.compile(u'¨\s*(<br.*?>)*\s*O', re.UNICODE), lambda match: u'Ö'),
-                  (re.compile(u'¨\s*(<br.*?>)*\s*u', re.UNICODE), lambda match: u'ü'),
-                  (re.compile(u'¨\s*(<br.*?>)*\s*U', re.UNICODE), lambda match: u'Ü'),
+                  (re.compile('¨\s*(<br.*?>)*\s*a', re.UNICODE), lambda match: 'ä'),
+                  (re.compile('¨\s*(<br.*?>)*\s*A', re.UNICODE), lambda match: 'Ä'),
+                  (re.compile('¨\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: 'ë'),
+                  (re.compile('¨\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: 'Ë'),
+                  (re.compile('¨\s*(<br.*?>)*\s*i', re.UNICODE), lambda match: 'ï'),
+                  (re.compile('¨\s*(<br.*?>)*\s*I', re.UNICODE), lambda match: 'Ï'),
+                  (re.compile('¨\s*(<br.*?>)*\s*o', re.UNICODE), lambda match: 'ö'),
+                  (re.compile('¨\s*(<br.*?>)*\s*O', re.UNICODE), lambda match: 'Ö'),
+                  (re.compile('¨\s*(<br.*?>)*\s*u', re.UNICODE), lambda match: 'ü'),
+                  (re.compile('¨\s*(<br.*?>)*\s*U', re.UNICODE), lambda match: 'Ü'),
 
                   # Fix accents
                   # `
-                  (re.compile(u'`\s*(<br.*?>)*\s*a', re.UNICODE), lambda match: u'à'),
-                  (re.compile(u'`\s*(<br.*?>)*\s*A', re.UNICODE), lambda match: u'À'),
-                  (re.compile(u'`\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: u'è'),
-                  (re.compile(u'`\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: u'È'),
-                  (re.compile(u'`\s*(<br.*?>)*\s*i', re.UNICODE), lambda match: u'ì'),
-                  (re.compile(u'`\s*(<br.*?>)*\s*I', re.UNICODE), lambda match: u'Ì'),
-                  (re.compile(u'`\s*(<br.*?>)*\s*o', re.UNICODE), lambda match: u'ò'),
-                  (re.compile(u'`\s*(<br.*?>)*\s*O', re.UNICODE), lambda match: u'Ò'),
-                  (re.compile(u'`\s*(<br.*?>)*\s*u', re.UNICODE), lambda match: u'ù'),
-                  (re.compile(u'`\s*(<br.*?>)*\s*U', re.UNICODE), lambda match: u'Ù'),
+                  (re.compile('`\s*(<br.*?>)*\s*a', re.UNICODE), lambda match: 'à'),
+                  (re.compile('`\s*(<br.*?>)*\s*A', re.UNICODE), lambda match: 'À'),
+                  (re.compile('`\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: 'è'),
+                  (re.compile('`\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: 'È'),
+                  (re.compile('`\s*(<br.*?>)*\s*i', re.UNICODE), lambda match: 'ì'),
+                  (re.compile('`\s*(<br.*?>)*\s*I', re.UNICODE), lambda match: 'Ì'),
+                  (re.compile('`\s*(<br.*?>)*\s*o', re.UNICODE), lambda match: 'ò'),
+                  (re.compile('`\s*(<br.*?>)*\s*O', re.UNICODE), lambda match: 'Ò'),
+                  (re.compile('`\s*(<br.*?>)*\s*u', re.UNICODE), lambda match: 'ù'),
+                  (re.compile('`\s*(<br.*?>)*\s*U', re.UNICODE), lambda match: 'Ù'),
 
                   # ` with letter before
-                  (re.compile(u'a\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: u'à'),
-                  (re.compile(u'A\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: u'À'),
-                  (re.compile(u'e\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: u'è'),
-                  (re.compile(u'E\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: u'È'),
-                  (re.compile(u'i\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: u'ì'),
-                  (re.compile(u'I\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: u'Ì'),
-                  (re.compile(u'o\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: u'ò'),
-                  (re.compile(u'O\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: u'Ò'),
-                  (re.compile(u'u\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: u'ù'),
-                  (re.compile(u'U\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: u'Ù'),
+                  (re.compile('a\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: 'à'),
+                  (re.compile('A\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: 'À'),
+                  (re.compile('e\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: 'è'),
+                  (re.compile('E\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: 'È'),
+                  (re.compile('i\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: 'ì'),
+                  (re.compile('I\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: 'Ì'),
+                  (re.compile('o\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: 'ò'),
+                  (re.compile('O\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: 'Ò'),
+                  (re.compile('u\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: 'ù'),
+                  (re.compile('U\s*(<br.*?>)*\s*`', re.UNICODE), lambda match: 'Ù'),
 
                   # ´
-                  (re.compile(u'´\s*(<br.*?>)*\s*a', re.UNICODE), lambda match: u'á'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*A', re.UNICODE), lambda match: u'Á'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*c', re.UNICODE), lambda match: u'ć'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*C', re.UNICODE), lambda match: u'Ć'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: u'é'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: u'É'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*i', re.UNICODE), lambda match: u'í'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*I', re.UNICODE), lambda match: u'Í'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*l', re.UNICODE), lambda match: u'ĺ'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*L', re.UNICODE), lambda match: u'Ĺ'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*o', re.UNICODE), lambda match: u'ó'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*O', re.UNICODE), lambda match: u'Ó'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*n', re.UNICODE), lambda match: u'ń'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*N', re.UNICODE), lambda match: u'Ń'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*r', re.UNICODE), lambda match: u'ŕ'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*R', re.UNICODE), lambda match: u'Ŕ'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*s', re.UNICODE), lambda match: u'ś'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*S', re.UNICODE), lambda match: u'Ś'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*u', re.UNICODE), lambda match: u'ú'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*U', re.UNICODE), lambda match: u'Ú'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*z', re.UNICODE), lambda match: u'ź'),
-                  (re.compile(u'´\s*(<br.*?>)*\s*Z', re.UNICODE), lambda match: u'Ź'),
+                  (re.compile('´\s*(<br.*?>)*\s*a', re.UNICODE), lambda match: 'á'),
+                  (re.compile('´\s*(<br.*?>)*\s*A', re.UNICODE), lambda match: 'Á'),
+                  (re.compile('´\s*(<br.*?>)*\s*c', re.UNICODE), lambda match: 'ć'),
+                  (re.compile('´\s*(<br.*?>)*\s*C', re.UNICODE), lambda match: 'Ć'),
+                  (re.compile('´\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: 'é'),
+                  (re.compile('´\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: 'É'),
+                  (re.compile('´\s*(<br.*?>)*\s*i', re.UNICODE), lambda match: 'í'),
+                  (re.compile('´\s*(<br.*?>)*\s*I', re.UNICODE), lambda match: 'Í'),
+                  (re.compile('´\s*(<br.*?>)*\s*l', re.UNICODE), lambda match: 'ĺ'),
+                  (re.compile('´\s*(<br.*?>)*\s*L', re.UNICODE), lambda match: 'Ĺ'),
+                  (re.compile('´\s*(<br.*?>)*\s*o', re.UNICODE), lambda match: 'ó'),
+                  (re.compile('´\s*(<br.*?>)*\s*O', re.UNICODE), lambda match: 'Ó'),
+                  (re.compile('´\s*(<br.*?>)*\s*n', re.UNICODE), lambda match: 'ń'),
+                  (re.compile('´\s*(<br.*?>)*\s*N', re.UNICODE), lambda match: 'Ń'),
+                  (re.compile('´\s*(<br.*?>)*\s*r', re.UNICODE), lambda match: 'ŕ'),
+                  (re.compile('´\s*(<br.*?>)*\s*R', re.UNICODE), lambda match: 'Ŕ'),
+                  (re.compile('´\s*(<br.*?>)*\s*s', re.UNICODE), lambda match: 'ś'),
+                  (re.compile('´\s*(<br.*?>)*\s*S', re.UNICODE), lambda match: 'Ś'),
+                  (re.compile('´\s*(<br.*?>)*\s*u', re.UNICODE), lambda match: 'ú'),
+                  (re.compile('´\s*(<br.*?>)*\s*U', re.UNICODE), lambda match: 'Ú'),
+                  (re.compile('´\s*(<br.*?>)*\s*z', re.UNICODE), lambda match: 'ź'),
+                  (re.compile('´\s*(<br.*?>)*\s*Z', re.UNICODE), lambda match: 'Ź'),
 
                   # ˆ
-                  (re.compile(u'ˆ\s*(<br.*?>)*\s*a', re.UNICODE), lambda match: u'â'),
-                  (re.compile(u'ˆ\s*(<br.*?>)*\s*A', re.UNICODE), lambda match: u'Â'),
-                  (re.compile(u'ˆ\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: u'ê'),
-                  (re.compile(u'ˆ\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: u'Ê'),
-                  (re.compile(u'ˆ\s*(<br.*?>)*\s*i', re.UNICODE), lambda match: u'î'),
-                  (re.compile(u'ˆ\s*(<br.*?>)*\s*I', re.UNICODE), lambda match: u'Î'),
-                  (re.compile(u'ˆ\s*(<br.*?>)*\s*o', re.UNICODE), lambda match: u'ô'),
-                  (re.compile(u'ˆ\s*(<br.*?>)*\s*O', re.UNICODE), lambda match: u'Ô'),
-                  (re.compile(u'ˆ\s*(<br.*?>)*\s*u', re.UNICODE), lambda match: u'û'),
-                  (re.compile(u'ˆ\s*(<br.*?>)*\s*U', re.UNICODE), lambda match: u'Û'),
+                  (re.compile('ˆ\s*(<br.*?>)*\s*a', re.UNICODE), lambda match: 'â'),
+                  (re.compile('ˆ\s*(<br.*?>)*\s*A', re.UNICODE), lambda match: 'Â'),
+                  (re.compile('ˆ\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: 'ê'),
+                  (re.compile('ˆ\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: 'Ê'),
+                  (re.compile('ˆ\s*(<br.*?>)*\s*i', re.UNICODE), lambda match: 'î'),
+                  (re.compile('ˆ\s*(<br.*?>)*\s*I', re.UNICODE), lambda match: 'Î'),
+                  (re.compile('ˆ\s*(<br.*?>)*\s*o', re.UNICODE), lambda match: 'ô'),
+                  (re.compile('ˆ\s*(<br.*?>)*\s*O', re.UNICODE), lambda match: 'Ô'),
+                  (re.compile('ˆ\s*(<br.*?>)*\s*u', re.UNICODE), lambda match: 'û'),
+                  (re.compile('ˆ\s*(<br.*?>)*\s*U', re.UNICODE), lambda match: 'Û'),
 
                   # ¸
-                  (re.compile(u'¸\s*(<br.*?>)*\s*c', re.UNICODE), lambda match: u'ç'),
-                  (re.compile(u'¸\s*(<br.*?>)*\s*C', re.UNICODE), lambda match: u'Ç'),
+                  (re.compile('¸\s*(<br.*?>)*\s*c', re.UNICODE), lambda match: 'ç'),
+                  (re.compile('¸\s*(<br.*?>)*\s*C', re.UNICODE), lambda match: 'Ç'),
 
                   # ˛
-                  (re.compile(u'\s*˛\s*(<br.*?>)*\s*a', re.UNICODE), lambda match: u'ą'),
-                  (re.compile(u'\s*˛\s*(<br.*?>)*\s*A', re.UNICODE), lambda match: u'Ą'),
-                  (re.compile(u'˛\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: u'ę'),
-                  (re.compile(u'˛\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: u'Ę'),
+                  (re.compile('\s*˛\s*(<br.*?>)*\s*a', re.UNICODE), lambda match: 'ą'),
+                  (re.compile('\s*˛\s*(<br.*?>)*\s*A', re.UNICODE), lambda match: 'Ą'),
+                  (re.compile('˛\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: 'ę'),
+                  (re.compile('˛\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: 'Ę'),
 
                   # ˙
-                  (re.compile(u'˙\s*(<br.*?>)*\s*z', re.UNICODE), lambda match: u'ż'),
-                  (re.compile(u'˙\s*(<br.*?>)*\s*Z', re.UNICODE), lambda match: u'Ż'),
+                  (re.compile('˙\s*(<br.*?>)*\s*z', re.UNICODE), lambda match: 'ż'),
+                  (re.compile('˙\s*(<br.*?>)*\s*Z', re.UNICODE), lambda match: 'Ż'),
 
                   # ˇ
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*c', re.UNICODE), lambda match: u'č'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*C', re.UNICODE), lambda match: u'Č'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*d', re.UNICODE), lambda match: u'ď'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*D', re.UNICODE), lambda match: u'Ď'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: u'ě'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: u'Ě'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*l', re.UNICODE), lambda match: u'ľ'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*L', re.UNICODE), lambda match: u'Ľ'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*n', re.UNICODE), lambda match: u'ň'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*N', re.UNICODE), lambda match: u'Ň'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*r', re.UNICODE), lambda match: u'ř'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*R', re.UNICODE), lambda match: u'Ř'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*s', re.UNICODE), lambda match: u'š'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*S', re.UNICODE), lambda match: u'Š'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*t', re.UNICODE), lambda match: u'ť'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*T', re.UNICODE), lambda match: u'Ť'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*z', re.UNICODE), lambda match: u'ž'),
-                  (re.compile(u'ˇ\s*(<br.*?>)*\s*Z', re.UNICODE), lambda match: u'Ž'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*c', re.UNICODE), lambda match: 'č'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*C', re.UNICODE), lambda match: 'Č'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*d', re.UNICODE), lambda match: 'ď'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*D', re.UNICODE), lambda match: 'Ď'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*e', re.UNICODE), lambda match: 'ě'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*E', re.UNICODE), lambda match: 'Ě'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*l', re.UNICODE), lambda match: 'ľ'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*L', re.UNICODE), lambda match: 'Ľ'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*n', re.UNICODE), lambda match: 'ň'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*N', re.UNICODE), lambda match: 'Ň'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*r', re.UNICODE), lambda match: 'ř'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*R', re.UNICODE), lambda match: 'Ř'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*s', re.UNICODE), lambda match: 'š'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*S', re.UNICODE), lambda match: 'Š'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*t', re.UNICODE), lambda match: 'ť'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*T', re.UNICODE), lambda match: 'Ť'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*z', re.UNICODE), lambda match: 'ž'),
+                  (re.compile('ˇ\s*(<br.*?>)*\s*Z', re.UNICODE), lambda match: 'Ž'),
 
                   # °
-                  (re.compile(u'°\s*(<br.*?>)*\s*u', re.UNICODE), lambda match: u'ů'),
-                  (re.compile(u'°\s*(<br.*?>)*\s*U', re.UNICODE), lambda match: u'Ů'),
+                  (re.compile('°\s*(<br.*?>)*\s*u', re.UNICODE), lambda match: 'ů'),
+                  (re.compile('°\s*(<br.*?>)*\s*U', re.UNICODE), lambda match: 'Ů'),
 
                   # If pdf printed from a browser then the header/footer has a reliable pattern
                   (re.compile(r'((?<=</a>)\s*file:/{2,4}[A-Z].*<br>|file:////?[A-Z].*<br>(?=\s*<hr>))', re.IGNORECASE), lambda match: ''),
 
                   # Center separator lines
-                  (re.compile(u'<br>\s*(?P<break>([*#•✦=] *){3,})\s*<br>'), lambda match: '<p>\n<p style="text-align:center">' + match.group('break') + '</p>'),
+                  (re.compile('<br>\s*(?P<break>([*#•✦=] *){3,})\s*<br>'), lambda match: '<p>\n<p style="text-align:center">' + match.group('break') + '</p>'),
 
                   # Remove <hr> tags
                   (re.compile(r'<hr.*?>', re.IGNORECASE), lambda match: ''),
@@ -476,9 +478,9 @@ class HTMLPreProcessor(object):
                   (re.compile(r'\s*</body>'), lambda match : '</p>\n</body>'),
 
                   # Clean up spaces
-                  (re.compile(u'(?<=[\.,;\?!”"\'])[\s^ ]*(?=<)'), lambda match: ' '),
+                  (re.compile('(?<=[\.,;\?!”"\'])[\s^ ]*(?=<)'), lambda match: ' '),
                   # Add space before and after italics
-                  (re.compile(u'(?<!“)<i>'), lambda match: ' <i>'),
+                  (re.compile('(?<!“)<i>'), lambda match: ' <i>'),
                   (re.compile(r'</i>(?=\w)'), lambda match: '</i> '),
                  ]
 
@@ -532,7 +534,7 @@ class HTMLPreProcessor(object):
         start_rules = []
         if is_pdftohtml:
             # Remove non breaking spaces
-            start_rules.append((re.compile(ur'\u00a0'), lambda match : ' '))
+            start_rules.append((re.compile(r'\u00a0'), lambda match : ' '))
 
         if not getattr(self.extra_opts, 'keep_ligatures', False):
             html = _ligpat.sub(lambda m:LIGATURES[m.group()], html)
@@ -571,9 +573,9 @@ class HTMLPreProcessor(object):
         # delete soft hyphens - moved here so it's executed after header/footer removal
         if is_pdftohtml:
             # unwrap/delete soft hyphens
-            end_rules.append((re.compile(u'[­](</p>\s*<p>\s*)+\s*(?=[[a-z\d])'), lambda match: ''))
+            end_rules.append((re.compile('[­](</p>\s*<p>\s*)+\s*(?=[[a-z\d])'), lambda match: ''))
             # unwrap/delete soft hyphens with formatting
-            end_rules.append((re.compile(u'[­]\s*(</(i|u|b)>)+(</p>\s*<p>\s*)+\s*(<(i|u|b)>)+\s*(?=[[a-z\d])'), lambda match: ''))
+            end_rules.append((re.compile('[­]\s*(</(i|u|b)>)+(</p>\s*<p>\s*)+\s*(<(i|u|b)>)+\s*(?=[[a-z\d])'), lambda match: ''))
 
         length = -1
         if getattr(self.extra_opts, 'unwrap_factor', 0.0) > 0.01:
@@ -582,10 +584,10 @@ class HTMLPreProcessor(object):
             if length:
                 # print "The pdf line length returned is " + str(length)
                 # unwrap em/en dashes
-                end_rules.append((re.compile(u'(?<=.{%i}[–—])\s*<p>\s*(?=[[a-z\d])' % length), lambda match: ''))
+                end_rules.append((re.compile('(?<=.{%i}[–—])\s*<p>\s*(?=[[a-z\d])' % length), lambda match: ''))
                 end_rules.append(
                     # Un wrap using punctuation
-                    (re.compile(u'(?<=.{%i}([a-zäëïöüàèìòùáćéíĺóŕńśúýâêîôûçąężıãõñæøþðßěľščťžňďřů,:)\IA\u00DF]|(?<!\&\w{4});))\s*(?P<ital></(i|b|u)>)?\s*(</p>\s*<p>\s*)+\s*(?=(<(i|b|u)>)?\s*[\w\d$(])' % length, re.UNICODE), wrap_lines),  # noqa
+                    (re.compile('(?<=.{%i}([a-zäëïöüàèìòùáćéíĺóŕńśúýâêîôûçąężıãõñæøþðßěľščťžňďřů,:)\IA\\u00DF]|(?<!\&\w{4});))\s*(?P<ital></(i|b|u)>)?\s*(</p>\s*<p>\s*)+\s*(?=(<(i|b|u)>)?\s*[\w\d$(])' % length, re.UNICODE), wrap_lines),  # noqa
                 )
 
         for rule in self.PREPROCESS + start_rules:
@@ -655,7 +657,7 @@ class HTMLPreProcessor(object):
             from calibre.utils.localization import get_udc
             from calibre.utils.mreplace import MReplace
             unihandecoder = get_udc()
-            mr = MReplace(data={u'«':u'&lt;'*3, u'»':u'&gt;'*3})
+            mr = MReplace(data={'«':'&lt;'*3, '»':'&gt;'*3})
             html = mr.mreplace(html)
             html = unihandecoder.decode(html)
 
@@ -670,7 +672,7 @@ class HTMLPreProcessor(object):
         try:
             unsupported_unicode_chars = self.extra_opts.output_profile.unsupported_unicode_chars
         except AttributeError:
-            unsupported_unicode_chars = u''
+            unsupported_unicode_chars = ''
         if unsupported_unicode_chars:
             from calibre.utils.localization import get_udc
             unihandecoder = get_udc()

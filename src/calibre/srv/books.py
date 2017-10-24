@@ -1,24 +1,27 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-from hashlib import sha1
+import errno
+import json as jsonlib
+import os
+import shutil
+import tempfile
+import time
+from pickle import dumps
 from functools import partial
-from threading import RLock, Lock
-from cPickle import dumps
-from zipfile import ZipFile
-import errno, os, tempfile, shutil, time, json as jsonlib
-
+from hashlib import sha1
 from lzma.xz import decompress
+from threading import Lock, RLock
+from zipfile import ZipFile
+
 from calibre.constants import cache_dir, iswindows
 from calibre.customize.ui import plugin_for_input_format
+from calibre.srv.errors import BookNotFound, HTTPNotFound
 from calibre.srv.metadata import book_as_json
 from calibre.srv.render_book import RENDER_VERSION
-from calibre.srv.errors import HTTPNotFound, BookNotFound
 from calibre.srv.routes import endpoint, json
-from calibre.srv.utils import get_library_data, get_db
+from calibre.srv.utils import get_db, get_library_data
+
 
 cache_lock = RLock()
 queued_jobs = {}
@@ -136,7 +139,7 @@ def book_manifest(ctx, rd, book_id, fmt):
         fm = db.format_metadata(book_id, fmt)
         if not fm:
             raise HTTPNotFound('No %s format for the book (id:%s) in the library: %s' % (fmt, book_id, library_id))
-        size, mtime = map(int, (fm['size'], time.mktime(fm['mtime'].utctimetuple())*10))
+        size, mtime = list(map(int, (fm['size'], time.mktime(fm['mtime'].utctimetuple())*10)))
         bhash = book_hash(db.library_id, book_id, fmt, size, mtime)
         with cache_lock:
             mpath = abspath(os.path.join(books_cache_dir(), 'f', bhash, 'calibre-book-manifest.json'))

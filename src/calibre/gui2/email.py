@@ -1,33 +1,38 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import print_function
+import os
+import socket
+import textwrap
+import time
+from binascii import unhexlify
+from collections import defaultdict
+from functools import partial
+from itertools import repeat
+from threading import Thread
+
+from calibre.constants import preferred_encoding
+from calibre.customize.ui import available_input_formats, available_output_formats
+from calibre.ebooks.metadata import authors_to_string
+from calibre.gui2 import Dispatcher, config, error_dialog, gprefs, warning_dialog
+from calibre.gui2.threaded_jobs import ThreadedJob
+from calibre.library.save_to_disk import get_components
+from calibre.utils.config import prefs, tweaks
+from calibre.utils.filenames import ascii_filename
+from calibre.utils.icu import primary_sort_key
+from calibre.utils.smtp import (
+	compose_mail, config as email_config, extract_email_address, sendmail
+)
+from PyQt5.Qt import (
+	QDialog, QDialogButtonBox, QGridLayout, QIcon, QLabel,
+	QLineEdit, QListWidget, QListWidgetItem, QPushButton, Qt
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, socket, time, textwrap
-from binascii import unhexlify
-from functools import partial
-from threading import Thread
-from itertools import repeat
-from collections import defaultdict
 
-from PyQt5.Qt import (
-    Qt, QDialog, QGridLayout, QIcon, QListWidget, QDialogButtonBox,
-    QListWidgetItem, QLabel, QLineEdit, QPushButton)
 
-from calibre.utils.smtp import (compose_mail, sendmail, extract_email_address,
-        config as email_config)
-from calibre.utils.filenames import ascii_filename
-from calibre.customize.ui import available_input_formats, available_output_formats
-from calibre.ebooks.metadata import authors_to_string
-from calibre.constants import preferred_encoding
-from calibre.gui2 import config, Dispatcher, warning_dialog, error_dialog, gprefs
-from calibre.library.save_to_disk import get_components
-from calibre.utils.config import tweaks, prefs
-from calibre.utils.icu import primary_sort_key
-from calibre.gui2.threaded_jobs import ThreadedJob
 
 
 class Worker(Thread):
@@ -152,7 +157,7 @@ def send_mails(jobnames, callback, attachments, to_s, subjects,
 def email_news(mi, remove, get_fmts, done, job_manager):
     opts = email_config().parse()
     accounts = [(account, [x.strip().lower() for x in x[0].split(',')])
-            for account, x in opts.accounts.items() if x[1]]
+            for account, x in list(opts.accounts.items()) if x[1]]
     sent_mails = []
     for i, x in enumerate(accounts):
         account, fmts = x
@@ -210,7 +215,7 @@ class SelectRecipients(QDialog):  # {{{
         for i, name in enumerate(('address', 'alias', 'formats', 'subject')):
             c = i % 2
             row = l.rowCount() - c
-            self.labels[i].setText(unicode(self.labels[i].text()) + ':')
+            self.labels[i].setText(str(self.labels[i].text()) + ':')
             l.addWidget(self.labels[i], row, (2*c))
             le = QLineEdit(self)
             le.setToolTip(tooltips[i])
@@ -232,11 +237,11 @@ class SelectRecipients(QDialog):  # {{{
         self.init_list()
 
     def add_recipient(self):
-        to = unicode(self.address.text()).strip()
+        to = str(self.address.text()).strip()
         if not to:
             return error_dialog(
                 self, _('Need address'), _('You must specify an address'), show=True)
-        formats = ','.join([x.strip().upper() for x in unicode(self.formats.text()).strip().split(',') if x.strip()])
+        formats = ','.join([x.strip().upper() for x in str(self.formats.text()).strip().split(',') if x.strip()])
         if not formats:
             return error_dialog(
                 self, _('Need formats'), _('You must specify at least one format to send'), show=True)
@@ -248,11 +253,11 @@ class SelectRecipients(QDialog):  # {{{
         acc[to] = [formats, False, False]
         c = email_config()
         c.set('accounts', acc)
-        alias = unicode(self.alias.text()).strip()
+        alias = str(self.alias.text()).strip()
         if alias:
             opts.aliases[to] = alias
             c.set('aliases', opts.aliases)
-        subject = unicode(self.subject.text()).strip()
+        subject = str(self.subject.text()).strip()
         if subject:
             opts.subjects[to] = subject
             c.set('subjects', opts.subjects)
@@ -287,7 +292,7 @@ class SelectRecipients(QDialog):  # {{{
         ans = []
         for i in self.items:
             if i.checkState() == Qt.Checked:
-                to = unicode(i.data(Qt.UserRole) or '')
+                to = str(i.data(Qt.UserRole) or '')
                 fmts = tuple(x.strip().upper() for x in (opts.accounts[to][0] or '').split(','))
                 subject = opts.subjects.get(to, '')
                 ans.append((to, fmts, subject))
@@ -320,7 +325,7 @@ class EmailMixin(object):  # {{{
 
         for to, fmts, subject in recipients:
             rfmts = set(fmts)
-            ok_ids = {book_id for book_id, bfmts in db_fmt_map.iteritems() if bfmts.intersection(rfmts)}
+            ok_ids = {book_id for book_id, bfmts in db_fmt_map.items() if bfmts.intersection(rfmts)}
             convert_ids = ids - ok_ids
             self.send_by_mail(to, fmts, delete_from_library, subject=subject, send_ids=ok_ids, do_auto_convert=False)
             if not rfmts.intersection(ofmts):
@@ -335,20 +340,20 @@ class EmailMixin(object):  # {{{
                 auto_convert_map[outfmt].append((to, subject, ok_ids))
 
         if auto_convert_map:
-            titles = {book_id for x in auto_convert_map.itervalues() for data in x for book_id in data[2]}
+            titles = {book_id for x in auto_convert_map.values() for data in x for book_id in data[2]}
             titles = {db.title(book_id, index_is_id=True) for book_id in titles}
             if self.auto_convert_question(
                 _('Auto convert the following books before sending via email?'), list(titles)):
-                for ofmt, data in auto_convert_map.iteritems():
+                for ofmt, data in auto_convert_map.items():
                     ids = {bid for x in data for bid in x[2]}
                     data = [(to, subject) for to, subject, x in data]
                     self.iactions['Convert Books'].auto_convert_multiple_mail(ids, data, ofmt, delete_from_library)
 
         if bad_recipients:
             det_msg = []
-            titles = {book_id for x in bad_recipients.itervalues() for book_id in x[0]}
+            titles = {book_id for x in bad_recipients.values() for book_id in x[0]}
             titles = {book_id:db.title(book_id, index_is_id=True) for book_id in titles}
-            for to, (ids, nooutput) in bad_recipients.iteritems():
+            for to, (ids, nooutput) in bad_recipients.items():
                 msg = _('This recipient has no valid formats defined') if nooutput else \
                         _('These books have no suitable input formats for conversion')
                 det_msg.append('%s - %s' % (to, msg))
@@ -408,7 +413,7 @@ class EmailMixin(object):  # {{{
                     from calibre.utils.html2text import html2text
                     texts[-1] += '\n\n' + _('About this book:') + '\n\n' + textwrap.fill(html2text(mi.comments))
                 prefix = ascii_filename(t+' - '+a)
-                if not isinstance(prefix, unicode):
+                if not isinstance(prefix, str):
                     prefix = prefix.decode(preferred_encoding, 'replace')
                 attachment_names.append(prefix + os.path.splitext(f)[1])
         remove = remove_ids if delete_from_library else []
@@ -505,4 +510,4 @@ class EmailMixin(object):  # {{{
 if __name__ == '__main__':
     from PyQt5.Qt import QApplication
     app = QApplication([])  # noqa
-    print (select_recipients())
+    print((select_recipients()))

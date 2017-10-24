@@ -1,20 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os.path
+
+from calibre.ebooks.metadata import authors_to_string
+from calibre.gui2 import gprefs
+from PyQt5.Qt import (
+	QApplication, QDialog, QDialogButtonBox, QFont, QGridLayout,
+	QIcon, QLabel, Qt, QTreeWidget, QTreeWidgetItem
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os.path
 
-from PyQt5.Qt import (
-    QDialog, QGridLayout, QIcon, QLabel, QTreeWidget, QTreeWidgetItem, Qt,
-    QFont, QDialogButtonBox, QApplication)
 
-from calibre.gui2 import gprefs
-from calibre.ebooks.metadata import authors_to_string
 
 
 class DuplicatesQuestion(QDialog):
@@ -69,12 +69,12 @@ class DuplicatesQuestion(QDialog):
         QApplication.clipboard().setText(self.as_text)
 
     def select_all(self):
-        for i in xrange(self.dup_list.topLevelItemCount()):
+        for i in range(self.dup_list.topLevelItemCount()):
             x = self.dup_list.topLevelItem(i)
             x.setCheckState(0, Qt.Checked)
 
     def select_none(self):
-        for i in xrange(self.dup_list.topLevelItemCount()):
+        for i in range(self.dup_list.topLevelItemCount()):
             x = self.dup_list.topLevelItem(i)
             x.setCheckState(0, Qt.Unchecked)
 
@@ -133,7 +133,7 @@ class DuplicatesQuestion(QDialog):
 
     @property
     def duplicates(self):
-        for i in xrange(self.dup_list.topLevelItemCount()):
+        for i in range(self.dup_list.topLevelItemCount()):
             x = self.dup_list.topLevelItem(i)
             if x.checkState(0) == Qt.Checked:
                 yield x.data(0, Qt.UserRole)
@@ -141,13 +141,13 @@ class DuplicatesQuestion(QDialog):
     @property
     def as_text(self):
         entries = []
-        for i in xrange(self.dup_list.topLevelItemCount()):
+        for i in range(self.dup_list.topLevelItemCount()):
             x = self.dup_list.topLevelItem(i)
             check = '✓' if x.checkState(0) == Qt.Checked else '✗'
-            title = '%s %s' % (check, unicode(x.text(0)))
+            title = '%s %s' % (check, str(x.text(0)))
             dups = []
-            for child in (x.child(j) for j in xrange(x.childCount())):
-                dups.append('\t' + unicode(child.text(0)))
+            for child in (x.child(j) for j in range(x.childCount())):
+                dups.append('\t' + str(child.text(0)))
             entries.append(title + '\n' + '\n'.join(dups))
         return '\n\n'.join(entries)
 
@@ -160,5 +160,4 @@ if __name__ == '__main__':
     db = db()
     d = DuplicatesQuestion(db, [(M('Life of Pi', ['Yann Martel']), None, None),
                             (M('Heirs of the blade', ['Adrian Tchaikovsky']), None, None)])
-    print (tuple(d.duplicates))
-
+    print((tuple(d.duplicates)))

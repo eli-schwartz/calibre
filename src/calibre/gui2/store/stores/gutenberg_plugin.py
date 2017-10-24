@@ -1,25 +1,27 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
-store_version = 5  # Needed for dynamic plugin loading
-
-__license__ = 'GPL 3'
-__copyright__ = '2011, 2013, John Schember <john@nachtimwald.com>'
-__docformat__ = 'restructuredtext en'
-
 import base64
 import mimetypes
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from contextlib import closing
-
-from lxml import etree
 
 from calibre import browser, url_slash_cleaner
 from calibre.constants import __appname__, __version__
 from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.gui2.store.opensearch_store import OpenSearchOPDSStore
 from calibre.gui2.store.search_result import SearchResult
+from lxml import etree
+
+
+store_version = 5  # Needed for dynamic plugin loading
+
+__license__ = 'GPL 3'
+__copyright__ = '2011, 2013, John Schember <john@nachtimwald.com>'
+__docformat__ = 'restructuredtext en'
+
+
+
 
 web_url = 'http://m.gutenberg.org/'
 
@@ -31,7 +33,7 @@ def fix_url(url):
 
 
 def search(query, max_results=10, timeout=60, write_raw_to=None):
-    url = 'http://m.gutenberg.org/ebooks/search.opds/?query=' + urllib.quote_plus(query)
+    url = 'http://m.gutenberg.org/ebooks/search.opds/?query=' + urllib.parse.quote_plus(query)
 
     counter = max_results
     br = browser(user_agent='calibre/'+__version__)
@@ -70,7 +72,7 @@ def search(query, max_results=10, timeout=60, write_raw_to=None):
                             ext = ext[1:].upper().strip()
                             s.downloads[ext] = fix_url(href)
 
-            s.formats = ', '.join(s.downloads.keys())
+            s.formats = ', '.join(list(s.downloads.keys()))
             if not s.formats:
                 continue
 

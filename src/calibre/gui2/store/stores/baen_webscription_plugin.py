@@ -1,18 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
-store_version = 2  # Needed for dynamic plugin loading
-
-__license__ = 'GPL 3'
-__copyright__ = '2011, John Schember <john@nachtimwald.com>'
-__docformat__ = 'restructuredtext en'
-
-from urllib import urlencode
 from contextlib import closing
-
-from lxml import html
-
-from PyQt5.Qt import QUrl
+from urllib.parse import urlencode
 
 from calibre import browser
 from calibre.ebooks.metadata import authors_to_string
@@ -21,6 +10,19 @@ from calibre.gui2.store import StorePlugin
 from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.gui2.store.search_result import SearchResult
 from calibre.gui2.store.web_store_dialog import WebStoreDialog
+from lxml import html
+from PyQt5.Qt import QUrl
+
+
+store_version = 2  # Needed for dynamic plugin loading
+
+__license__ = 'GPL 3'
+__copyright__ = '2011, John Schember <john@nachtimwald.com>'
+__docformat__ = 'restructuredtext en'
+
+
+
+
 
 
 def search(query, max_results=10, timeout=60):

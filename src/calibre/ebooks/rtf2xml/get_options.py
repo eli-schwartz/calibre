@@ -13,8 +13,10 @@
 """
 Gets options for main part of script
 """
-import sys, os
-from calibre.ebooks.rtf2xml import options_trem, configure_txt
+import os
+import sys
+
+from calibre.ebooks.rtf2xml import configure_txt, options_trem
 
 
 class GetOptions:
@@ -77,7 +79,7 @@ class GetOptions:
         if options == 0:
             return_options['valid'] = 0
             return return_options
-        the_keys = options.keys()
+        the_keys = list(options.keys())
         return_options['help'] = 0
         if 'help' in the_keys:
             return_options['help'] = 1

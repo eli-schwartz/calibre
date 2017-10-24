@@ -1,12 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-from struct import unpack, error
 import os
+from struct import error, unpack
+
 from calibre.utils.speedups import ReadOnlyFileBuffer
+
 
 """ Recognize image file formats and sizes based on their first few bytes."""
 
@@ -16,7 +15,7 @@ HSIZE = 120
 def what(file, h=None):
     ' Recognize image headers '
     if h is None:
-        if isinstance(file, basestring):
+        if isinstance(file, str):
             with lopen(file, 'rb') as f:
                 h = f.read(HSIZE)
         else:

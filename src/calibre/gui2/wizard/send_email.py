@@ -1,25 +1,26 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import io
+import sys
+from binascii import hexlify, unhexlify
+from functools import partial
+from threading import Thread
+
+from calibre import prints
+from calibre.gui2 import error_dialog, question_dialog
+from calibre.gui2.wizard.send_email_ui import Ui_Form
+from calibre.utils.smtp import config as smtp_prefs
+from PyQt5.Qt import (
+	QCheckBox, QDialog, QDialogButtonBox, QGridLayout, QHBoxLayout, QIcon, QLabel,
+	QLineEdit, QPlainTextEdit, QPushButton, Qt, QVBoxLayout, QWidget, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import cStringIO, sys
-from binascii import hexlify, unhexlify
-from functools import partial
-from threading import Thread
 
-from PyQt5.Qt import (
-    QWidget, pyqtSignal, QDialog, Qt, QLabel, QLineEdit, QDialogButtonBox,
-    QGridLayout, QCheckBox, QIcon, QVBoxLayout, QPushButton, QPlainTextEdit,
-    QHBoxLayout)
 
-from calibre import prints
-from calibre.gui2.wizard.send_email_ui import Ui_Form
-from calibre.utils.smtp import config as smtp_prefs
-from calibre.gui2 import error_dialog, question_dialog
 
 
 class TestEmail(QDialog):
@@ -68,7 +69,7 @@ class TestEmail(QDialog):
 
     def run_test(self):
         try:
-            tb = self.test_func(unicode(self.to.text())) or _('Email successfully sent')
+            tb = self.test_func(str(self.to.text())) or _('Email successfully sent')
         except Exception:
             import traceback
             tb = traceback.format_exc()
@@ -130,7 +131,7 @@ class RelaySetup(QDialog):
         self.service = service
 
     def accept(self):
-        un = unicode(self.username.text())
+        un = str(self.username.text())
         if self.service.get('at_in_username', False) and '@' not in un:
             return error_dialog(self, _('Incorrect username'),
                     _('%s needs the full email address as your username') %
@@ -192,7 +193,7 @@ class SendEmail(QWidget, Ui_Form):
     def test_email_settings(self, to):
         opts = smtp_prefs().parse()
         from calibre.utils.smtp import sendmail, create_mail
-        buf = cStringIO.StringIO()
+        buf = io.StringIO()
         debug_out = partial(prints, file=buf)
         oout, oerr = sys.stdout, sys.stderr
         sys.stdout = sys.stderr = buf
@@ -263,14 +264,14 @@ class SendEmail(QWidget, Ui_Form):
         self.relay_tls.setChecked(True)
 
     def set_email_settings(self, to_set):
-        from_ = unicode(self.email_from.text()).strip()
+        from_ = str(self.email_from.text()).strip()
         if to_set and not from_:
             error_dialog(self, _('Bad configuration'),
                          _('You must set the From email address')).exec_()
             return False
-        username = unicode(self.relay_username.text()).strip()
-        password = unicode(self.relay_password.text()).strip()
-        host = unicode(self.relay_host.text()).strip()
+        username = str(self.relay_username.text()).strip()
+        password = str(self.relay_password.text()).strip()
+        host = str(self.relay_host.text()).strip()
         enc_method = ('TLS' if self.relay_tls.isChecked() else 'SSL'
                 if self.relay_ssl.isChecked() else 'NONE')
         if host:

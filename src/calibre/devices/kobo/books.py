@@ -2,17 +2,17 @@ __license__   = 'GPL v3'
 __copyright__ = '2010-2012, , Timothy Legge <timlegge at gmail.com> and David Forrester <davidfor@internode.on.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, time, sys
+import os
+import sys
+import time
 
-from calibre.constants import preferred_encoding, DEBUG
-from calibre import isbytestring, force_unicode
-from calibre.utils.icu import sort_key
-
-from calibre.devices.usbms.books import Book as Book_
-from calibre.devices.usbms.books import CollectionsBookList
-from calibre.utils.config_base import prefs
+from calibre import force_unicode, isbytestring
+from calibre.constants import DEBUG, preferred_encoding
+from calibre.devices.usbms.books import Book as Book_, CollectionsBookList
 from calibre.devices.usbms.driver import debug_print
 from calibre.ebooks.metadata import author_to_author_sort
+from calibre.utils.config_base import prefs
+from calibre.utils.icu import sort_key
 
 
 class Book(Book_):
@@ -179,7 +179,7 @@ class KTCollectionsBookList(CollectionsBookList):
                 elif fm is not None and fm['datatype'] == 'series':
                     val = [orig_val]
                 elif fm is not None and fm['datatype'] == 'rating':
-                    val = [type(u'')(orig_val / 2.0)]
+                    val = [type('')(orig_val / 2.0)]
                 elif fm is not None and fm['datatype'] == 'text' and fm['is_multiple']:
                     if isinstance(orig_val, (list, tuple)):
                         val = orig_val
@@ -224,7 +224,7 @@ class KTCollectionsBookList(CollectionsBookList):
                     if not category:
                         continue
 
-                    cat_name = type(u'')(category).strip(' ,')
+                    cat_name = type('')(category).strip(' ,')
 
                     if cat_name not in collections:
                         collections[cat_name] = {}
@@ -234,10 +234,10 @@ class KTCollectionsBookList(CollectionsBookList):
                         if is_series:
                             if doing_dc:
                                 collections[cat_name][lpath] = \
-                                    (book, book.get('series_index', sys.maxint), tsval)
+                                    (book, book.get('series_index', sys.maxsize), tsval)
                             else:
                                 collections[cat_name][lpath] = \
-                                    (book, book.get(attr+'_index', sys.maxint), tsval)
+                                    (book, book.get(attr+'_index', sys.maxsize), tsval)
                         else:
                             collections[cat_name][lpath] = (book, tsval, tsval)
                         if show_debug:
@@ -258,7 +258,7 @@ class KTCollectionsBookList(CollectionsBookList):
                 return 1
             if y is None:
                 return -1
-            if isinstance(x, basestring) and isinstance(y, basestring):
+            if isinstance(x, str) and isinstance(y, str):
                 x, y = sort_key(force_unicode(x)), sort_key(force_unicode(y))
             c = cmp(x, y)
             if c != 0:
@@ -266,8 +266,8 @@ class KTCollectionsBookList(CollectionsBookList):
             # same as above -- no sort_key needed here
             return cmp(xx[2], yy[2])
 
-        for category, lpaths in collections.items():
-            books = lpaths.values()
+        for category, lpaths in list(collections.items()):
+            books = list(lpaths.values())
             books.sort(cmp=none_cmp)
             result[category] = [x[0] for x in books]
         # debug_print("KTCollectionsBookList:get_collections - result=", result.keys())

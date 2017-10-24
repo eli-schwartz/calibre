@@ -8,9 +8,15 @@ __license__   = 'GPL v3'
 __copyright__ = '2009, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
+import io
 import re
 import struct
 import zlib
+
+from calibre.ebooks.pdb.formatwriter import FormatWriter
+from calibre.ebooks.pdb.header import PdbHeaderBuilder
+from calibre.ebooks.pml.pmlml import PMLMLizer
+
 
 try:
     from PIL import Image
@@ -18,11 +24,7 @@ try:
 except ImportError:
     import Image
 
-import cStringIO
 
-from calibre.ebooks.pdb.formatwriter import FormatWriter
-from calibre.ebooks.pdb.header import PdbHeaderBuilder
-from calibre.ebooks.pml.pmlml import PMLMLizer
 
 IDENTITY = 'PNRdPPrs'
 
@@ -39,7 +41,7 @@ class Writer(FormatWriter):
 
     def write_content(self, oeb_book, out_stream, metadata=None):
         pmlmlizer = PMLMLizer(self.log)
-        pml = unicode(pmlmlizer.extract_content(oeb_book, self.opts)).encode('cp1252', 'replace')
+        pml = str(pmlmlizer.extract_content(oeb_book, self.opts)).encode('cp1252', 'replace')
 
         text, text_sizes = self._text(pml)
         chapter_index = self._index_item(r'(?s)\\C(?P<val>[0-4])="(?P<text>.+?)"', pml)
@@ -107,7 +109,7 @@ class Writer(FormatWriter):
         index = []
         for mo in re.finditer(regex, pml):
             item = ''
-            if 'text' in mo.groupdict().keys():
+            if 'text' in list(mo.groupdict().keys()):
                 item += struct.pack('>L', mo.start())
                 text = mo.group('text')
                 # Strip all PML tags from text
@@ -115,7 +117,7 @@ class Writer(FormatWriter):
                 text = re.sub(r'\\a\d{3}', '', text)
                 text = re.sub(r'\\.', '', text)
                 # Add appropriate spacing to denote the various levels of headings
-                if 'val' in mo.groupdict().keys():
+                if 'val' in list(mo.groupdict().keys()):
                     text = '%s%s' % (' ' * 4 * int(mo.group('val')), text)
                 item += text
                 item += '\x00'
@@ -138,12 +140,12 @@ class Writer(FormatWriter):
         from calibre.ebooks.oeb.base import OEB_RASTER_IMAGES
 
         for item in manifest:
-            if item.media_type in OEB_RASTER_IMAGES and item.href in image_hrefs.keys():
+            if item.media_type in OEB_RASTER_IMAGES and item.href in list(image_hrefs.keys()):
                 try:
-                    im = Image.open(cStringIO.StringIO(item.data)).convert('P')
+                    im = Image.open(io.StringIO(item.data)).convert('P')
                     im.thumbnail((300,300), Image.ANTIALIAS)
 
-                    data = cStringIO.StringIO()
+                    data = io.StringIO()
                     im.save(data, 'PNG')
                     data = data.getvalue()
 
@@ -249,4 +251,3 @@ class Writer(FormatWriter):
             record += struct.pack('>H', 0)                  # [54:132]
 
         return record
-

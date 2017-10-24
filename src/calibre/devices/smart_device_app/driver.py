@@ -1,26 +1,26 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-'''
-Created on 29 Jun 2012
-
-@author: charles
-'''
-import socket, select, json, os, traceback, time, sys, random
+import hashlib
+import json
+import os
 import posixpath
-from collections import defaultdict
-import hashlib, threading
 import Queue
-
-from functools import wraps
+import random
+import select
+import socket
+import sys
+import threading
+import time
+import traceback
+from collections import defaultdict
 from errno import EAGAIN, EINTR
+from functools import wraps
 from threading import Thread
 
 from calibre import prints
-from calibre.constants import numeric_version, DEBUG, cache_dir
-from calibre.devices.errors import (OpenFailed, OpenFeedback, ControlError, TimeoutError,
-                                    InitialConnectionError, PacketError)
+from calibre.constants import DEBUG, cache_dir, numeric_version
+from calibre.devices.errors import (
+	ControlError, InitialConnectionError, OpenFailed, OpenFeedback, PacketError, TimeoutError
+)
 from calibre.devices.interface import DevicePlugin, currently_connected_device
 from calibre.devices.usbms.books import Book, CollectionsBookList
 from calibre.devices.usbms.deviceconfig import DeviceConfig
@@ -32,12 +32,22 @@ from calibre.ebooks.metadata.book.base import Metadata
 from calibre.ebooks.metadata.book.json_codec import JsonCodec
 from calibre.library import current_library_name
 from calibre.ptempfile import PersistentTemporaryFile
-from calibre.utils.ipc import eintr_retry_call
 from calibre.utils.config_base import tweaks
 from calibre.utils.filenames import ascii_filename as sanitize, shorten_components_to
-from calibre.utils.mdns import (publish as publish_zeroconf, unpublish as
-        unpublish_zeroconf, get_all_ips)
+from calibre.utils.ipc import eintr_retry_call
+from calibre.utils.mdns import (
+	get_all_ips, publish as publish_zeroconf, unpublish as unpublish_zeroconf
+)
 from calibre.utils.socket_inheritance import set_socket_inherit
+
+
+'''
+Created on 29 Jun 2012
+
+@author: charles
+'''
+
+
 
 
 def synchronous(tlockname):

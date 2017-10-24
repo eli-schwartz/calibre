@@ -1,22 +1,24 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import io
+import re
+import sys
+import time
+from collections import OrderedDict
+from threading import Thread
+from urllib import urlencode
+from zlib import decompressobj
+
+from calibre import prints
+from calibre.constants import DEBUG, numeric_version
+from calibre.gui2.store import StorePlugin
+from calibre.utils.config import JSONConfig
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, time, io, re
-from zlib import decompressobj
-from collections import OrderedDict
-from threading import Thread
-from urllib import urlencode
 
-from calibre import prints
-from calibre.constants import numeric_version, DEBUG
-from calibre.gui2.store import StorePlugin
-from calibre.utils.config import JSONConfig
 
 
 class VersionMismatch(ValueError):
@@ -199,5 +201,3 @@ if __name__ == '__main__':
         print(code.encode('utf-8'))
         print('\n', '_'*80, '\n', sep='')
     print ('Time to download all %d plugins: %.2f seconds'%(count, time.time() - st))
-
-

@@ -1,15 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import string
+
+from calibre.utils.config import JSONConfig
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import string
-from future_builtins import map
 
-from calibre.utils.config import JSONConfig
 
 CONTAINER_DND_MIMETYPE = 'application/x-calibre-container-name-list'
 tprefs = JSONConfig('tweak_book_gui')
@@ -39,7 +37,7 @@ d['preview_base_font_size'] = 18
 d['preview_mono_font_size'] = 14
 d['preview_minimum_font_size'] = 8
 d['remove_existing_links_when_linking_sheets'] = True
-d['charmap_favorites'] = list(map(ord, '\xa0\u2002\u2003\u2009\xad' '‘’“”‹›«»‚„' '—–§¶†‡©®™' '→⇒•·°±−×÷¼½½¾' '…µ¢£€¿¡¨´¸ˆ˜' 'ÀÁÂÃÄÅÆÇÈÉÊË' 'ÌÍÎÏÐÑÒÓÔÕÖØ' 'ŒŠÙÚÛÜÝŸÞßàá' 'âãäåæçèéêëìí' 'îïðñòóôõöøœš' 'ùúûüýÿþªºαΩ∞'))  # noqa
+d['charmap_favorites'] = list(map(ord, '\xa0\\u2002\\u2003\\u2009\xad' '‘’“”‹›«»‚„' '—–§¶†‡©®™' '→⇒•·°±−×÷¼½½¾' '…µ¢£€¿¡¨´¸ˆ˜' 'ÀÁÂÃÄÅÆÇÈÉÊË' 'ÌÍÎÏÐÑÒÓÔÕÖØ' 'ŒŠÙÚÛÜÝŸÞßàá' 'âãäåæçèéêëìí' 'îïðñòóôõöøœš' 'ùúûüýÿþªºαΩ∞'))  # noqa
 d['folders_for_types'] = {'style':'styles', 'image':'images', 'font':'fonts', 'audio':'audio', 'video':'video'}
 d['pretty_print_on_open'] = False
 d['disable_completion_popup_for_search'] = False
@@ -111,7 +109,7 @@ TOP = object()
 
 
 def editor_name(editor):
-    for n, ed in editors.iteritems():
+    for n, ed in editors.items():
         if ed is editor:
             return n
 

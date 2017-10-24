@@ -1,24 +1,26 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import copy
+import zipfile
+
+from calibre.utils.localization import get_language
+from calibre.utils.search_query_parser import ParseException, SearchQueryParser
+from calibre.web.feeds.recipes.collection import (
+	SchedulerConfig, add_custom_recipe, add_custom_recipes,
+	download_builtin_recipe, get_builtin_recipe, get_builtin_recipe_collection,
+	get_custom_recipe, get_custom_recipe_collection, remove_custom_recipe,
+	update_custom_recipe, update_custom_recipes
+)
+from PyQt5.Qt import (
+	QAbstractItemModel, QColor, QFont, QIcon, QModelIndex, QPixmap, Qt, pyqtSignal
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import copy, zipfile
 
-from PyQt5.Qt import QAbstractItemModel, Qt, QColor, QFont, QIcon, \
-        QModelIndex, pyqtSignal, QPixmap
 
-from calibre.utils.search_query_parser import SearchQueryParser
-from calibre.utils.localization import get_language
-from calibre.web.feeds.recipes.collection import \
-        get_builtin_recipe_collection, get_custom_recipe_collection, \
-        SchedulerConfig, download_builtin_recipe, update_custom_recipe, \
-        update_custom_recipes, add_custom_recipe, add_custom_recipes, \
-        remove_custom_recipe, get_custom_recipe, get_builtin_recipe
-from calibre.utils.search_query_parser import ParseException
 
 
 class NewsTreeItem(object):
@@ -181,7 +183,7 @@ class RecipeModel(QAbstractItemModel, AdaptSQP):
 
     def update_custom_recipes(self, script_urn_map):
         script_ids = []
-        for urn, title_script in script_urn_map.iteritems():
+        for urn, title_script in script_urn_map.items():
             id_ = int(urn[len('custom:'):])
             (title, script) = title_script
             script_ids.append((id_, title, script))
@@ -296,7 +298,7 @@ class RecipeModel(QAbstractItemModel, AdaptSQP):
     def search(self, query):
         results = []
         try:
-            query = unicode(query).strip()
+            query = str(query).strip()
             if query:
                 results = self.parse(query)
                 if not results:
@@ -413,6 +415,3 @@ class RecipeModel(QAbstractItemModel, AdaptSQP):
             for recipe in self.scheduler_config.iter_recipes():
                 ans.append(recipe.get('id'))
         return ans
-
-
-

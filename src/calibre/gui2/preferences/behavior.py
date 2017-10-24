@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,17 +6,16 @@ __docformat__ = 'restructuredtext en'
 
 import re
 
-from PyQt5.Qt import Qt, QListWidgetItem
-
-from calibre.gui2.preferences import ConfigWidgetBase, test_widget, Setting
-from calibre.gui2.preferences.behavior_ui import Ui_Form
-from calibre.gui2 import config, info_dialog, dynamic, gprefs
-from calibre.utils.config import prefs
-from calibre.customize.ui import available_output_formats, all_input_formats
+from calibre.constants import iswindows
+from calibre.customize.ui import all_input_formats, available_output_formats
 from calibre.ebooks import BOOK_EXTENSIONS
 from calibre.ebooks.oeb.iterator import is_supported
-from calibre.constants import iswindows
+from calibre.gui2 import config, dynamic, gprefs, info_dialog
+from calibre.gui2.preferences import ConfigWidgetBase, Setting, test_widget
+from calibre.gui2.preferences.behavior_ui import Ui_Form
+from calibre.utils.config import prefs
 from calibre.utils.icu import sort_key
+from PyQt5.Qt import QListWidgetItem, Qt
 
 
 class OutputFormatSetting(Setting):
@@ -49,7 +47,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         choices = [(x.upper(), x) for x in output_formats]
         r('output_format', prefs, choices=choices, setting=OutputFormatSetting)
 
-        restrictions = sorted(db.prefs['virtual_libraries'].iterkeys(), key=sort_key)
+        restrictions = sorted(iter(db.prefs['virtual_libraries'].keys()), key=sort_key)
         choices = [('', '')] + [(x, x) for x in restrictions]
         # check that the virtual library still exists
         vls = db.prefs['virtual_lib_on_startup']
@@ -83,7 +81,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
 
     def commit(self):
         input_map = prefs['input_format_order']
-        input_cols = [unicode(self.opt_input_order.item(i).data(Qt.UserRole) or '') for
+        input_cols = [str(self.opt_input_order.item(i).data(Qt.UserRole) or '') for
                 i in range(self.opt_input_order.count())]
         if input_map != input_cols:
             prefs['input_format_order'] = input_cols
@@ -128,7 +126,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         viewer = self.opt_internally_viewed_formats
         for i in range(viewer.count()):
             if viewer.item(i).checkState() == Qt.Checked:
-                fmts.append(unicode(viewer.item(i).text()))
+                fmts.append(str(viewer.item(i).text()))
         return fmts
     # }}}
 
@@ -164,7 +162,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
     # }}}
 
     def reset_confirmation_dialogs(self, *args):
-        for key in dynamic.keys():
+        for key in list(dynamic.keys()):
             if key.endswith('_again') and dynamic[key] is False:
                 dynamic[key] = True
         gprefs['questions_to_auto_skip'] = []
@@ -175,4 +173,3 @@ if __name__ == '__main__':
     from PyQt5.Qt import QApplication
     app = QApplication([])
     test_widget('Interface', 'Behavior')
-

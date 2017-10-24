@@ -17,12 +17,12 @@ License: [BSD](http://www.opensource.org/licenses/bsd-license.php)
 
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
+import re
+
 from . import Extension
 from ..treeprocessors import Treeprocessor
 from ..util import isBlockLevel
-import re
+
 
 try:
     Scanner = re.Scanner

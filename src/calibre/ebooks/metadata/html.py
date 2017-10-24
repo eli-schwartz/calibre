@@ -1,7 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+
+from calibre import isbytestring, replace_entities
+from calibre.ebooks.chardet import xml_to_unicode
+from calibre.ebooks.metadata import string_to_authors
+from calibre.ebooks.metadata.book.base import Metadata
+from calibre.utils.date import is_date_undefined, parse_date
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
@@ -9,13 +14,7 @@ __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 Try to read metadata from an HTML file.
 '''
 
-import re
 
-from calibre.ebooks.metadata import string_to_authors
-from calibre.ebooks.metadata.book.base import Metadata
-from calibre.ebooks.chardet import xml_to_unicode
-from calibre import replace_entities, isbytestring
-from calibre.utils.date import parse_date, is_date_undefined
 
 
 def get_metadata(stream):
@@ -60,7 +59,7 @@ attr_pat = r'''(?:(?P<sq>')|(?P<dq>"))(?P<content>(?(sq)[^']+|[^"]+))(?(sq)'|")'
 
 def parse_meta_tags(src):
     rmap = {}
-    for field, names in META_NAMES.iteritems():
+    for field, names in META_NAMES.items():
         for name in names:
             rmap[name.lower()] = field
     all_names = '|'.join(rmap)
@@ -89,8 +88,8 @@ def parse_meta_tags(src):
 
 
 def parse_comment_tags(src):
-    all_names = '|'.join(COMMENT_NAMES.itervalues())
-    rmap = {v:k for k, v in COMMENT_NAMES.iteritems()}
+    all_names = '|'.join(iter(COMMENT_NAMES.values()))
+    rmap = {v:k for k, v in COMMENT_NAMES.items()}
     ans = {}
     for match in re.finditer(r'''<!--\s*(?P<name>%s)\s*=\s*%s''' % (all_names, attr_pat), src):
         field = rmap[match.group('name')]

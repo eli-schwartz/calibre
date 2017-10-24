@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+from calibre.utils.mreplace import MReplace
+
 
 __license__ = 'GPL 3'
 __copyright__ = '2011, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-from calibre.utils.mreplace import MReplace
 
 _mreplace = MReplace({
         '&#8211;': '--',
@@ -42,5 +42,3 @@ _mreplace = MReplace({
 })
 
 unsmarten_text = _mreplace.mreplace
-
-

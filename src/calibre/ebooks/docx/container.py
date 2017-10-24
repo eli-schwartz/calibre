@@ -1,25 +1,26 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import shutil
+import sys
 
-__license__ = 'GPL v3'
-__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import os, sys, shutil
-
-from lxml import etree
-
-from calibre import walk, guess_type
-from calibre.ebooks.metadata import string_to_authors, authors_to_sort_string
-from calibre.ebooks.metadata.book.base import Metadata
+from calibre import guess_type, walk
 from calibre.ebooks.docx import InvalidDOCX
 from calibre.ebooks.docx.names import DOCXNamespace
+from calibre.ebooks.metadata import authors_to_sort_string, string_to_authors
+from calibre.ebooks.metadata.book.base import Metadata
+from calibre.ebooks.oeb.parse_utils import RECOVER_PARSER
 from calibre.ptempfile import PersistentTemporaryDirectory
 from calibre.utils.localization import canonicalize_lang
 from calibre.utils.logging import default_log
 from calibre.utils.zipfile import ZipFile
-from calibre.ebooks.oeb.parse_utils import RECOVER_PARSER
+from lxml import etree
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 
 def fromstring(raw, parser=RECOVER_PARSER):
@@ -56,7 +57,7 @@ def read_doc_props(raw, mi, XPath):
 
     desc = XPath('//dc:description')(root)
     if desc:
-        raw = etree.tostring(desc[0], method='text', encoding=unicode)
+        raw = etree.tostring(desc[0], method='text', encoding=str)
         raw = raw.replace('_x000d_', '')  # Word 2007 mangles newlines in the summary
         mi.comments = raw.strip()
 
@@ -265,4 +266,4 @@ class DOCX(object):
 
 if __name__ == '__main__':
     d = DOCX(sys.argv[-1], extract=False)
-    print (d.metadata)
+    print((d.metadata))

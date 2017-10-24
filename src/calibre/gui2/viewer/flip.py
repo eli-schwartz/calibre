@@ -1,12 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QWidget, QPainter, QPropertyAnimation, QEasingCurve, \
-    QRect, QPixmap, Qt, pyqtProperty
+from PyQt5.Qt import (
+	QEasingCurve, QPainter, QPixmap, QPropertyAnimation, QRect, Qt, QWidget, pyqtProperty
+)
 
 
 class SlideFlip(QWidget):
@@ -113,5 +113,3 @@ class SlideFlip(QWidget):
             fget=lambda self: self._current_width,
             fset=set_current_width
             )
-
-

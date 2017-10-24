@@ -1,23 +1,24 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import errno
+import os
+import shutil
+from queue import Empty, LifoQueue
+from threading import Thread
+
+from calibre.constants import iswindows
+from calibre.gui2.progress_indicator import ProgressIndicator
+from calibre.ptempfile import PersistentTemporaryFile
+from calibre.utils import join_with_timeout
+from calibre.utils.filenames import atomic_rename, format_permissions
+from calibre.utils.ipc import RC
+from PyQt5.Qt import QHBoxLayout, QLabel, QObject, Qt, QWidget, pyqtSignal
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import shutil, os, errno
-from threading import Thread
-from Queue import LifoQueue, Empty
 
-from PyQt5.Qt import (QObject, pyqtSignal, QLabel, QWidget, QHBoxLayout, Qt)
 
-from calibre.constants import iswindows
-from calibre.ptempfile import PersistentTemporaryFile
-from calibre.gui2.progress_indicator import ProgressIndicator
-from calibre.utils import join_with_timeout
-from calibre.utils.filenames import atomic_rename, format_permissions
-from calibre.utils.ipc import RC
 
 
 def save_dir_container(container, path):

@@ -1,24 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-from PyQt5.Qt import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QComboBox, QLineEdit,
-    QPushButton, QSize, pyqtSignal, QMenu
-)
-
 from calibre.ebooks.css_transform_rules import (
-    validate_rule, safe_parser, compile_rules, transform_sheet, ACTION_MAP, MATCH_TYPE_MAP, export_rules, import_rules)
-from calibre.gui2 import error_dialog, elided_text, choose_save_file, choose_files
+	ACTION_MAP, MATCH_TYPE_MAP, compile_rules, export_rules,
+	import_rules, safe_parser, transform_sheet, validate_rule
+)
+from calibre.gui2 import choose_files, choose_save_file, elided_text, error_dialog
 from calibre.gui2.tag_mapper import (
-    RuleEdit as RE, RuleEditDialog as RuleEditDialogBase, Rules as RulesBase,
-    RulesDialog as RulesDialogBase, RuleItem as RuleItemBase, SaveLoadMixin)
+	RuleEdit as RE, RuleEditDialog as RuleEditDialogBase, RuleItem as RuleItemBase,
+	Rules as RulesBase, RulesDialog as RulesDialogBase, SaveLoadMixin
+)
 from calibre.gui2.widgets2 import Dialog
 from calibre.utils.config import JSONConfig
 from calibre.utils.localization import localize_user_manual_link
+from PyQt5.Qt import (
+	QComboBox, QHBoxLayout, QLabel, QLineEdit, QMenu,
+	QPushButton, QSize, QVBoxLayout, QWidget, pyqtSignal
+)
 
 
 class RuleEdit(QWidget):  # {{{
@@ -49,7 +47,7 @@ class RuleEdit(QWidget):  # {{{
                                'For instance use margin-top, not margin.'))
             elif clause == '{match_type}':
                 self.match_type = w = QComboBox(self)
-                for action, text in MATCH_TYPE_MAP.iteritems():
+                for action, text in MATCH_TYPE_MAP.items():
                     w.addItem(text, action)
                 w.currentIndexChanged.connect(self.update_state)
             elif clause == '{query}':
@@ -69,7 +67,7 @@ class RuleEdit(QWidget):  # {{{
         for clause in parts:
             if clause == '{action}':
                 self.action = w = QComboBox(self)
-                for action, text in ACTION_MAP.iteritems():
+                for action, text in ACTION_MAP.items():
                     w.addItem(text, action)
                 w.currentIndexChanged.connect(self.update_state)
             elif clause == '{action_data}':
@@ -133,14 +131,14 @@ class RuleEdit(QWidget):  # {{{
     def rule(self, rule):
         def sc(name):
             c = getattr(self, name)
-            idx = c.findData(unicode(rule.get(name, '')))
+            idx = c.findData(str(rule.get(name, '')))
             if idx < 0:
                 idx = 0
             c.setCurrentIndex(idx)
         sc('action'), sc('match_type')
-        self.property.setText(unicode(rule.get('property', '')).strip())
-        self.query.setText(unicode(rule.get('query', '')).strip())
-        self.action_data.setText(unicode(rule.get('action_data', '')).strip())
+        self.property.setText(str(rule.get('property', '')).strip())
+        self.query.setText(str(rule.get('query', '')).strip())
+        self.action_data.setText(str(rule.get('action_data', '')).strip())
         self.update_state()
 
     def validate(self):

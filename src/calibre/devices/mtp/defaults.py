@@ -1,15 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+import traceback
+
+from calibre.constants import iswindows
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import traceback, re
 
-from calibre.constants import iswindows
 
 
 class DeviceDefaults(object):
@@ -47,7 +47,7 @@ class DeviceDefaults(object):
         for rule in self.rules:
             tests = rule[0]
             matches = True
-            for k, v in tests.iteritems():
+            for k, v in tests.items():
                 if k == 'vendor' and v != vid:
                     matches = False
                     break

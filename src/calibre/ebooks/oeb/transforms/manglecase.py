@@ -1,16 +1,14 @@
 '''
 CSS case-mangling transform.
 '''
-from __future__ import with_statement
+from calibre.ebooks.oeb.base import CSS_MIME, XHTML, XHTML_NS, namespace
+from calibre.ebooks.oeb.stylizer import Stylizer
+from lxml import etree
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2008, Marshall T. Vandegrift <llasram@gmail.com>'
 
-from lxml import etree
-from calibre.ebooks.oeb.base import XHTML, XHTML_NS
-from calibre.ebooks.oeb.base import CSS_MIME
-from calibre.ebooks.oeb.base import namespace
-from calibre.ebooks.oeb.stylizer import Stylizer
 
 CASE_MANGLER_CSS = """
 .calibre_lowercase {
@@ -95,7 +93,7 @@ class CaseMangler(object):
                 last = child
 
     def mangle_elem(self, elem, stylizer):
-        if not isinstance(elem.tag, basestring) or \
+        if not isinstance(elem.tag, str) or \
            namespace(elem.tag) != XHTML_NS:
             return
         children = list(elem)

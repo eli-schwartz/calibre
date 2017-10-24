@@ -1,7 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import BaseHTTPServer
+import io
+import os
+import re
+import SocketServer
+import sys
+import time
+import traceback
+from SimpleHTTPServer import SimpleHTTPRequestHandler
+from threading import Lock, local
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
@@ -12,15 +20,11 @@ Utilities to help with developing coffeescript based apps.
 A coffeescript compiler and a simple web server that automatically serves
 coffeescript files as javascript.
 '''
-import sys, traceback, io
 if sys.version_info.major > 2:
     print('This script is not Python 3 compatible. Run it with Python 2',
             file=sys.stderr)
     raise SystemExit(1)
 
-import time, BaseHTTPServer, os, sys, re, SocketServer
-from threading import Lock, local
-from SimpleHTTPServer import SimpleHTTPRequestHandler
 
 # Compiler {{{
 
@@ -275,7 +279,7 @@ def serve(resources={}, port=8000, host='0.0.0.0'):
     Handler.special_resources = resources
     Handler.compiler = compile_coffeescript
     httpd = Server((host, port), Handler)
-    print('serving %s at %s:%d with PID=%d'%(os.getcwdu(), host, port, os.getpid()))
+    print('serving %s at %s:%d with PID=%d'%(os.getcwd(), host, port, os.getpid()))
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

@@ -1,35 +1,36 @@
 '''
 Basic support for writing LIT files.
 '''
-from __future__ import with_statement
+import copy
+import functools
+import random
+import re
+import time
+import uuid
+from io import StringIO
+from itertools import chain, count
+from struct import pack
+from urllib.parse import unquote as urlunquote
+from urllib.parse import urldefrag
+
+import calibre
+import calibre.ebooks.lit.maps as maps
+import calibre.ebooks.lit.mssha1 as mssha1
+from calibre import plugins
+from calibre.ebooks.lit.lzx import Compressor
+from calibre.ebooks.lit.reader import DirectoryEntry
+from calibre.ebooks.oeb.base import (
+	CSS_MIME, OEB_DOCS, OEB_STYLES, OPF_MIME,
+	XHTML_MIME, XML, XML_NS, prefixname, urlnormalize
+)
+from calibre.ebooks.oeb.stylizer import Stylizer
+from lxml import etree
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2008, Marshall T. Vandegrift <llasram@gmail.com>'
 
-from cStringIO import StringIO
-from struct import pack
-from itertools import izip, count, chain
-import time
-import random
-import re
-import copy
-import uuid
-import functools
-from urlparse import urldefrag
-from urllib import unquote as urlunquote
-from lxml import etree
-from calibre.ebooks.lit.reader import DirectoryEntry
-import calibre.ebooks.lit.maps as maps
-from calibre.ebooks.oeb.base import OEB_DOCS, XHTML_MIME, OEB_STYLES, \
-    CSS_MIME, OPF_MIME, XML_NS, XML
-from calibre.ebooks.oeb.base import prefixname, \
-    urlnormalize
-from calibre.ebooks.oeb.stylizer import Stylizer
-from calibre.ebooks.lit.lzx import Compressor
-import calibre
-from calibre import plugins
 msdes, msdeserror = plugins['msdes']
-import calibre.ebooks.lit.mssha1 as mssha1
 
 __all__ = ['LitWriter']
 
@@ -47,9 +48,9 @@ ALL_MS_COVER_TYPES = [
 
 def invert_tag_map(tag_map):
     tags, dattrs, tattrs = tag_map
-    tags = dict((tags[i], i) for i in xrange(len(tags)))
-    dattrs = dict((v, k) for k, v in dattrs.items())
-    tattrs = [dict((v, k) for k, v in (map or {}).items()) for map in tattrs]
+    tags = dict((tags[i], i) for i in range(len(tags)))
+    dattrs = dict((v, k) for k, v in list(dattrs.items()))
+    tattrs = [dict((v, k) for k, v in list((map or {}).items())) for map in tattrs]
     for map in tattrs:
         if map:
             map.update(dattrs)
@@ -131,11 +132,11 @@ def decint(value):
 
 
 def randbytes(n):
-    return ''.join(chr(random.randint(0, 255)) for x in xrange(n))
+    return ''.join(chr(random.randint(0, 255)) for x in range(n))
 
 
 def warn(x):
-    print x
+    print(x)
 
 
 class ReBinary(object):
@@ -158,12 +159,12 @@ class ReBinary(object):
 
     def write(self, *values):
         for value in values:
-            if isinstance(value, (int, long)):
+            if isinstance(value, int):
                 try:
-                    value = unichr(value)
+                    value = chr(value)
                 except OverflowError:
                     self.logger.warn('Unicode overflow for integer:', value)
-                    value = u'?'
+                    value = '?'
             self.buf.write(value.encode('utf-8'))
 
     def is_block(self, style):
@@ -171,13 +172,13 @@ class ReBinary(object):
 
     def tree_to_binary(self, elem, nsrmap=NSRMAP, parents=[],
                        inhead=False, preserve=False):
-        if not isinstance(elem.tag, basestring):
+        if not isinstance(elem.tag, str):
             # Don't emit any comments or raw entities
             return
         nsrmap = copy.copy(nsrmap)
         attrib = dict(elem.attrib)
         style = self.stylizer.style(elem) if self.stylizer else None
-        for key, value in elem.nsmap.items():
+        for key, value in list(elem.nsmap.items()):
             if value not in nsrmap or nsrmap[value] != key:
                 xmlns = ('xmlns:' + key) if key else 'xmlns'
                 attrib[xmlns] = value
@@ -206,16 +207,16 @@ class ReBinary(object):
         if style and last_break != tag_offset \
            and style['page-break-before'] in PAGE_BREAKS:
             self.page_breaks.append((tag_offset, list(parents)))
-        for attr, value in attrib.items():
+        for attr, value in list(attrib.items()):
             attr = prefixname(attr, nsrmap)
             if attr in ('href', 'src'):
                 value = urlnormalize(value)
                 path, frag = urldefrag(value)
                 if self.item:
                     path = self.item.abshref(path)
-                prefix = unichr(3)
+                prefix = chr(3)
                 if path in self.manifest.hrefs:
-                    prefix = unichr(2)
+                    prefix = chr(2)
                     value = self.manifest.hrefs[path].id
                     if frag:
                         value = '#'.join((value, frag))
@@ -278,9 +279,9 @@ class ReBinary(object):
             self.logger.warn("More than six anchors in file %r. "
                 "Some links may not work properly." % self.item.href)
         data = StringIO()
-        data.write(unichr(len(self.anchors)).encode('utf-8'))
+        data.write(chr(len(self.anchors)).encode('utf-8'))
         for anchor, offset in self.anchors:
-            data.write(unichr(len(anchor)).encode('utf-8'))
+            data.write(chr(len(anchor)).encode('utf-8'))
             data.write(anchor)
             data.write(pack('<I', offset))
         return data.getvalue()
@@ -310,7 +311,7 @@ class LitWriter(object):
         oeb.metadata.add('calibre-version', calibre.__version__)
         cover = None
         if oeb.metadata.cover:
-            id = unicode(oeb.metadata.cover[0])
+            id = str(oeb.metadata.cover[0])
             cover = oeb.manifest.ids[id]
             for type, title in ALL_MS_COVER_TYPES:
                 if type not in oeb.guide:
@@ -328,7 +329,7 @@ class LitWriter(object):
         self._oeb = oeb
         self._logger = oeb.logger
         self._stream = stream
-        self._sections = [StringIO() for i in xrange(4)]
+        self._sections = [StringIO() for i in range(4)]
         self._directory = []
         self._meta = None
         self._litize_oeb()
@@ -359,7 +360,7 @@ class LitWriter(object):
             1, PRIMARY_SIZE, 5, SECONDARY_SIZE))
         self._write(packguid(LITFILE_GUID))
         offset = self._tell()
-        pieces = list(xrange(offset, offset + (PIECE_SIZE * 5), PIECE_SIZE))
+        pieces = list(range(offset, offset + (PIECE_SIZE * 5), PIECE_SIZE))
         self._write((5 * PIECE_SIZE) * '\0')
         aoli1 = len(dchunks) if ichunk else ULL_NEG1
         last = len(dchunks) - 1
@@ -400,7 +401,7 @@ class LitWriter(object):
             1, CCHUNK_SIZE, 0x20000, ULL_NEG1, 1))
         cchunk = StringIO()
         last = 0
-        for i, dcount in izip(count(), dcounts):
+        for i, dcount in zip(count(), dcounts):
             cchunk.write(decint(last))
             cchunk.write(decint(dcount))
             cchunk.write(decint(i))
@@ -465,7 +466,7 @@ class LitWriter(object):
 
     def _build_data(self):
         self._add_folder('/data')
-        for item in self._oeb.manifest.values():
+        for item in list(self._oeb.manifest.values()):
             if item.media_type not in LIT_MIMES:
                 self._logger.warn("File %r of unknown media-type %r "
                     "excluded from output." % (item.href, item.media_type))
@@ -482,7 +483,7 @@ class LitWriter(object):
                 data = rebin.content
                 name = name + '/content'
                 secnum = 1
-            elif isinstance(data, unicode):
+            elif isinstance(data, str):
                 data = data.encode('utf-8')
             elif hasattr(data, 'cssText'):
                 data = str(item)
@@ -492,7 +493,7 @@ class LitWriter(object):
     def _build_manifest(self):
         states = ['linear', 'nonlinear', 'css', 'images']
         manifest = dict((state, []) for state in states)
-        for item in self._oeb.manifest.values():
+        for item in list(self._oeb.manifest.values()):
             if item.spine_position is not None:
                 key = 'linear' if item.linear else 'nonlinear'
                 manifest[key].append(item)
@@ -518,9 +519,9 @@ class LitWriter(object):
                 item.offset = offset \
                     if state in ('linear', 'nonlinear') else 0
                 data.write(pack('<I', item.offset))
-                entry = [unichr(len(id)), unicode(id),
-                         unichr(len(href)), unicode(href),
-                         unichr(len(media_type)), unicode(media_type)]
+                entry = [chr(len(id)), str(id),
+                         chr(len(href)), str(href),
+                         chr(len(media_type)), str(media_type)]
                 for value in entry:
                     data.write(value.encode('utf-8'))
                 data.write('\0')
@@ -574,7 +575,7 @@ class LitWriter(object):
         self._add_file('/meta', meta)
 
     def _build_drm_storage(self):
-        drmsource = u'Free as in freedom\0'.encode('utf-16-le')
+        drmsource = 'Free as in freedom\0'.encode('utf-16-le')
         self._add_file('/DRMStorage/DRMSource', drmsource)
         tempkey = self._calculate_deskey([self._meta, drmsource])
         msdes.deskey(tempkey, msdes.EN0)
@@ -658,7 +659,7 @@ class LitWriter(object):
             hash.update(data)
         digest = hash.digest()
         key = [0] * 8
-        for i in xrange(0, len(digest)):
+        for i in range(0, len(digest)):
             key[i % 8] ^= ord(digest[i])
         return ''.join(chr(x) for x in key)
 
@@ -696,7 +697,7 @@ class LitWriter(object):
         ichunk = None
         if len(ddata) > 1:
             ichunk = StringIO()
-        for cid, (content, quickref, dcount, name) in izip(count(), ddata):
+        for cid, (content, quickref, dcount, name) in zip(count(), ddata):
             dchunk = StringIO()
             prev = cid - 1 if cid > 0 else ULL_NEG1
             next = cid + 1 if cid < cidmax else ULL_NEG1

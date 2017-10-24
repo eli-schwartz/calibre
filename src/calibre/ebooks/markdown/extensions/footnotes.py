@@ -13,16 +13,16 @@ License: [BSD](http://www.opensource.org/licenses/bsd-license.php)
 
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from . import Extension
-from ..preprocessors import Preprocessor
-from ..inlinepatterns import Pattern
-from ..treeprocessors import Treeprocessor
-from ..postprocessors import Postprocessor
-from ..util import etree, text_type
-from ..odict import OrderedDict
 import re
+
+from . import Extension
+from ..inlinepatterns import Pattern
+from ..odict import OrderedDict
+from ..postprocessors import Postprocessor
+from ..preprocessors import Preprocessor
+from ..treeprocessors import Treeprocessor
+from ..util import etree, text_type
+
 
 FN_BACKLINK_TEXT = "zz1337820767766393qq"
 NBSP_PLACEHOLDER = "qq3936677670287331zz"
@@ -139,7 +139,7 @@ class FootnoteExtension(Extension):
         etree.SubElement(div, "hr")
         ol = etree.SubElement(div, "ol")
 
-        for id in self.footnotes.keys():
+        for id in list(self.footnotes.keys()):
             li = etree.SubElement(ol, "li")
             li.set("id", self.makeFootnoteId(id))
             self.parser.parseChunk(li, self.footnotes[id])
@@ -267,7 +267,7 @@ class FootnotePattern(Pattern):
 
     def handleMatch(self, m):
         id = m.group(2)
-        if id in self.footnotes.footnotes.keys():
+        if id in list(self.footnotes.footnotes.keys()):
             sup = etree.Element("sup")
             a = etree.SubElement(sup, "a")
             sup.set('id', self.footnotes.makeFootnoteRefId(id))

@@ -5,9 +5,9 @@ __copyright__  = '2008, Kovid Goyal <kovid at kovidgoyal.net>,' \
 
 import os
 
+from calibre.constants import filesystem_encoding
 from calibre.customize.conversion import InputFormatPlugin
 from calibre.ptempfile import TemporaryDirectory
-from calibre.constants import filesystem_encoding
 
 
 class CHMInput(InputFormatPlugin):
@@ -33,7 +33,7 @@ class CHMInput(InputFormatPlugin):
 
         log.debug('Processing CHM...')
         with TemporaryDirectory('_chm2oeb') as tdir:
-            if not isinstance(tdir, unicode):
+            if not isinstance(tdir, str):
                 tdir = tdir.decode(filesystem_encoding)
             html_input = plugin_for_input_format('html')
             for opt in html_input.options:
@@ -106,7 +106,7 @@ class CHMInput(InputFormatPlugin):
 
     def _create_html_root(self, hhcpath, log, encoding):
         from lxml import html
-        from urllib import unquote as _unquote
+        from urllib.parse import unquote as _unquote
         from calibre.ebooks.oeb.base import urlquote
         from calibre.ebooks.chardet import xml_to_unicode
         hhcdata = self._read_file(hhcpath)
@@ -124,7 +124,7 @@ class CHMInput(InputFormatPlugin):
         base = os.path.dirname(os.path.abspath(htmlpath))
 
         def unquote(x):
-            if isinstance(x, unicode):
+            if isinstance(x, str):
                 x = x.encode('utf-8')
             return _unquote(x).decode('utf-8')
 
@@ -183,7 +183,7 @@ class CHMInput(InputFormatPlugin):
             p = node.xpath('ancestor::ul[1]/ancestor::li[1]/object[1]')
             parent = p[0] if p else None
             toc = ancestor_map.get(parent, toc)
-            title = href = u''
+            title = href = ''
             for param in node.xpath('./param'):
                 if match_string(param.attrib['name'], 'name'):
                     title = param.attrib['value']

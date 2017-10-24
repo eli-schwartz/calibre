@@ -1,20 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
-
 import os
-
-from lxml.html.builder import IMG, HR
 
 from calibre.constants import iswindows
 from calibre.ebooks.docx.names import barename
 from calibre.utils.filenames import ascii_filename
-from calibre.utils.img import resize_to_fit, image_to_data
+from calibre.utils.img import image_to_data, resize_to_fit
 from calibre.utils.imghdr import what
+from lxml.html.builder import HR, IMG
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 
 class LinkedImageNotFound(ValueError):
@@ -66,7 +65,7 @@ def get_image_properties(parent, XPath, get):
 
 def get_image_margins(elem):
     ans = {}
-    for w, css in {'L':'left', 'T':'top', 'R':'right', 'B':'bottom'}.iteritems():
+    for w, css in {'L':'left', 'T':'top', 'R':'right', 'B':'bottom'}.items():
         val = elem.get('dist%s' % w, None)
         if val is not None:
             try:
@@ -157,7 +156,7 @@ class Images(object):
         return raw, base
 
     def unique_name(self, base):
-        exists = frozenset(self.used.itervalues())
+        exists = frozenset(iter(self.used.values()))
         c = 1
         name = base
         while name in exists:
@@ -242,7 +241,7 @@ class Images(object):
                 ans = self.pic_to_img(pic, alt, inline, title)
                 if ans is not None:
                     if style:
-                        ans.set('style', '; '.join('%s: %s' % (k, v) for k, v in style.iteritems()))
+                        ans.set('style', '; '.join('%s: %s' % (k, v) for k, v in style.items()))
                     yield ans
 
         # Now process the floats
@@ -253,7 +252,7 @@ class Images(object):
                 ans = self.pic_to_img(pic, alt, anchor, title)
                 if ans is not None:
                     if style:
-                        ans.set('style', '; '.join('%s: %s' % (k, v) for k, v in style.iteritems()))
+                        ans.set('style', '; '.join('%s: %s' % (k, v) for k, v in style.items()))
                     yield ans
 
     def pict_to_html(self, pict, page):
@@ -275,7 +274,7 @@ class Images(object):
                 style['margin-left'] = '0' if align == 'left' else 'auto'
                 style['margin-right'] = 'auto' if align == 'left' else '0'
             if style:
-                hr.set('style', '; '.join(('%s:%s' % (k, v) for k, v in style.iteritems())))
+                hr.set('style', '; '.join(('%s:%s' % (k, v) for k, v in style.items())))
             yield hr
 
         for imagedata in XPath('descendant::v:imagedata[@r:id]')(pict):

@@ -34,5 +34,3 @@ def get_metadata(stream):
                 mi.timestamp = None
                 return mi
     raise ValueError('No ebook found in RAR archive')
-
-

@@ -1,7 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import os.path as op
+import stat
+from datetime import datetime
+from urllib.parse import quote
+
 
 # Copyright 2010 Hardcoded Software (http://www.hardcoded.net)
 
@@ -19,10 +22,6 @@ from __future__ import (unicode_literals, division, absolute_import,
 # For external volumes this implementation will raise an exception if it can't
 # find or create the user's trash directory.
 
-import os, stat
-import os.path as op
-from datetime import datetime
-from urllib import quote
 
 FILES_DIR = 'files'
 INFO_DIR = 'info'
@@ -38,7 +37,7 @@ TOPDIR_FALLBACK = '.Trash-%s'%uid
 
 
 def uniquote(raw):
-    if isinstance(raw, unicode):
+    if isinstance(raw, str):
         raw = raw.encode('utf-8')
     return quote(raw).decode('utf-8')
 

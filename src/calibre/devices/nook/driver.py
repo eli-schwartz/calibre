@@ -8,9 +8,8 @@ __docformat__ = 'restructuredtext en'
 Device driver for Barns and Nobel's Nook
 '''
 
+import io
 import os
-
-import cStringIO
 
 from calibre import fsync
 from calibre.devices.usbms.driver import USBMS
@@ -56,12 +55,12 @@ class NOOK(USBMS):
 
         coverdata = getattr(metadata, 'thumbnail', None)
         if coverdata and coverdata[2]:
-            cover = Image.open(cStringIO.StringIO(coverdata[2]))
+            cover = Image.open(io.StringIO(coverdata[2]))
         else:
             coverdata = lopen(I('library.png'), 'rb').read()
 
             cover = Image.new('RGB', (96, 144), 'black')
-            im = Image.open(cStringIO.StringIO(coverdata))
+            im = Image.open(io.StringIO(coverdata))
             im.thumbnail((96, 144), Image.ANTIALIAS)
 
             x, y = im.size
@@ -71,7 +70,7 @@ class NOOK(USBMS):
             draw.text((1, 15), metadata.get('title', _('Unknown')).encode('ascii', 'ignore'))
             draw.text((1, 115), metadata.get('authors', _('Unknown')).encode('ascii', 'ignore'))
 
-        data = cStringIO.StringIO()
+        data = io.StringIO()
         cover.save(data, 'JPEG')
         coverdata = data.getvalue()
 

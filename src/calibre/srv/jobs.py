@@ -1,19 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-import os, time
-from itertools import count
-from collections import namedtuple, deque
+import os
+import time
+from collections import deque, namedtuple
 from functools import partial
-from threading import RLock, Thread, Event
-from Queue import Queue, Empty
+from itertools import count
+from queue import Empty, Queue
+from threading import Event, RLock, Thread
+from time import monotonic
 
 from calibre import detect_ncpus, force_unicode
-from time import monotonic
-from calibre.utils.ipc.simple_worker import fork_job, WorkerError
+from calibre.utils.ipc.simple_worker import WorkerError, fork_job
+
 
 StartEvent = namedtuple('StartEvent', 'job_id name module function args kwargs callback data')
 DoneEvent = namedtuple('DoneEvent', 'job_id')
@@ -144,12 +143,12 @@ class JobsManager(object):
     def shutdown(self, timeout=5.0):
         with self.lock:
             self.shutting_down = True
-            for job in self.jobs.itervalues():
+            for job in self.jobs.values():
                 job.abort_event.set()
             self.events.put(False)
 
     def wait_for_shutdown(self, wait_till):
-        for job in self.jobs.itervalues():
+        for job in self.jobs.values():
             delta = wait_till - monotonic()
             if delta > 0:
                 job.join(delta)
@@ -193,7 +192,7 @@ class JobsManager(object):
         with self.lock:
             mb = None
             now = monotonic()
-            for job in self.jobs.itervalues():
+            for job in self.jobs.values():
                 if not job.done and not job.abort_event.is_set():
                     delta = self.max_job_time - (now - job.start_time)
                     if delta <= 0:
@@ -208,7 +207,7 @@ class JobsManager(object):
     def abort_hanging_jobs(self):
         now = monotonic()
         found = False
-        for job in self.jobs.itervalues():
+        for job in self.jobs.values():
             if not job.done and not job.abort_event.is_set():
                 delta = self.max_job_time - (now - job.start_time)
                 if delta <= 0:
@@ -237,7 +236,7 @@ class JobsManager(object):
         with self.lock:
             remove = []
             now = monotonic()
-            for job_id, job in self.finished_jobs.iteritems():
+            for job_id, job in self.finished_jobs.items():
                 if now - job.end_time > 3600:
                     remove.append(job_id)
             for job_id in remove:

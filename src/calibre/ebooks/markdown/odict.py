@@ -1,7 +1,6 @@
-from __future__ import unicode_literals
-from __future__ import absolute_import
-from . import util
 from copy import deepcopy
+
+from . import util
 
 
 class OrderedDict(dict):
@@ -33,7 +32,7 @@ class OrderedDict(dict):
 
     def __deepcopy__(self, memo):
         return self.__class__([(key, deepcopy(value, memo))
-                               for key, value in self.items()])
+                               for key, value in list(self.items())])
 
     def __copy__(self):
         # The Python's default copy implementation will alter the state

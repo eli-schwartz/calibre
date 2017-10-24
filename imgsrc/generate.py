@@ -1,10 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-import os, glob, subprocess, argparse
+import argparse
+import glob
+import os
+import subprocess
+
 
 duplicates = {
     'character-set': ['languages'],
@@ -52,7 +53,7 @@ def render(src, output_files):
     for dest in output_files:
         oname = os.path.basename(dest).rpartition('.')[0]
         size = sizes.get(oname, '128')
-        print('Rendering', oname, 'at size:', size)
+        print(('Rendering', oname, 'at size:', size))
         rsvg(src, size, dest)
 
 

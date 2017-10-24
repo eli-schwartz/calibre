@@ -1,21 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import shutil
+from hashlib import sha1
+from io import BytesIO
+from tempfile import SpooledTemporaryFile, mkdtemp
+from zipfile import ZIP_STORED, ZipFile, ZipInfo
+
+from setup import Command, download_securely
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, shutil
-from io import BytesIO
-from zipfile import ZipFile, ZIP_STORED, ZipInfo
-from hashlib import sha1
-from tempfile import mkdtemp, SpooledTemporaryFile
 is_ci = os.environ.get('CI', '').lower() == 'true'
 
 
-from setup import Command, download_securely
 
 
 class MathJax(Command):
@@ -40,7 +40,7 @@ class MathJax(Command):
             raw = f.read()
         self.h.update(raw)
         zi = ZipInfo(name)
-        zi.external_attr = 0o444 << 16L
+        zi.external_attr = 0o444 << 16
         zf.writestr(zi, raw)
 
     def add_tree(self, zf, base, prefix, ignore=lambda n:False):

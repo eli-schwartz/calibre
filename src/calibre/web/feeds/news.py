@@ -1,4 +1,37 @@
-from __future__ import with_statement
+import io
+import os
+import re
+import sys
+import time
+import traceback
+import urllib.parse
+from collections import defaultdict
+from contextlib import closing, nested
+from functools import partial
+
+from calibre import (
+	__appname__, as_unicode, browser, entity_to_unicode, force_unicode,
+	iswindows, preferred_encoding, random_user_agent, strftime
+)
+from calibre.ebooks.BeautifulSoup import BeautifulSoup, CData, NavigableString, Tag
+from calibre.ebooks.metadata import MetaInformation
+from calibre.ebooks.metadata.opf2 import OPFCreator
+from calibre.ebooks.metadata.toc import TOC
+from calibre.ptempfile import PersistentTemporaryFile
+from calibre.utils.date import now as nowf
+from calibre.utils.icu import numeric_sort_key
+from calibre.utils.img import add_borders_to_image, image_to_data, save_cover_data_to
+from calibre.utils.localization import canonicalize_lang
+from calibre.utils.logging import ThreadSafeWrapper
+from calibre.utils.threadpool import NoResultsPending, ThreadPool, WorkRequest
+from calibre.web import Recipe
+from calibre.web.feeds import Feed, feed_from_xml, feeds_from_index, templates
+from calibre.web.fetch.simple import (
+	AbortArticle, RecursiveFetcher, option_parser as web2disk_option_parser
+)
+from calibre.web.fetch.utils import prepare_masthead_image
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 '''
@@ -7,30 +40,8 @@ Defines various abstract base classes that can be subclassed to create powerful 
 __docformat__ = "restructuredtext en"
 
 
-import os, time, traceback, re, urlparse, sys, cStringIO
-from collections import defaultdict
-from functools import partial
-from contextlib import nested, closing
 
 
-from calibre import (browser, __appname__, iswindows, force_unicode,
-                    strftime, preferred_encoding, as_unicode, random_user_agent)
-from calibre.ebooks.BeautifulSoup import BeautifulSoup, NavigableString, CData, Tag
-from calibre.ebooks.metadata.opf2 import OPFCreator
-from calibre import entity_to_unicode
-from calibre.web import Recipe
-from calibre.ebooks.metadata.toc import TOC
-from calibre.ebooks.metadata import MetaInformation
-from calibre.web.feeds import feed_from_xml, templates, feeds_from_index, Feed
-from calibre.web.fetch.simple import option_parser as web2disk_option_parser, RecursiveFetcher, AbortArticle
-from calibre.web.fetch.utils import prepare_masthead_image
-from calibre.utils.threadpool import WorkRequest, ThreadPool, NoResultsPending
-from calibre.ptempfile import PersistentTemporaryFile
-from calibre.utils.date import now as nowf
-from calibre.utils.icu import numeric_sort_key
-from calibre.utils.img import save_cover_data_to, add_borders_to_image, image_to_data
-from calibre.utils.localization import canonicalize_lang
-from calibre.utils.logging import ThreadSafeWrapper
 
 
 class LoginFailed(ValueError):
@@ -54,7 +65,7 @@ class BasicNewsRecipe(Recipe):
 
     #: A couple of lines that describe the content this recipe downloads.
     #: This will be used primarily in a GUI that presents a list of recipes.
-    description = u''
+    description = ''
 
     #: The author of this recipe
     __author__             = __appname__
@@ -288,7 +299,7 @@ class BasicNewsRecipe(Recipe):
     #: The CSS that is used to style the templates, i.e., the navigation bars and
     #: the Tables of Contents. Rather than overriding this variable, you should
     #: use `extra_css` in your recipe to customize look and feel.
-    template_css = u'''
+    template_css = '''
             .article_date {
                 color: gray; font-family: monospace;
             }
@@ -530,7 +541,7 @@ class BasicNewsRecipe(Recipe):
 
     @property
     def cloned_browser(self):
-        if self.get_browser.im_func is BasicNewsRecipe.get_browser.im_func:
+        if self.get_browser.__func__ is BasicNewsRecipe.get_browser.__func__:
             # We are using the default get_browser, which means no need to
             # clone
             br = BasicNewsRecipe.get_browser(self)
@@ -549,7 +560,7 @@ class BasicNewsRecipe(Recipe):
         returns that or else returns
         `article.link <https://pythonhosted.org/feedparser/reference-entry-link.html>`_.
         '''
-        for key in article.keys():
+        for key in list(article.keys()):
             if key.endswith('_origlink'):
                 url = article[key]
                 if url and (url.startswith('http://') or url.startswith('https://')):
@@ -651,7 +662,7 @@ class BasicNewsRecipe(Recipe):
                         download an article.
         '''
         try:
-            parts = urlparse.urlparse(url)
+            parts = urllib.parse.urlparse(url)
         except Exception:
             self.log.error('Failed to parse url: %r, ignoring' % url)
             return frozenset()
@@ -680,14 +691,14 @@ class BasicNewsRecipe(Recipe):
             _raw = url_or_raw
         if raw:
             return _raw
-        if not isinstance(_raw, unicode) and self.encoding:
+        if not isinstance(_raw, str) and self.encoding:
             if callable(self.encoding):
                 _raw = self.encoding(_raw)
             else:
                 _raw = _raw.decode(self.encoding, 'replace')
         from calibre.ebooks.chardet import strip_encoding_declarations, xml_to_unicode
         from calibre.utils.cleantext import clean_xml_chars
-        if isinstance(_raw, unicode):
+        if isinstance(_raw, str):
             _raw = strip_encoding_declarations(_raw)
         else:
             _raw = xml_to_unicode(_raw, strip_encoding_pats=True, resolve_entities=True)[0]
@@ -723,12 +734,12 @@ class BasicNewsRecipe(Recipe):
             root = frag
         elif frag.tag == 'body':
             root = document_fromstring(
-                u'<html><head><title>%s</title></head></html>' %
+                '<html><head><title>%s</title></head></html>' %
                 extracted_title)
             root.append(frag)
         else:
             root = document_fromstring(
-                u'<html><head><title>%s</title></head><body/></html>' %
+                '<html><head><title>%s</title></head><body/></html>' %
                 extracted_title)
             root.xpath('//body')[0].append(frag)
 
@@ -743,7 +754,7 @@ class BasicNewsRecipe(Recipe):
             heading.text = extracted_title
             body.insert(0, heading)
 
-        raw_html = tostring(root, encoding=unicode)
+        raw_html = tostring(root, encoding=str)
 
         return raw_html
 
@@ -864,11 +875,11 @@ class BasicNewsRecipe(Recipe):
         :param progress_reporter: A Callable that takes two arguments: progress (a number between 0 and 1) and a string message. The message should be optional.
         '''
         self.log = ThreadSafeWrapper(log)
-        if not isinstance(self.title, unicode):
-            self.title = unicode(self.title, 'utf-8', 'replace')
+        if not isinstance(self.title, str):
+            self.title = str(self.title, 'utf-8', 'replace')
 
         self.debug = options.verbose > 1
-        self.output_dir = os.path.abspath(os.getcwdu())
+        self.output_dir = os.path.abspath(os.getcwd())
         self.verbose = options.verbose
         self.test = options.test
         if self.test and not isinstance(self.test, tuple):
@@ -889,9 +900,9 @@ class BasicNewsRecipe(Recipe):
             self.verbose = True
         self.report_progress = progress_reporter
 
-        if isinstance(self.feeds, basestring):
+        if isinstance(self.feeds, str):
             self.feeds = eval(self.feeds)
-            if isinstance(self.feeds, basestring):
+            if isinstance(self.feeds, str):
                 self.feeds = [self.feeds]
 
         if self.needs_subscription and (
@@ -960,7 +971,7 @@ class BasicNewsRecipe(Recipe):
             head = soup.find('body')
         if not head:
             head = soup.find(True)
-        style = BeautifulSoup(u'<style type="text/css" title="override_css">%s</style>'%(
+        style = BeautifulSoup('<style type="text/css" title="override_css">%s</style>'%(
             self.template_css +'\n\n'+(self.get_extra_css() or ''))).find('style')
         head.insert(len(head.contents), style)
         if first_fetch and job_info:
@@ -1067,10 +1078,10 @@ class BasicNewsRecipe(Recipe):
         src = force_unicode(src, 'utf-8')
         pos = cls.summary_length
         fuzz = 50
-        si = src.find(u';', pos)
+        si = src.find(';', pos)
         if si > 0 and si-pos > fuzz:
             si = -1
-        gi = src.find(u'>', pos)
+        gi = src.find('>', pos)
         if gi > 0 and gi-pos > fuzz:
             gi = -1
         npos = max(si, gi)
@@ -1080,7 +1091,7 @@ class BasicNewsRecipe(Recipe):
         if len(ans) < len(src):
             from calibre.utils.cleantext import clean_xml_chars
             # Truncating the string could cause a dangling UTF-16 half-surrogate, which will cause lxml to barf, clean it
-            ans = clean_xml_chars(ans) + u'\u2026'
+            ans = clean_xml_chars(ans) + '\\u2026'
         return ans
 
     def feed2index(self, f, feeds):
@@ -1093,7 +1104,7 @@ class BasicNewsRecipe(Recipe):
             if feed.image_url in self.image_map:
                 feed.image_url = self.image_map[feed.image_url]
             else:
-                bn = urlparse.urlsplit(feed.image_url).path
+                bn = urllib.parse.urlsplit(feed.image_url).path
                 if bn:
                     bn = bn.rpartition('/')[-1]
                     if bn:
@@ -1119,7 +1130,7 @@ class BasicNewsRecipe(Recipe):
 
     def _fetch_article(self, url, dir_, f, a, num_of_feeds):
         br = self.browser
-        if self.get_browser.im_func is BasicNewsRecipe.get_browser.im_func:
+        if self.get_browser.__func__ is BasicNewsRecipe.get_browser.__func__:
             # We are using the default get_browser, which means no need to
             # clone
             br = BasicNewsRecipe.get_browser(self)
@@ -1306,7 +1317,7 @@ class BasicNewsRecipe(Recipe):
             ext = cu.split('/')[-1].rpartition('.')[-1].lower().strip()
             if ext == 'pdf':
                 from calibre.ebooks.metadata.pdf import get_metadata
-                stream = cStringIO.StringIO(cdata)
+                stream = io.StringIO(cdata)
                 cdata = None
                 mi = get_metadata(stream)
                 if mi.cover_data and mi.cover_data[1]:
@@ -1389,7 +1400,7 @@ class BasicNewsRecipe(Recipe):
         '''
         try:
             from calibre.ebooks.covers import create_cover
-            title = self.title if isinstance(self.title, unicode) else \
+            title = self.title if isinstance(self.title, str) else \
                     self.title.decode(preferred_encoding, 'replace')
             date = strftime(self.timefmt).replace('[', '').replace(']', '')
             img_data = create_cover(title, [date])
@@ -1435,7 +1446,7 @@ class BasicNewsRecipe(Recipe):
                     article_titles.append(force_unicode(a.title, 'utf-8'))
 
         desc = self.description
-        if not isinstance(desc, unicode):
+        if not isinstance(desc, str):
             desc = desc.decode('utf-8', 'replace')
         mi.comments = (_('Articles in this issue:') + '\n\n' +
                 '\n\n'.join(article_titles)) + '\n\n' + desc
@@ -1452,7 +1463,7 @@ class BasicNewsRecipe(Recipe):
         mp = getattr(self, 'masthead_path', None)
         if mp is not None and os.access(mp, os.R_OK):
             from calibre.ebooks.metadata.opf2 import Guide
-            ref = Guide.Reference(os.path.basename(self.masthead_path), os.getcwdu())
+            ref = Guide.Reference(os.path.basename(self.masthead_path), os.getcwd())
             ref.type = 'masthead'
             ref.title = 'Masthead Image'
             opf.guide.append(ref)
@@ -1537,7 +1548,7 @@ class BasicNewsRecipe(Recipe):
                             elem = BeautifulSoup(templ.render(doctype='xhtml').decode('utf-8')).find('div')
                             body.insert(len(body.contents), elem)
                             with open(last, 'wb') as fi:
-                                fi.write(unicode(soup).encode('utf-8'))
+                                fi.write(str(soup).encode('utf-8'))
         if len(feeds) == 0:
             raise Exception('All feeds are empty, aborting.')
 
@@ -1585,7 +1596,7 @@ class BasicNewsRecipe(Recipe):
         article.sub_pages  = result[1][1:]
         self.jobs_done += 1
         self.report_progress(float(self.jobs_done)/len(self.jobs),
-            _(u'Article downloaded: %s')%force_unicode(article.title))
+            _('Article downloaded: %s')%force_unicode(article.title))
         if result[2]:
             self.partial_failures.append((request.feed.title, article.title, article.url, result[2]))
 
@@ -1613,7 +1624,7 @@ class BasicNewsRecipe(Recipe):
         feeds = self.get_feeds()
         parsed_feeds = []
         for obj in feeds:
-            if isinstance(obj, basestring):
+            if isinstance(obj, str):
                 title, url = None, obj
             else:
                 title, url = obj
@@ -1661,11 +1672,11 @@ class BasicNewsRecipe(Recipe):
         '''
         if tag is None:
             return ''
-        if isinstance(tag, basestring):
+        if isinstance(tag, str):
             return tag
         if callable(getattr(tag, 'xpath', None)) and not hasattr(tag, 'contents'):  # a lxml tag
             from lxml.etree import tostring
-            ans = tostring(tag, method='text', encoding=unicode, with_tail=False)
+            ans = tostring(tag, method='text', encoding=str, with_tail=False)
         else:
             strings = []
             for item in tag.contents:
@@ -1680,14 +1691,14 @@ class BasicNewsRecipe(Recipe):
                             strings.append(item['alt'])
                         except KeyError:
                             pass
-            ans = u''.join(strings)
+            ans = ''.join(strings)
         if normalize_whitespace:
             ans = re.sub(r'\s+', ' ', ans)
         return ans
 
     @classmethod
     def soup(cls, raw):
-        entity_replace = [(re.compile(ur'&(\S+?);'), partial(entity_to_unicode,
+        entity_replace = [(re.compile(r'&(\S+?);'), partial(entity_to_unicode,
                                                            exceptions=[]))]
         nmassage = list(BeautifulSoup.MARKUP_MASSAGE)
         nmassage.extend(entity_replace)
@@ -1809,7 +1820,7 @@ class CalibrePeriodical(BasicNewsRecipe):
                         ' Either your subscription has expired or you have'
                         ' exceeded the maximum allowed downloads for today.'))
             raise
-        f = cStringIO.StringIO(raw)
+        f = io.StringIO(raw)
         from calibre.utils.zipfile import ZipFile
         zf = ZipFile(f)
         zf.extractall()

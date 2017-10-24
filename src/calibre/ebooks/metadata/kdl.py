@@ -1,23 +1,25 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re, urllib, urlparse, socket
+import re
+import socket
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
-from mechanize import URLError
-
-from calibre.ebooks.metadata.book.base import Metadata
 from calibre import browser
 from calibre.ebooks.BeautifulSoup import BeautifulSoup
 from calibre.ebooks.chardet import xml_to_unicode
+from calibre.ebooks.metadata.book.base import Metadata
+from mechanize import URLError
+
 
 URL = \
 "http://ww2.kdl.org/libcat/WhatsNext.asp?AuthorLastName={0}&AuthorFirstName=&SeriesName=&BookTitle={1}&CategoryID=0&cmdSearch=Search&Search=1&grouping="
 
-_ignore_starts = u'\'"'+u''.join(unichr(x) for x in range(0x2018, 0x201e)+[0x2032, 0x2033])
+_ignore_starts = '\'"'+''.join(chr(x) for x in list(range(0x2018, 0x201e))+[0x2032, 0x2033])
 
 
 def get_series(title, authors, timeout=60):
@@ -27,10 +29,10 @@ def get_series(title, authors, timeout=60):
     title = re.sub(r'^(A|The|An)\s+', '', title).strip()
     if not title:
         return mi
-    if isinstance(title, unicode):
+    if isinstance(title, str):
         title = title.encode('utf-8')
 
-    title = urllib.quote_plus(title)
+    title = urllib.parse.quote_plus(title)
 
     author = authors[0].strip()
     if not author:
@@ -62,7 +64,7 @@ def get_series(title, authors, timeout=60):
     if a is None:
         return mi
     href = a['href'].partition('?')[-1]
-    data = urlparse.parse_qs(href)
+    data = urllib.parse.parse_qs(href)
     series = data.get('SeriesName', [])
     if not series:
         return mi
@@ -72,7 +74,7 @@ def get_series(title, authors, timeout=60):
         mi.series = series
     ns = ss.nextSibling
     if ns.contents:
-        raw = unicode(ns.contents[0])
+        raw = str(ns.contents[0])
         raw = raw.partition('.')[0].strip()
         try:
             mi.series_index = int(raw)
@@ -83,5 +85,4 @@ def get_series(title, authors, timeout=60):
 
 if __name__ == '__main__':
     import sys
-    print get_series(sys.argv[-2], [sys.argv[-1]])
-
+    print(get_series(sys.argv[-2], [sys.argv[-1]]))

@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,13 +6,13 @@ __docformat__ = 'restructuredtext en'
 
 import textwrap
 
-from PyQt5.Qt import (QWidget, pyqtSignal, QCheckBox, QAbstractSpinBox,
-    QLineEdit, QComboBox, Qt, QIcon, QDialog, QVBoxLayout,
-    QDialogButtonBox)
-
 from calibre.customize.ui import preferences_plugins
-from calibre.utils.config import ConfigProxy
 from calibre.gui2.complete2 import EditWithComplete
+from calibre.utils.config import ConfigProxy
+from PyQt5.Qt import (
+	QAbstractSpinBox, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+	QIcon, QLineEdit, Qt, QVBoxLayout, QWidget, pyqtSignal
+)
 
 
 class AbortCommit(Exception):
@@ -118,15 +117,15 @@ class Setting(object):
             raise ValueError('Unknown data type %s' % self.gui_obj.__class__)
 
         if isinstance(self.config_obj, ConfigProxy) and \
-                not unicode(self.gui_obj.toolTip()):
+                not str(self.gui_obj.toolTip()):
             h = self.config_obj.help(self.name)
             if h:
                 self.gui_obj.setToolTip(h)
-        tt = unicode(self.gui_obj.toolTip())
+        tt = str(self.gui_obj.toolTip())
         if tt:
-            if not unicode(self.gui_obj.whatsThis()):
+            if not str(self.gui_obj.whatsThis()):
                 self.gui_obj.setWhatsThis(tt)
-            if not unicode(self.gui_obj.statusTip()):
+            if not str(self.gui_obj.statusTip()):
                 self.gui_obj.setStatusTip(tt)
             tt = '\n'.join(textwrap.wrap(tt, 70))
             self.gui_obj.setToolTip(tt)
@@ -143,7 +142,7 @@ class Setting(object):
             else:
                 self.gui_obj.clear()
                 for x in choices:
-                    if isinstance(x, basestring):
+                    if isinstance(x, str):
                         x = (x, x)
                     self.gui_obj.addItem(x[0], (x[1]))
         self.set_gui_val(self.get_config_val(default=False))
@@ -194,17 +193,17 @@ class Setting(object):
         elif self.datatype == 'number':
             val = self.gui_obj.value()
         elif self.datatype == 'string':
-            val = unicode(self.gui_obj.text()).strip()
+            val = str(self.gui_obj.text()).strip()
             if self.empty_string_is_None and not val:
                 val = None
         elif self.datatype == 'choice':
             if isinstance(self.gui_obj, EditWithComplete):
-                val = unicode(self.gui_obj.text())
+                val = str(self.gui_obj.text())
             else:
                 idx = self.gui_obj.currentIndex()
                 if idx < 0:
                     idx = 0
-                val = unicode(self.gui_obj.itemData(idx) or '')
+                val = str(self.gui_obj.itemData(idx) or '')
         return val
 
 
@@ -213,11 +212,11 @@ class CommaSeparatedList(Setting):
     def set_gui_val(self, val):
         x = ''
         if val:
-            x = u', '.join(val)
+            x = ', '.join(val)
         self.gui_obj.setText(x)
 
     def get_gui_val(self):
-        val = unicode(self.gui_obj.text()).strip()
+        val = str(self.gui_obj.text()).strip()
         ans = []
         if val:
             ans = [x.strip() for x in val.split(',')]
@@ -279,19 +278,19 @@ class ConfigWidgetBase(QWidget, ConfigWidgetInterface):
         return setting
 
     def initialize(self):
-        for setting in self.settings.values():
+        for setting in list(self.settings.values()):
             setting.initialize()
 
     def commit(self, *args):
         restart_required = False
-        for setting in self.settings.values():
+        for setting in list(self.settings.values()):
             rr = setting.commit()
             if rr:
                 restart_required = True
         return restart_required
 
     def restore_defaults(self, *args):
-        for setting in self.settings.values():
+        for setting in list(self.settings.values()):
             setting.restore_defaults()
 
 

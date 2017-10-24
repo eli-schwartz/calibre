@@ -1,17 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import traceback, errno, os, time, shutil
-from collections import namedtuple, defaultdict
+import errno
+import os
+import shutil
+import time
+import traceback
+from collections import defaultdict, namedtuple
+from queue import Empty
 from tempfile import SpooledTemporaryFile
-from Queue import Empty
-
-from PyQt5.Qt import QObject, Qt, pyqtSignal
 
 from calibre import prints
 from calibre.constants import DEBUG
@@ -19,12 +14,22 @@ from calibre.customize.ui import can_set_metadata
 from calibre.db.errors import NoSuchFormat
 from calibre.ebooks.metadata import authors_to_string
 from calibre.ebooks.metadata.opf2 import metadata_to_opf
-from calibre.ptempfile import PersistentTemporaryDirectory
-from calibre.gui2 import error_dialog, warning_dialog, gprefs, open_local_file
+from calibre.gui2 import error_dialog, gprefs, open_local_file, warning_dialog
 from calibre.gui2.dialogs.progress import ProgressDialog
+from calibre.library.save_to_disk import (
+	find_plugboard, get_path_components, plugboard_save_to_disk_value, sanitize_args
+)
+from calibre.ptempfile import PersistentTemporaryDirectory
 from calibre.utils.formatter_functions import load_user_template_functions
-from calibre.utils.ipc.pool import Pool, Failure
-from calibre.library.save_to_disk import sanitize_args, get_path_components, find_plugboard, plugboard_save_to_disk_value
+from calibre.utils.ipc.pool import Failure, Pool
+from PyQt5.Qt import QObject, Qt, pyqtSignal
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 BookId = namedtuple('BookId', 'title authors')
 
@@ -32,11 +37,11 @@ BookId = namedtuple('BookId', 'title authors')
 def ensure_unique_components(data):  # {{{
     cmap = defaultdict(set)
     bid_map = {}
-    for book_id, (mi, components, fmts) in data.iteritems():
+    for book_id, (mi, components, fmts) in data.items():
         cmap[tuple(components)].add(book_id)
         bid_map[book_id] = components
 
-    for book_ids in cmap.itervalues():
+    for book_ids in cmap.values():
         if len(book_ids) > 1:
             for i, book_id in enumerate(sorted(book_ids)[1:]):
                 suffix = ' (%d)' % (i + 1)
@@ -150,7 +155,7 @@ class Saver(QObject):
         self.pd.max = len(self.collected_data)
         self.pd.value = 0
         if self.opts.update_metadata:
-            all_fmts = {fmt for data in self.collected_data.itervalues() for fmt in data[2]}
+            all_fmts = {fmt for data in self.collected_data.values() for fmt in data[2]}
             plugboards_cache = {fmt:find_plugboard(plugboard_save_to_disk_value, fmt, self.plugboards) for fmt in all_fmts}
             self.pool = Pool(name='SaveToDisk') if self.pool is None else self.pool
             try:
@@ -158,7 +163,7 @@ class Saver(QObject):
             except Failure as err:
                 error_dialog(self.pd, _('Critical failure'), _(
                     'Could not save books to disk, click "Show details" for more information'),
-                    det_msg=unicode(err.failure_message) + '\n' + unicode(err.details), show=True)
+                    det_msg=str(err.failure_message) + '\n' + str(err.details), show=True)
                 self.pd.canceled = True
         self.do_one_signal.emit()
 
@@ -272,7 +277,7 @@ class Saver(QObject):
                 except Failure as err:
                     error_dialog(self.pd, _('Critical failure'), _(
                         'Could not save books to disk, click "Show details" for more information'),
-                        det_msg=unicode(err.failure_message) + '\n' + unicode(err.details), show=True)
+                        det_msg=str(err.failure_message) + '\n' + str(err.details), show=True)
                     self.pd.canceled = True
             else:
                 self.pd.value += 1
@@ -306,7 +311,7 @@ class Saver(QObject):
         except Failure as err:
             error_dialog(self.pd, _('Critical failure'), _(
                 'Could not save books to disk, click "Show details" for more information'),
-                det_msg=unicode(err.failure_message) + '\n' + unicode(err.details), show=True)
+                det_msg=str(err.failure_message) + '\n' + str(err.details), show=True)
             self.pd.canceled = True
         except RuntimeError:
             pass  # tasks not completed
@@ -332,7 +337,7 @@ class Saver(QObject):
         def indent(text):
             return '\xa0\xa0\xa0\xa0' + '\n\xa0\xa0\xa0\xa0'.join(text.splitlines())
 
-        for book_id, errors in self.errors.iteritems():
+        for book_id, errors in self.errors.items():
             types = {t for t, data in errors}
             title, authors = self.book_id_data(book_id).title, authors_to_string(self.book_id_data(book_id).authors[:1])
             if report:
@@ -360,7 +365,7 @@ class Saver(QObject):
     def report(self):
         if not self.errors:
             return
-        err_types = {e[0] for errors in self.errors.itervalues() for e in errors}
+        err_types = {e[0] for errors in self.errors.values() for e in errors}
         if err_types == {'metadata'}:
             msg = _('Failed to update metadata in some books, click "Show details" for more information')
             d = warning_dialog

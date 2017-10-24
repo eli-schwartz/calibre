@@ -1,22 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+from functools import partial
+
+from calibre.gui2 import error_dialog
+from calibre.utils.config import XMLConfig
+from calibre.utils.icu import sort_key
+from PyQt5.Qt import (
+	QAbstractListModel, QApplication, QFont, QFrame, QHBoxLayout, QIcon, QKeyEvent,
+	QKeySequence, QLabel, QListView, QPushButton, QRadioButton, QRectF, QSize, QStyle,
+	QStyledItemDelegate, Qt, QTextDocument, QToolButton, QVBoxLayout, QWidget
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from functools import partial
 
-from PyQt5.Qt import (
-    QAbstractListModel, Qt, QKeySequence, QListView, QVBoxLayout, QLabel,
-    QHBoxLayout, QWidget, QApplication, QStyledItemDelegate, QStyle, QIcon,
-    QTextDocument, QRectF, QFrame, QSize, QFont, QKeyEvent, QRadioButton, QPushButton, QToolButton
-)
 
-from calibre.gui2 import error_dialog
-from calibre.utils.config import XMLConfig
-from calibre.utils.icu import sort_key
 
 DEFAULTS = Qt.UserRole
 DESCRIPTION = Qt.UserRole + 1
@@ -118,7 +118,7 @@ class Customize(QFrame):
         dup_desc = self.dup_check(sequence, self.key)
         if dup_desc is not None:
             error_dialog(self, _('Already assigned'),
-                    unicode(sequence.toString(QKeySequence.NativeText)) + ' ' +
+                    str(sequence.toString(QKeySequence.NativeText)) + ' ' +
                     _('already assigned to') + ' ' + dup_desc, show=True)
             self.clear_clicked(which=which)
 
@@ -137,7 +137,7 @@ class Delegate(QStyledItemDelegate):
 
     def editing_done(self, editor, hint):
         remove = None
-        for row, w in self.editing_indices.items():
+        for row, w in list(self.editing_indices.items()):
             remove = (row, w.data_model.index(row))
         if remove is not None:
             self.editing_indices.pop(remove[0])
@@ -169,12 +169,12 @@ class Delegate(QStyledItemDelegate):
 
     def setEditorData(self, editor, index):
         defs = index.data(DEFAULTS)
-        defs = _(' or ').join([unicode(x.toString(x.NativeText)) for x in defs])
-        editor.key = unicode(index.data(KEY))
+        defs = _(' or ').join([str(x.toString(x.NativeText)) for x in defs])
+        editor.key = str(index.data(KEY))
         editor.default_shortcuts.setText(_('&Default') + ': %s' % defs)
         editor.default_shortcuts.setChecked(True)
         editor.header.setText('<b>%s: %s</b>'%(_('Customize shortcuts for'),
-            unicode(index.data(DESCRIPTION))))
+            str(index.data(DESCRIPTION))))
         custom = index.data(CUSTOM)
         if custom:
             editor.custom.setChecked(True)
@@ -202,7 +202,7 @@ class Delegate(QStyledItemDelegate):
 
 class Shortcuts(QAbstractListModel):
 
-    TEMPLATE = u'''
+    TEMPLATE = '''
     <p><b>{0}</b><br>
     {2}: <code>{1}</code></p>
     '''
@@ -211,15 +211,15 @@ class Shortcuts(QAbstractListModel):
         QAbstractListModel.__init__(self, parent)
 
         self.descriptions = {}
-        for k, v in shortcuts.items():
+        for k, v in list(shortcuts.items()):
             self.descriptions[k] = v[-1]
         self.keys = {}
-        for k, v in shortcuts.items():
+        for k, v in list(shortcuts.items()):
             self.keys[k] = v[0]
         self.order = list(shortcuts)
         self.order.sort(key=lambda x : sort_key(self.descriptions[x]))
         self.sequences = {}
-        for k, v in self.keys.items():
+        for k, v in list(self.keys.items()):
             self.sequences[k] = [QKeySequence(x) for x in v]
 
         self.custom = XMLConfig(config_file_base_name)
@@ -250,7 +250,7 @@ class Shortcuts(QAbstractListModel):
             return self.descriptions[key]
 
     def get_shortcuts(self, key):
-        return [unicode(x.toString(x.NativeText)) for x in
+        return [str(x.toString(x.NativeText)) for x in
                 self.get_sequences(key)]
 
     def data(self, index, role):
@@ -279,7 +279,7 @@ class Shortcuts(QAbstractListModel):
     def set_data(self, index, custom):
         key = self.order[index.row()]
         if custom:
-            self.custom[key] = [unicode(x.toString(QKeySequence.PortableText)) for x in custom]
+            self.custom[key] = [str(x.toString(QKeySequence.PortableText)) for x in custom]
         elif key in self.custom:
             del self.custom[key]
 

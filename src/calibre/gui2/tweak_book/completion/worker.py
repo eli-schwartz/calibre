@@ -1,21 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import cPickle, os, sys
-from threading import Thread, Event, RLock
-from Queue import Queue
-from contextlib import closing
+import pickle
+import os
+import sys
 from collections import namedtuple
+from contextlib import closing
+from queue import Queue
+from threading import Event, RLock, Thread
 
 from calibre.constants import iswindows
 from calibre.gui2.tweak_book.completion.basic import Request
 from calibre.gui2.tweak_book.completion.utils import DataError
 from calibre.utils.ipc import eintr_retry_call
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
 
 COMPLETION_REQUEST = 'completion request'
 CLEAR_REQUEST = 'clear request'
@@ -46,7 +47,7 @@ class CompletionWorker(Thread):
             'from {0} import run_main, {1}; run_main({1})'.format(self.__class__.__module__, self.worker_entry_point))
         auth_key = os.urandom(32)
         address, self.listener = create_listener(auth_key)
-        eintr_retry_call(p.stdin.write, cPickle.dumps((address, auth_key), -1))
+        eintr_retry_call(p.stdin.write, pickle.dumps((address, auth_key), -1))
         p.stdin.flush(), p.stdin.close()
         self.control_conn = eintr_retry_call(self.listener.accept)
         self.data_conn = eintr_retry_call(self.listener.accept)
@@ -172,7 +173,7 @@ def completion_worker():
 
 def run_main(func):
     from multiprocessing.connection import Client
-    address, key = cPickle.loads(eintr_retry_call(sys.stdin.read))
+    address, key = pickle.loads(eintr_retry_call(sys.stdin.read))
     with closing(Client(address, authkey=key)) as control_conn, closing(Client(address, authkey=key)) as data_conn:
         func(control_conn, data_conn)
 
@@ -213,5 +214,5 @@ def test():
     w = CompletionWorker(worker_entry_point='test_main')
     w.wait_for_connection()
     w.send('Hello World!')
-    print (w.recv())
+    print((w.recv()))
     w.shutdown(), w.join()

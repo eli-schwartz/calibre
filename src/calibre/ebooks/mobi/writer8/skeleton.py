@@ -1,22 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__   = 'GPL v3'
-__copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
-__docformat__ = 'restructuredtext en'
-
 import re
 from collections import namedtuple
 from functools import partial
 from xml.sax.saxutils import escape
 
-from lxml import etree
-
-from calibre.ebooks.oeb.base import XHTML_NS, extract
 from calibre.constants import ispy3
 from calibre.ebooks.mobi.utils import to_base
+from calibre.ebooks.oeb.base import XHTML_NS, extract
+from lxml import etree
+
+
+__license__   = 'GPL v3'
+__copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
+__docformat__ = 'restructuredtext en'
+
+
+
 
 CHUNK_SIZE = 8192
 
@@ -59,7 +58,7 @@ def node_from_path(root, path):
         parent = parent[idx]
     return parent
 
-mychr = chr if ispy3 else unichr
+mychr = chr if ispy3 else chr
 
 
 def tostring(raw, **kwargs):
@@ -71,7 +70,7 @@ def tostring(raw, **kwargs):
 
     xml_declaration = kwargs.pop('xml_declaration', False)
     encoding = kwargs.pop('encoding', 'UTF-8')
-    kwargs['encoding'] = unicode
+    kwargs['encoding'] = str
     kwargs['xml_declaration'] = False
     ans = etree.tostring(raw, **kwargs)
     if xml_declaration:
@@ -212,7 +211,7 @@ class Chunker(object):
 
     def remove_namespaces(self, root):
         lang = None
-        for attr, val in root.attrib.iteritems():
+        for attr, val in root.attrib.items():
             if attr.rpartition('}')[-1] == 'lang':
                 lang = val
 
@@ -244,11 +243,11 @@ class Chunker(object):
                 tn = tag.tag
                 if tn is not None:
                     tn = tn.rpartition('}')[-1]
-                attrib = {k.rpartition('}')[-1]:v for k, v in tag.attrib.iteritems()}
+                attrib = {k.rpartition('}')[-1]:v for k, v in tag.attrib.items()}
                 try:
                     elem = nroot.makeelement(tn, attrib=attrib)
                 except ValueError:
-                    attrib = {k:v for k, v in attrib.iteritems() if ':' not in k}
+                    attrib = {k:v for k, v in attrib.items() if ':' not in k}
                     elem = nroot.makeelement(tn, attrib=attrib)
                 elem.text = tag.text
             elem.tail = tag.tail
@@ -398,7 +397,7 @@ class Chunker(object):
             return bytes(':off:'.join((pos, fid)))
 
         placeholder_map = {bytes(k):to_placeholder(v) for k, v in
-                self.placeholder_map.iteritems()}
+                self.placeholder_map.items()}
 
         # Now update the links
         def sub(match):
@@ -442,5 +441,3 @@ class Chunker(object):
                     'tool on the orig and rebuilt directories')
         else:
             self.log('Skeleton HTML before and after is identical.')
-
-

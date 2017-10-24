@@ -1,12 +1,4 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__   = 'GPL v3'
-__copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
-__docformat__ = 'restructuredtext en'
-
 import os
 
 from calibre.devices.interface import BookList as BL
@@ -14,6 +6,13 @@ from calibre.ebooks.metadata import title_sort
 from calibre.ebooks.metadata.book.base import Metadata
 from calibre.ebooks.metadata.book.json_codec import JsonCodec
 from calibre.utils.date import utcnow
+
+
+__license__   = 'GPL v3'
+__copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
+__docformat__ = 'restructuredtext en'
+
+
 
 
 class BookList(BL):
@@ -75,4 +74,3 @@ class Book(Metadata):
 
 class JSONCodec(JsonCodec):
     pass
-

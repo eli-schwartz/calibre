@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -6,25 +5,25 @@ __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
 import os
-from functools import partial
 from collections import defaultdict
-
-from PyQt5.Qt import QPixmap, QTimer
+from functools import partial
 
 from calibre import as_unicode
-from calibre.gui2 import (error_dialog, choose_files, choose_dir,
-        warning_dialog, info_dialog, gprefs)
+from calibre.ebooks import BOOK_EXTENSIONS
+from calibre.ebooks.metadata import MetaInformation
+from calibre.gui2 import (
+	choose_dir, choose_files, error_dialog, gprefs,
+	info_dialog, question_dialog, warning_dialog
+)
+from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.dialogs.add_empty_book import AddEmptyBookDialog
 from calibre.gui2.dialogs.confirm_delete import confirm
 from calibre.gui2.dialogs.progress import ProgressDialog
-from calibre.ebooks import BOOK_EXTENSIONS
+from calibre.ptempfile import PersistentTemporaryFile
 from calibre.utils.config_base import tweaks
 from calibre.utils.filenames import ascii_filename
 from calibre.utils.icu import sort_key
-from calibre.gui2.actions import InterfaceAction
-from calibre.gui2 import question_dialog
-from calibre.ebooks.metadata import MetaInformation
-from calibre.ptempfile import PersistentTemporaryFile
+from PyQt5.Qt import QPixmap, QTimer
 
 
 def get_filters():
@@ -140,7 +139,7 @@ class AddAction(InterfaceAction):
         fmt_map = {os.path.splitext(fpath)[1][1:].upper():fpath for fpath in books}
 
         for id_ in ids:
-            for fmt, fpath in fmt_map.iteritems():
+            for fmt, fpath in fmt_map.items():
                 if fmt:
                     db.add_format_with_hooks(id_, fmt, fpath, index_is_id=True,
                         notify=True)
@@ -263,7 +262,7 @@ class AddAction(InterfaceAction):
                     book_id = db.id(index.row())
                     orig_fmts = tuple(db.new_api.format(book_id, fmt, as_path=True) for fmt in db.new_api.formats(book_id))
 
-            for x in xrange(num):
+            for x in range(num):
                 if dlg.duplicate_current_book:
                     mi = origmi
                 else:
@@ -389,7 +388,7 @@ class AddAction(InterfaceAction):
             self.gui.refresh_cover_browser()
 
     def __add_filesystem_book(self, paths, allow_device=True):
-        if isinstance(paths, basestring):
+        if isinstance(paths, str):
             paths = [paths]
         books = [path for path in map(os.path.abspath, paths) if os.access(path,
             os.R_OK)]
@@ -544,7 +543,7 @@ class AddAction(InterfaceAction):
             self.gui.device_job_exception(job)
             return
         paths = job.result
-        ok_paths = [x for x in paths if isinstance(x, basestring)]
+        ok_paths = [x for x in paths if isinstance(x, str)]
         failed_paths = [x for x in paths if isinstance(x, tuple)]
         if failed_paths:
             if not ok_paths:

@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,21 +6,21 @@ __docformat__ = 'restructuredtext en'
 
 import importlib
 
-from PyQt5.Qt import (
-    QIcon, Qt, QStringListModel, QListView, QSizePolicy, QHBoxLayout, QSize,
-    QStackedWidget, pyqtSignal)
-
-from calibre.gui2.preferences import ConfigWidgetBase, test_widget, AbortCommit
+from calibre.customize.ui import input_format_plugins, output_format_plugins
 from calibre.ebooks.conversion.plumber import Plumber
-from calibre.utils.logging import Log
-from calibre.gui2.convert.look_and_feel import LookAndFeelWidget
+from calibre.gui2.convert import config_widget_for_input_plugin
 from calibre.gui2.convert.heuristics import HeuristicsWidget
-from calibre.gui2.convert.search_and_replace import SearchAndReplaceWidget
+from calibre.gui2.convert.look_and_feel import LookAndFeelWidget
 from calibre.gui2.convert.page_setup import PageSetupWidget
+from calibre.gui2.convert.search_and_replace import SearchAndReplaceWidget
 from calibre.gui2.convert.structure_detection import StructureDetectionWidget
 from calibre.gui2.convert.toc import TOCWidget
-from calibre.customize.ui import input_format_plugins, output_format_plugins
-from calibre.gui2.convert import config_widget_for_input_plugin
+from calibre.gui2.preferences import AbortCommit, ConfigWidgetBase, test_widget
+from calibre.utils.logging import Log
+from PyQt5.Qt import (
+	QHBoxLayout, QIcon, QListView, QSize, QSizePolicy,
+	QStackedWidget, QStringListModel, Qt, pyqtSignal
+)
 
 
 class Model(QStringListModel):

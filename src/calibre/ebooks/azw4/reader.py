@@ -44,7 +44,7 @@ class Reader(FormatReader):
         if mo:
             data = mo.group()
 
-        pdf_n = os.path.join(os.getcwdu(), 'tmp.pdf')
+        pdf_n = os.path.join(os.getcwd(), 'tmp.pdf')
         with open(pdf_n, 'wb') as pdf:
             pdf.write(data)
         from calibre.customize.ui import plugin_for_input_format

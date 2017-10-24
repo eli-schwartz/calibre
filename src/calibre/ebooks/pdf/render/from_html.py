@@ -1,29 +1,30 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import json
+import os
+from collections import defaultdict
+from math import floor
+
+from calibre import fit_image
+from calibre.constants import iswindows
+from calibre.ebooks.oeb.display.webview import load_html
+from calibre.ebooks.pdf.render.common import (
+	PAPER_SIZES, cicero, cm, current_log, didot, inch, mm, pica
+)
+from calibre.ebooks.pdf.render.engine import PdfDevice
+from calibre.ptempfile import PersistentTemporaryFile
+from PyQt5.Qt import (
+	QEventLoop, QObject, QPainter, QPixmap, QRect, QSize, Qt, QTimer, pyqtSlot
+)
+from PyQt5.QtWebKit import QWebSettings
+from PyQt5.QtWebKitWidgets import QWebPage, QWebView
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import json, os
-from future_builtins import map
-from math import floor
-from collections import defaultdict
 
-from PyQt5.Qt import (
-    QObject, QPainter, Qt, QSize, QTimer, QEventLoop, QPixmap, QRect, pyqtSlot)
-from PyQt5.QtWebKit import QWebSettings
-from PyQt5.QtWebKitWidgets import QWebView, QWebPage
 
-from calibre import fit_image
-from calibre.constants import iswindows
-from calibre.ebooks.oeb.display.webview import load_html
-from calibre.ebooks.pdf.render.common import (inch, cm, mm, pica, cicero,
-                                              didot, PAPER_SIZES, current_log)
-from calibre.ebooks.pdf.render.engine import PdfDevice
-from calibre.ptempfile import PersistentTemporaryFile
 
 
 def get_page_size(opts, for_comic=False):  # {{{
@@ -90,10 +91,10 @@ class Page(QWebPage):  # {{{
         self.longjs_counter = 0
 
     def javaScriptConsoleMessage(self, msg, lineno, msgid):
-        self.log.debug(u'JS:', unicode(msg))
+        self.log.debug('JS:', str(msg))
 
     def javaScriptAlert(self, frame, msg):
-        self.log(unicode(msg))
+        self.log(str(msg))
 
     @pyqtSlot(result=bool)
     def shouldInterruptJavaScript(self):
@@ -127,19 +128,19 @@ def draw_image_page(page_rect, painter, p, preserve_aspect_ratio=True):
 
 class PDFWriter(QObject):
 
-    @pyqtSlot(result=unicode)
+    @pyqtSlot(result=str)
     def title(self):
         return self.doc_title
 
-    @pyqtSlot(result=unicode)
+    @pyqtSlot(result=str)
     def author(self):
         return self.doc_author
 
-    @pyqtSlot(result=unicode)
+    @pyqtSlot(result=str)
     def section(self):
         return self.current_section
 
-    @pyqtSlot(result=unicode)
+    @pyqtSlot(result=str)
     def tl_section(self):
         return self.current_tl_section
 
@@ -180,7 +181,7 @@ class PDFWriter(QObject):
             if val == 0.0:
                 val = getattr(opts, 'margin_' + which)
             return val
-        ml, mr, mt, mb = map(margin, 'left right top bottom'.split())
+        ml, mr, mt, mb = list(map(margin, 'left right top bottom'.split()))
         # We cannot set the side margins in the webview as there is no right
         # margin for the last page (the margins are implemented with
         # -webkit-column-gap)
@@ -210,8 +211,8 @@ class PDFWriter(QObject):
         self.render_queue = items
         self.total_items = len(items)
 
-        mt, mb = map(self.doc.to_px, (mt, mb))
-        self.margin_top, self.margin_bottom = map(lambda x:int(floor(x)), (mt, mb))
+        mt, mb = list(map(self.doc.to_px, (mt, mb)))
+        self.margin_top, self.margin_bottom = [int(floor(x)) for x in (mt, mb)]
 
         self.painter = QPainter(self.doc)
         self.doc.set_metadata(title=pdf_metadata.title,
@@ -274,7 +275,7 @@ class PDFWriter(QObject):
             self.loop.exit(1)
 
     def render_next(self):
-        item = unicode(self.render_queue.pop(0))
+        item = str(self.render_queue.pop(0))
 
         self.logger.debug('Processing %s...' % item)
         self.current_item = item
@@ -304,9 +305,9 @@ class PDFWriter(QObject):
 
     def load_mathjax(self):
         evaljs = self.view.page().mainFrame().evaluateJavaScript
-        mjpath = P(u'viewer/mathjax').replace(os.sep, '/')
+        mjpath = P('viewer/mathjax').replace(os.sep, '/')
         if iswindows:
-            mjpath = u'/' + mjpath
+            mjpath = '/' + mjpath
         if bool(evaljs('''
                     window.mathjax.base = %s;
                     mathjax.check_for_math(); mathjax.math_present
@@ -363,7 +364,7 @@ class PDFWriter(QObject):
 
         if not isinstance(amap, dict):
             amap = {'links':[], 'anchors':{}}  # Some javascript error occurred
-        for val in amap['anchors'].itervalues():
+        for val in amap['anchors'].values():
             if isinstance(val, dict) and 'column' in val:
                 val['column'] = int(val['column'])
         for href, val in amap['links']:

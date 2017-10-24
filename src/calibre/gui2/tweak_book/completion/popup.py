@@ -1,21 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import textwrap
+from math import ceil
+
+from calibre import prepare_string_for_xml, prints
+from calibre.gui2 import error_dialog
+from calibre.gui2.tweak_book.widgets import make_highlighted_text
+from calibre.utils.icu import string_length
+from PyQt5.Qt import (
+	QPainter, QPalette, QSize, QStaticText, Qt, QTextOption, QTimer, QWidget
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import textwrap
-from math import ceil
 
-from PyQt5.Qt import (
-    QWidget, Qt, QStaticText, QTextOption, QSize, QPainter, QTimer, QPalette)
 
-from calibre import prints, prepare_string_for_xml
-from calibre.gui2 import error_dialog
-from calibre.gui2.tweak_book.widgets import make_highlighted_text
-from calibre.utils.icu import string_length
 
 
 class ChoosePopupWidget(QWidget):
@@ -246,7 +246,7 @@ class CompletionPopup(ChoosePopupWidget):
 
     def set_items(self, items, descriptions=None, query=None):
         self.current_query = query
-        ChoosePopupWidget.set_items(self, tuple(items.iteritems()), descriptions=descriptions)
+        ChoosePopupWidget.set_items(self, tuple(items.items()), descriptions=descriptions)
 
     def choose_next_result(self, previous=False):
         ChoosePopupWidget.choose_next_result(self, previous=previous)

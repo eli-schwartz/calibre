@@ -1,6 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+import struct
+from datetime import datetime
+
+from calibre.ebooks.metadata import MetaInformation
+from calibre.ebooks.pdb.header import PdbHeaderReader
+from calibre.ebooks.pdb.plucker.reader import (
+	DATATYPE_METADATA, MIBNUM_TO_NAME, SectionHeader
+)
+
 
 '''
 Read meta information from Plucker pdb files.
@@ -10,13 +18,7 @@ __license__   = 'GPL v3'
 __copyright__ = '2009, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-import struct
-from datetime import datetime
 
-from calibre.ebooks.metadata import MetaInformation
-from calibre.ebooks.pdb.header import PdbHeaderReader
-from calibre.ebooks.pdb.plucker.reader import SectionHeader, DATATYPE_METADATA, \
-    MIBNUM_TO_NAME
 
 
 def get_metadata(stream, extract_cover=True):
@@ -44,7 +46,7 @@ def get_metadata(stream, extract_cover=True):
     title = None
     author = None
     pubdate = 0
-    for i in xrange(record_count):
+    for i in range(record_count):
         try:
             type, length = struct.unpack_from('>HH', section_data, 2 + adv)
         except struct.error:

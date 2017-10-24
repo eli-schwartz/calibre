@@ -1,34 +1,39 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import io
+import re
+import sys
+import weakref
+from io import StringIO
+
+from calibre.ebooks.oeb.polish.utils import (
+	apply_func_to_html_text, apply_func_to_match_groups
+)
+from calibre.gui2 import error_dialog
+from calibre.gui2.complete2 import EditWithComplete
+from calibre.gui2.tweak_book import dictionaries
+from calibre.gui2.tweak_book.editor.text import TextEdit
+from calibre.gui2.tweak_book.widgets import Dialog
+from calibre.utils.config import JSONConfig
+from calibre.utils.icu import capitalize, lower, swapcase, upper
+from calibre.utils.localization import localize_user_manual_link
+from calibre.utils.titlecase import titlecase
+from PyQt5.Qt import (
+	QApplication, QFontMetrics, QHBoxLayout, QIcon, QLabel,
+	QPlainTextEdit, QSize, Qt, QVBoxLayout, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re, io, weakref, sys
-from cStringIO import StringIO
 
-from PyQt5.Qt import (
-    pyqtSignal, QVBoxLayout, QHBoxLayout, QPlainTextEdit, QLabel, QFontMetrics,
-    QSize, Qt, QApplication, QIcon)
 
-from calibre.ebooks.oeb.polish.utils import apply_func_to_match_groups, apply_func_to_html_text
-from calibre.gui2 import error_dialog
-from calibre.gui2.complete2 import EditWithComplete
-from calibre.gui2.tweak_book import dictionaries
-from calibre.gui2.tweak_book.widgets import Dialog
-from calibre.gui2.tweak_book.editor.text import TextEdit
-from calibre.utils.config import JSONConfig
-from calibre.utils.icu import capitalize, upper, lower, swapcase
-from calibre.utils.titlecase import titlecase
-from calibre.utils.localization import localize_user_manual_link
 
 user_functions = JSONConfig('editor-search-replace-functions')
 
 
 def compile_code(src, name='<string>'):
-    if not isinstance(src, unicode):
+    if not isinstance(src, str):
         match = re.search(r'coding[:=]\s*([-\w.]+)', src[:200])
         enc = match.group(1) if match else 'utf-8'
         src = src.decode(enc)
@@ -41,7 +46,7 @@ def compile_code(src, name='<string>'):
     code = compile(src, name, 'exec')
 
     namespace = {}
-    exec code in namespace
+    exec(code, namespace)
     return namespace
 
 
@@ -68,7 +73,7 @@ class Function(object):
         self.boss = get_boss()
         self.data = {}
         self.debug_buf = StringIO()
-        self.functions = {name:func.mod for name, func in functions().iteritems() if func.mod is not None}
+        self.functions = {name:func.mod for name, func in functions().items() if func.mod is not None}
 
     def __hash__(self):
         return hash(self.name)
@@ -137,7 +142,7 @@ class DebugOutput(Dialog):
 
 
 def builtin_functions():
-    for name, obj in globals().iteritems():
+    for name, obj in globals().items():
         if name.startswith('replace_') and callable(obj) and hasattr(obj, 'imports'):
             yield obj
 
@@ -151,7 +156,7 @@ def functions(refresh=False):
         ans = _functions = {}
         for func in builtin_functions():
             ans[func.name] = Function(func.name, func=func)
-        for name, source in user_functions.iteritems():
+        for name, source in user_functions.items():
             try:
                 f = Function(name, source=source)
             except Exception:
@@ -264,19 +269,19 @@ class FunctionEditor(Dialog):
         return self.source_code.toPlainText()
 
     def accept(self):
-        if not self.func_name:
+        if not self.__name__:
             return error_dialog(self, _('Must specify name'), _(
                 'You must specify a name for this function.'), show=True)
         source = self.source
         try:
-            mod = compile_code(source, self.func_name)
+            mod = compile_code(source, self.__name__)
         except Exception as err:
             return error_dialog(self, _('Invalid Python code'), _(
                 'The code you created is not valid Python code, with error: %s') % err, show=True)
         if not callable(mod.get('replace')):
             return error_dialog(self, _('No replace function'), _(
                 'You must create a Python function named replace in your code'), show=True)
-        user_functions[self.func_name] = source
+        user_functions[self.__name__] = source
         functions(refresh=True)
         refresh_boxes()
 

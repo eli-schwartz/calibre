@@ -1,36 +1,38 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import pickle
+import shutil
+
+from calibre.customize.conversion import OptionRecommendation
+from calibre.customize.ui import available_output_formats
+from calibre.ebooks.conversion.config import (
+	GuiRecommendations, delete_specifics, load_specifics, save_specifics
+)
+from calibre.ebooks.conversion.plumber import ARCHIVE_FMTS, Plumber, supported_input_formats
+from calibre.gui2 import gprefs
+from calibre.gui2.convert.debug import DebugWidget
+from calibre.gui2.convert.heuristics import HeuristicsWidget
+from calibre.gui2.convert.look_and_feel import LookAndFeelWidget
+from calibre.gui2.convert.metadata import MetadataWidget
+from calibre.gui2.convert.page_setup import PageSetupWidget
+from calibre.gui2.convert.search_and_replace import SearchAndReplaceWidget
+from calibre.gui2.convert.single_ui import Ui_Dialog
+from calibre.gui2.convert.structure_detection import StructureDetectionWidget
+from calibre.gui2.convert.toc import TOCWidget
+from calibre.utils.config import prefs, tweaks
+from calibre.utils.logging import Log
+from PyQt5.Qt import (
+	QAbstractListModel, QCoreApplication, QDialog, QFont, QModelIndex, QSize, Qt
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import cPickle, shutil
-
-from PyQt5.Qt import QAbstractListModel, Qt, QFont, QModelIndex, QDialog, QCoreApplication, QSize
-
-from calibre.gui2 import gprefs
-from calibre.ebooks.conversion.config import (GuiRecommendations, save_specifics,
-        load_specifics)
-from calibre.gui2.convert.single_ui import Ui_Dialog
-from calibre.gui2.convert.metadata import MetadataWidget
-from calibre.gui2.convert.look_and_feel import LookAndFeelWidget
-from calibre.gui2.convert.heuristics import HeuristicsWidget
-from calibre.gui2.convert.search_and_replace import SearchAndReplaceWidget
-from calibre.gui2.convert.page_setup import PageSetupWidget
-from calibre.gui2.convert.structure_detection import StructureDetectionWidget
-from calibre.gui2.convert.toc import TOCWidget
-from calibre.gui2.convert.debug import DebugWidget
 
 
-from calibre.ebooks.conversion.plumber import (Plumber,
-        supported_input_formats, ARCHIVE_FMTS)
-from calibre.ebooks.conversion.config import delete_specifics
-from calibre.customize.ui import available_output_formats
-from calibre.customize.conversion import OptionRecommendation
-from calibre.utils.config import prefs, tweaks
-from calibre.utils.logging import Log
+
+
 
 
 class NoSupportedInputFormats(Exception):
@@ -187,15 +189,15 @@ class Config(QDialog, Ui_Dialog):
 
     @property
     def input_format(self):
-        return unicode(self.input_formats.currentText()).lower()
+        return str(self.input_formats.currentText()).lower()
 
     @property
     def output_format(self):
-        return unicode(self.output_formats.currentText()).lower()
+        return str(self.output_formats.currentText()).lower()
 
     @property
     def manually_fine_tune_toc(self):
-        for i in xrange(self.stack.count()):
+        for i in range(self.stack.count()):
             w = self.stack.widget(i)
             if hasattr(w, 'manually_fine_tune_toc'):
                 return w.manually_fine_tune_toc.isChecked()
@@ -217,7 +219,7 @@ class Config(QDialog, Ui_Dialog):
                 self.plumber.get_option_help, self.db, self.book_id)
 
         self.mw = widget_factory(MetadataWidget)
-        self.setWindowTitle(_('Convert')+ ' ' + unicode(self.mw.title.text()))
+        self.setWindowTitle(_('Convert')+ ' ' + str(self.mw.title.text()))
         lf = widget_factory(LookAndFeelWidget)
         hw = widget_factory(HeuristicsWidget)
         sr = widget_factory(SearchAndReplaceWidget)
@@ -272,9 +274,9 @@ class Config(QDialog, Ui_Dialog):
             preferred_output_format in output_formats else \
             sort_formats_by_preference(output_formats,
                     [prefs['output_format']])[0]
-        self.input_formats.addItems(list(map(unicode, [x.upper() for x in
+        self.input_formats.addItems(list(map(str, [x.upper() for x in
             input_formats])))
-        self.output_formats.addItems(list(map(unicode, [x.upper() for x in
+        self.output_formats.addItems(list(map(str, [x.upper() for x in
             output_formats])))
         self.input_formats.setCurrentIndex(input_formats.index(input_format))
         self.output_formats.setCurrentIndex(output_formats.index(preferred_output_format))
@@ -315,8 +317,8 @@ class Config(QDialog, Ui_Dialog):
     @property
     def recommendations(self):
         recs = [(k, v, OptionRecommendation.HIGH) for k, v in
-                self._recommendations.items()]
-        return cPickle.dumps(recs, -1)
+                list(self._recommendations.items())]
+        return pickle.dumps(recs, -1)
 
     def show_group_help(self, index):
         widget = self._groups_model.widgets[index.row()]

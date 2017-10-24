@@ -1,15 +1,20 @@
-from __future__ import with_statement
+import atexit
+import os
+import tempfile
+
+from .constants import (
+	__appname__, __version__, filesystem_encoding,
+	get_unicode_windows_env_var, get_windows_temp_path, isosx, iswindows
+)
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 """
 Provides platform independent temporary files that persist even after
 being closed.
 """
-import tempfile, os, atexit
-from future_builtins import map
 
-from .constants import (__version__, __appname__, filesystem_encoding,
-        get_unicode_windows_env_var, iswindows, get_windows_temp_path, isosx)
 
 
 def cleanup(path):
@@ -88,7 +93,7 @@ def osx_cache_dir():
         l = libc.confstr(65538, ctypes.byref(buf), len(buf))  # _CS_DARWIN_USER_CACHE_DIR = 65538
         if 0 < l < len(buf):
             try:
-                q = buf.value.decode('utf-8').rstrip(u'\0')
+                q = buf.value.decode('utf-8').rstrip('\0')
             except ValueError:
                 pass
             if q and os.path.isdir(q) and os.access(q, os.R_OK | os.W_OK | os.X_OK):
@@ -105,9 +110,9 @@ def base_dir():
     if _base_dir is None:
         td = os.environ.get('CALIBRE_WORKER_TEMP_DIR', None)
         if td is not None:
-            import cPickle, binascii
+            import pickle, binascii
             try:
-                td = cPickle.loads(binascii.unhexlify(td))
+                td = pickle.loads(binascii.unhexlify(td))
             except:
                 td = None
         if td and os.path.exists(td):
@@ -116,7 +121,7 @@ def base_dir():
             base = os.environ.get('CALIBRE_TEMP_DIR', None)
             if base is not None and iswindows:
                 base = get_unicode_windows_env_var('CALIBRE_TEMP_DIR')
-            prefix = app_prefix(u'tmp_')
+            prefix = app_prefix('tmp_')
             if base is None:
                 if iswindows:
                     # On windows, if the TMP env var points to a path that
@@ -161,12 +166,12 @@ def force_unicode(x):
 
 
 def _make_file(suffix, prefix, base):
-    suffix, prefix = map(force_unicode, (suffix, prefix))
+    suffix, prefix = list(map(force_unicode, (suffix, prefix)))
     return tempfile.mkstemp(suffix, prefix, dir=base)
 
 
 def _make_dir(suffix, prefix, base):
-    suffix, prefix = map(force_unicode, (suffix, prefix))
+    suffix, prefix = list(map(force_unicode, (suffix, prefix)))
     return tempfile.mkdtemp(suffix, prefix, base)
 
 
@@ -292,4 +297,3 @@ def better_mktemp(*args, **kwargs):
     fd, path = tempfile.mkstemp(*args, **kwargs)
     os.close(fd)
     return path
-

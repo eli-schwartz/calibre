@@ -1,17 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from io import BytesIO
+
+from calibre import as_unicode
+from calibre.ebooks.oeb.polish.check.base import WARN, BaseError
+from calibre.ebooks.oeb.polish.check.parsing import EmptyFile
+from PIL import Image
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from io import BytesIO
-from PIL import Image
 
-from calibre import as_unicode
-from calibre.ebooks.oeb.polish.check.base import BaseError, WARN
-from calibre.ebooks.oeb.polish.check.parsing import EmptyFile
 
 
 class InvalidImage(BaseError):

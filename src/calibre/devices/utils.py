@@ -1,16 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import re
+import time
+from functools import partial
+
+from calibre.devices.errors import DeviceError, FreeSpaceError, WrongDestinationError
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, time, re
-from functools import partial
 
-from calibre.devices.errors import DeviceError, WrongDestinationError, FreeSpaceError
 
 
 def sanity_check(on_card, files, card_prefixes, free_space):
@@ -60,8 +61,8 @@ def build_template_regexp(template):
         template = template.rpartition('/')[2]
         return re.compile(re.sub('{([^}]*)}', f, template) + '([_\d]*$)')
     except:
-        prints(u'Failed to parse template: %r'%template)
-        template = u'{title} - {authors}'
+        prints('Failed to parse template: %r'%template)
+        template = '{title} - {authors}'
         return re.compile(re.sub('{([^}]*)}', f, template) + '([_\d]*$)')
 
 
@@ -91,13 +92,13 @@ def create_upload_path(mdata, fname, template, sanitize,
         except:
             today = time.localtime()
             date = (today[0], today[1], today[2])
-        template = u"{title}_%d-%d-%d" % date
+        template = "{title}_%d-%d-%d" % date
 
     fname = sanitize(fname)
     ext = path_type.splitext(fname)[1]
 
     opts = config().parse()
-    if not isinstance(template, unicode):
+    if not isinstance(template, str):
         template = template.decode('utf-8')
     app_id = str(getattr(mdata, 'application_id', ''))
     id_ = mdata.get('id', fname)

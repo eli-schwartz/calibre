@@ -1,27 +1,28 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import codecs
+import re
+
+from calibre import force_unicode
+from calibre.ebooks.BeautifulSoup import BeautifulSoup
+from calibre.ebooks.chardet import xml_to_unicode
+from calibre.ebooks.metadata import MetaInformation, string_to_authors
+from calibre.ptempfile import TemporaryFile
+from calibre.utils.logging import default_log
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re, codecs
 
-from calibre.ebooks.BeautifulSoup import BeautifulSoup
-from calibre.ebooks.chardet import xml_to_unicode
-from calibre.ebooks.metadata import string_to_authors, MetaInformation
-from calibre.utils.logging import default_log
-from calibre.ptempfile import TemporaryFile
-from calibre import force_unicode
 
 
 def _clean(s):
-    return s.replace(u'\u00a0', u' ')
+    return s.replace('\\u00a0', ' ')
 
 
 def _detag(tag):
-    str = u""
+    str = ""
     if tag is None:
         return str
     for elem in tag:
@@ -76,10 +77,10 @@ def _get_comments(soup):
     pages = (_metadata_from_span(soup, 'pages') or _metadata_from_table(soup, 'pages'))
     try:
         # date span can have copyright symbols in it...
-        date = date.replace(u'\u00a9', '').strip()
+        date = date.replace('\\u00a9', '').strip()
         # and pages often comes as '(\d+ pages)'
         pages = re.search(r'\d+', pages).group(0)
-        return u'Published %s, %s pages.' % (date, pages)
+        return 'Published %s, %s pages.' % (date, pages)
     except:
         pass
     return None
@@ -110,7 +111,7 @@ def _get_cover(soup, rdr):
             except:
                 # Probably invalid width, height aattributes, ignore
                 continue
-        l = r.keys()
+        l = list(r.keys())
         l.sort()
         if l:
             ans = r[l[0]]
@@ -126,7 +127,7 @@ def _get_cover(soup, rdr):
                 ans = None
         if ans is not None:
             from PIL import Image
-            from cStringIO import StringIO
+            from io import StringIO
             buf = StringIO()
             try:
                 Image.open(StringIO(ans)).convert('RGB').save(buf, 'JPEG')

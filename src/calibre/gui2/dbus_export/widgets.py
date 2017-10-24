@@ -1,17 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import sys
+import time
+import weakref
+
+from calibre.constants import isosx, iswindows
+from PyQt5.Qt import QAction, QApplication, QEvent, QMenuBar, QObject, QSystemTrayIcon, Qt
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import time, sys, weakref
 
-from PyQt5.Qt import (
-    QObject, QMenuBar, QAction, QEvent, QSystemTrayIcon, QApplication, Qt)
 
-from calibre.constants import iswindows, isosx
 
 UNITY_WINDOW_REGISTRAR = ('com.canonical.AppMenu.Registrar', '/com/canonical/AppMenu/Registrar', 'com.canonical.AppMenu.Registrar')
 STATUS_NOTIFIER = ("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher", "org.kde.StatusNotifierWatcher")

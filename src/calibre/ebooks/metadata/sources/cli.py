@@ -1,26 +1,25 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__   = 'GPL v3'
-__copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
-__docformat__ = 'restructuredtext en'
-
 import sys
 from io import BytesIO
 from threading import Event
 
 from calibre import prints
 from calibre.customize.ui import all_metadata_plugins
-from calibre.utils.config import OptionParser
-from calibre.utils.img import save_cover_data_to
 from calibre.ebooks.metadata import string_to_authors
 from calibre.ebooks.metadata.opf2 import metadata_to_opf
 from calibre.ebooks.metadata.sources.base import create_log
-from calibre.ebooks.metadata.sources.identify import identify
 from calibre.ebooks.metadata.sources.covers import download_cover
+from calibre.ebooks.metadata.sources.identify import identify
 from calibre.ebooks.metadata.sources.update import patch_plugins
+from calibre.utils.config import OptionParser
+from calibre.utils.img import save_cover_data_to
+
+
+__license__   = 'GPL v3'
+__copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
+__docformat__ = 'restructuredtext en'
+
+
 
 
 def option_parser():

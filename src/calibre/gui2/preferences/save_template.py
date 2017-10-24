@@ -1,18 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+from calibre.gui2 import error_dialog, question_dialog
+from calibre.gui2.dialogs.template_dialog import TemplateDialog
+from calibre.gui2.preferences.save_template_ui import Ui_Form
+from calibre.library.save_to_disk import FORMAT_ARG_DESCS, preprocess_template
+from calibre.utils.formatter import validation_formatter
+from PyQt5.Qt import QWidget, pyqtSignal
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QWidget, pyqtSignal
 
-from calibre.gui2 import error_dialog, question_dialog
-from calibre.gui2.preferences.save_template_ui import Ui_Form
-from calibre.library.save_to_disk import FORMAT_ARG_DESCS, preprocess_template
-from calibre.utils.formatter import validation_formatter
-from calibre.gui2.dialogs.template_dialog import TemplateDialog
 
 
 class SaveTemplate(QWidget, Ui_Form):
@@ -33,12 +32,12 @@ class SaveTemplate(QWidget, Ui_Form):
                 ' by clicking the device icon and choosing "Configure this device".'))
         rows = []
         for var in variables:
-            rows.append(u'<tr><td>%s</td><td>&nbsp;</td><td>%s</td></tr>'%
+            rows.append('<tr><td>%s</td><td>&nbsp;</td><td>%s</td></tr>'%
                     (var, FORMAT_ARG_DESCS[var]))
-        rows.append(u'<tr><td>%s&nbsp;</td><td>&nbsp;</td><td>%s</td></tr>'%(
+        rows.append('<tr><td>%s&nbsp;</td><td>&nbsp;</td><td>%s</td></tr>'%(
             _('Any custom field'),
             _('The lookup name of any custom field (these names begin with "#").')))
-        table = u'<table>%s</table>'%(u'\n'.join(rows))
+        table = '<table>%s</table>'%('\n'.join(rows))
         self.template_variables.setText(table)
 
         self.field_metadata = field_metadata
@@ -82,6 +81,6 @@ class SaveTemplate(QWidget, Ui_Form):
         self.opt_template.set_value(val)
 
     def save_settings(self, config, name):
-        val = unicode(self.opt_template.text())
+        val = str(self.opt_template.text())
         config.set(name, val)
         self.opt_template.save_history(self.option_name+'_template_history')

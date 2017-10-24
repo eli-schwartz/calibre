@@ -1,20 +1,36 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import ast
+import atexit
+import bz2
+import errno
+import glob
+import gzip
+import HTMLParser
+import io
+import json
+import os
+import re
+import socket
+import stat
+import subprocess
+import sys
+import tempfile
+import urllib2
+import urlparse
+import zipfile
+import zlib
+from collections import namedtuple
+from contextlib import closing
+from datetime import datetime
+from email.utils import parsedate
+from functools import partial
+from multiprocessing.pool import ThreadPool
+from xml.sax.saxutils import escape, quoteattr
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import urllib2, re, HTMLParser, zlib, gzip, io, sys, bz2, json, errno, urlparse, os, zipfile, ast, tempfile, glob, stat, socket, subprocess, atexit
-from future_builtins import map, zip, filter
-from collections import namedtuple
-from multiprocessing.pool import ThreadPool
-from datetime import datetime
-from email.utils import parsedate
-from contextlib import closing
-from functools import partial
-from xml.sax.saxutils import escape, quoteattr
 
 USER_AGENT = 'calibre mirror'
 MR_URL = 'https://www.mobileread.com/forums/'
@@ -353,7 +369,7 @@ def log(*args, **kwargs):
 
 
 def atomic_write(raw, name):
-    with tempfile.NamedTemporaryFile(dir=os.getcwdu(), delete=False) as f:
+    with tempfile.NamedTemporaryFile(dir=os.getcwd(), delete=False) as f:
         f.write(raw)
         os.fchmod(f.fileno(), stat.S_IREAD|stat.S_IWRITE|stat.S_IRGRP|stat.S_IROTH)
         os.rename(f.name, name)

@@ -1,19 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import json
+import os
+import tempfile
+import time
+from queue import Queue
+from threading import Event, RLock, Thread
+
+from calibre.ptempfile import base_dir
+from calibre.utils.ipc.job import BaseJob
+from calibre.utils.logging import GUILog
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, time, tempfile, json
-from threading import Thread, RLock, Event
-from Queue import Queue
 
-from calibre.utils.ipc.job import BaseJob
-from calibre.utils.logging import GUILog
-from calibre.ptempfile import base_dir
 
 
 class ThreadedJob(BaseJob):
@@ -245,5 +247,3 @@ class ThreadedJobServer(Thread):
                 queued_types.append(job.type)
                 ans.append(job)
         return ans
-
-

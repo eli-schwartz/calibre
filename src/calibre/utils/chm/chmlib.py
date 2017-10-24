@@ -2,7 +2,10 @@
 # Don't modify this file, modify the SWIG interface instead.
 # This file is compatible with both classic and new-style classes.
 
+import types
+
 from calibre.constants import plugins
+
 
 _chmlib, chmlib_err = plugins['chmlib']
 
@@ -30,9 +33,8 @@ def _swig_getattr(self,class_type,name):
         return method(self)
     raise AttributeError(name)
 
-import types
 try:
-    _object = types.ObjectType
+    _object = object
     _newclass = 1
 except AttributeError:
     class _object :
@@ -68,7 +70,7 @@ class chmUnitInfo(_object):
         path = property(_chmlib.chmUnitInfo_path_get,_chmlib.chmUnitInfo_path_set)
 
     def __init__(self,*args):
-        _swig_setattr(self, chmUnitInfo, 'this', apply(_chmlib.new_chmUnitInfo,args))
+        _swig_setattr(self, chmUnitInfo, 'this', _chmlib.new_chmUnitInfo(*args))
         _swig_setattr(self, chmUnitInfo, 'thisown', 1)
 
     def __del__(self, destroy=_chmlib.delete_chmUnitInfo):
@@ -116,5 +118,3 @@ CHM_ENUMERATOR_SUCCESS = _chmlib.CHM_ENUMERATOR_SUCCESS
 chm_enumerate = _chmlib.chm_enumerate
 
 chm_enumerate_dir = _chmlib.chm_enumerate_dir
-
-

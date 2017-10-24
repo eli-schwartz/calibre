@@ -1,32 +1,31 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import weakref
+from collections import OrderedDict, namedtuple
+from functools import partial
+
+from calibre import fit_image
+from calibre.ebooks.metadata import authors_to_sort_string, fmt_sidx, title_sort
+from calibre.gui2 import gprefs, pixmap_to_data
+from calibre.gui2.comments_editor import Editor
+from calibre.gui2.complete2 import LineEdit as EditWithComplete
+from calibre.gui2.languages import LanguagesEdit as LE
+from calibre.gui2.metadata.basic_widgets import PubdateEdit, RatingEdit
+from calibre.gui2.widgets2 import RightClickButton
+from calibre.ptempfile import PersistentTemporaryFile
+from calibre.utils.date import UNDEFINED_DATE
+from PyQt5.Qt import (
+	QAction, QApplication, QCheckBox, QColor, QDialog, QDialogButtonBox, QFont, QFrame,
+	QGridLayout, QHBoxLayout, QIcon, QKeySequence, QLabel, QMenu, QPainter, QPen, QPixmap,
+	QScrollArea, QSize, QSizePolicy, Qt, QToolButton, QVBoxLayout, QWidget, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, weakref
-from collections import OrderedDict, namedtuple
-from functools import partial
-from future_builtins import zip
 
-from PyQt5.Qt import (
-    QDialog, QWidget, QGridLayout, QLabel, QToolButton, QIcon,
-    QVBoxLayout, QDialogButtonBox, QApplication, pyqtSignal, QFont, QPixmap,
-    QSize, QPainter, Qt, QColor, QPen, QSizePolicy, QScrollArea, QFrame,
-    QKeySequence, QAction, QMenu, QHBoxLayout, QCheckBox)
 
-from calibre import fit_image
-from calibre.ebooks.metadata import title_sort, authors_to_sort_string, fmt_sidx
-from calibre.gui2 import pixmap_to_data, gprefs
-from calibre.gui2.complete2 import LineEdit as EditWithComplete
-from calibre.gui2.comments_editor import Editor
-from calibre.gui2.languages import LanguagesEdit as LE
-from calibre.gui2.widgets2 import RightClickButton
-from calibre.gui2.metadata.basic_widgets import PubdateEdit, RatingEdit
-from calibre.ptempfile import PersistentTemporaryFile
-from calibre.utils.date import UNDEFINED_DATE
 
 Widgets = namedtuple('Widgets', 'new old label button')
 
@@ -52,7 +51,7 @@ class LineEdit(EditWithComplete):
     @dynamic_property
     def value(self):
         def fget(self):
-            val = unicode(self.text()).strip()
+            val = str(self.text()).strip()
             ism = self.metadata['is_multiple']
             if ism:
                 if not val:
@@ -88,7 +87,7 @@ class LineEdit(EditWithComplete):
     @dynamic_property
     def current_val(self):
         def fget(self):
-            return unicode(self.text())
+            return str(self.text())
 
         def fset(self, val):
             self.setText(val)
@@ -212,7 +211,7 @@ class SeriesEdit(LineEdit):
         self.setCursorPosition(0)
 
     def to_mi(self, mi):
-        val = unicode(self.text()).strip()
+        val = str(self.text()).strip()
         try:
             series_index = float(val.rpartition('[')[-1].rstrip(']').strip())
         except:
@@ -245,10 +244,10 @@ class IdentifiersEdit(LineEdit):
     def as_dict(self):
         def fget(self):
             parts = (x.strip() for x in self.current_val.split(',') if x.strip())
-            return {k:v for k, v in {x.partition(':')[0].strip():x.partition(':')[-1].strip() for x in parts}.iteritems() if k and v}
+            return {k:v for k, v in {x.partition(':')[0].strip():x.partition(':')[-1].strip() for x in parts}.items() if k and v}
 
         def fset(self, val):
-            val = ('%s:%s' % (k, v) for k, v in val.iteritems())
+            val = ('%s:%s' % (k, v) for k, v in val.items())
             self.setText(', '.join(val))
             self.setCursorPosition(0)
         return property(fget=fget, fset=fset)
@@ -377,7 +376,7 @@ class CoverView(QWidget):
             f = p.font()
             f.setBold(True)
             p.setFont(f)
-            sz = u'\u00a0%d x %d\u00a0'%(self.pixmap.width(), self.pixmap.height())
+            sz = '\\u00a0%d x %d\\u00a0'%(self.pixmap.width(), self.pixmap.height())
             flags = Qt.AlignBottom|Qt.AlignRight|Qt.TextSingleLine
             szrect = p.boundingRect(sztgt, flags, sz)
             p.fillRect(szrect.adjusted(0, 0, 0, 4), QColor(0, 0, 0, 200))
@@ -517,14 +516,14 @@ class CompareSingle(QWidget):
     def __call__(self, oldmi, newmi):
         self.current_mi = newmi
         self.initial_vals = {}
-        for field, widgets in self.widgets.iteritems():
+        for field, widgets in self.widgets.items():
             widgets.old.from_mi(oldmi)
             widgets.new.from_mi(newmi)
             self.initial_vals[field] = widgets.new.current_val
 
     def apply_changes(self):
         changed = False
-        for field, widgets in self.widgets.iteritems():
+        for field, widgets in self.widgets.items():
             val = widgets.new.current_val
             if val != self.initial_vals[field]:
                 widgets.new.to_mi(self.current_mi)
@@ -696,9 +695,9 @@ if __name__ == '__main__':
     ids = sorted(db.all_ids(), reverse=True)
     ids = tuple(zip(ids[0::2], ids[1::2]))
     gm = partial(db.get_metadata, index_is_id=True, get_cover=True, cover_as_data=True)
-    get_metadata = lambda x:map(gm, ids[x])
-    d = CompareMany(list(xrange(len(ids))), get_metadata, db.field_metadata, db=db)
+    get_metadata = lambda x:list(map(gm, ids[x]))
+    d = CompareMany(list(range(len(ids))), get_metadata, db.field_metadata, db=db)
     if d.exec_() == d.Accepted:
-        for changed, mi in d.accepted.itervalues():
+        for changed, mi in d.accepted.values():
             if changed and mi is not None:
                 print (mi)

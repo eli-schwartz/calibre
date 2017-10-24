@@ -1,21 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-import socket, os, struct, errno
+import errno
+import os
+import socket
+import struct
 from base64 import standard_b64encode
 from collections import deque, namedtuple
 from functools import partial
 from hashlib import sha1
+from time import monotonic
 
 from calibre.srv.tests.base import BaseTest, TestServer
 from calibre.srv.web_socket import (
-    GUID_STR, BINARY, TEXT, MessageWriter, create_frame, CLOSE, NORMAL_CLOSE,
-    PING, PONG, PROTOCOL_ERROR, CONTINUATION, INCONSISTENT_DATA, CONTROL_CODES)
-from time import monotonic
+	BINARY, CLOSE, CONTINUATION, CONTROL_CODES, GUID_STR, INCONSISTENT_DATA,
+	NORMAL_CLOSE, PING, PONG, PROTOCOL_ERROR, TEXT, MessageWriter, create_frame
+)
 from calibre.utils.socket_inheritance import set_socket_inherit
+
 
 HANDSHAKE_STR = '''\
 GET / HTTP/1.1\r
@@ -230,7 +232,7 @@ class WebSocketTest(BaseTest):
                 # connection before the client has finished sending all
                 # messages, so ignore failures to send packets.
                 isf_test = partial(simple_test, ignore_send_failures=True)
-                for rsv in xrange(1, 7):
+                for rsv in range(1, 7):
                     isf_test([{'rsv':rsv, 'opcode':BINARY}], [], close_code=PROTOCOL_ERROR, send_close=False)
                 for opcode in (3, 4, 5, 6, 7, 11, 12, 13, 14, 15):
                     isf_test([{'opcode':opcode}], [], close_code=PROTOCOL_ERROR, send_close=False)

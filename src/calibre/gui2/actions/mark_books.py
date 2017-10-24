@@ -1,17 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from functools import partial
+
+from calibre.gui2 import error_dialog
+from calibre.gui2.actions import InterfaceAction
+from PyQt5.Qt import QApplication, Qt, QTimer
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from functools import partial
 
-from PyQt5.Qt import QTimer, QApplication, Qt
 
-from calibre.gui2 import error_dialog
-from calibre.gui2.actions import InterfaceAction
 
 
 class MarkBooksAction(InterfaceAction):
@@ -117,7 +116,7 @@ class MarkBooksAction(InterfaceAction):
 
     def clear_all_marked(self):
         self.gui.current_db.data.set_marked_ids(())
-        if unicode(self.gui.search.text()).startswith('marked:'):
+        if str(self.gui.search.text()).startswith('marked:'):
             self.gui.search.set_search_string('')
 
     def mark_field(self, field, add):
@@ -138,4 +137,3 @@ class MarkBooksAction(InterfaceAction):
             else:
                 mids.pop(book_id, None)
         db.data.set_marked_ids(mids)
-

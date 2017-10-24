@@ -8,6 +8,7 @@ from collections import OrderedDict
 
 from calibre.utils.config_base import tweaks
 
+
 category_icon_map = {
                     'authors'    : 'user_profile.png',
                     'series'     : 'series.png',
@@ -428,7 +429,7 @@ class FieldMetadata(object):
         return key in self
 
     def keys(self):
-        return self._tb_cats.keys()
+        return list(self._tb_cats.keys())
 
     def __eq__(self, other):
         if not isinstance(other, FieldMetadata):
@@ -442,7 +443,7 @@ class FieldMetadata(object):
         return not self.__eq__(other)
 
     def sortable_field_keys(self):
-        return [k for k in self._tb_cats.keys()
+        return [k for k in list(self._tb_cats.keys())
                 if self._tb_cats[k]['kind']=='field' and
                    self._tb_cats[k]['datatype'] is not None]
 
@@ -456,20 +457,20 @@ class FieldMetadata(object):
         return ans
 
     def displayable_field_keys(self):
-        return [k for k in self._tb_cats.keys()
+        return [k for k in list(self._tb_cats.keys())
                 if self._tb_cats[k]['kind']=='field' and
                    self._tb_cats[k]['datatype'] is not None and
                    k not in ('au_map', 'marked', 'ondevice', 'cover', 'series_sort') and
                    not self.is_series_index(k)]
 
     def standard_field_keys(self):
-        return [k for k in self._tb_cats.keys()
+        return [k for k in list(self._tb_cats.keys())
                 if self._tb_cats[k]['kind']=='field' and
                    not self._tb_cats[k]['is_custom']]
 
     def custom_field_keys(self, include_composites=True):
         res = []
-        for k in self._tb_cats.keys():
+        for k in list(self._tb_cats.keys()):
             fm = self._tb_cats[k]
             if fm['kind']=='field' and fm['is_custom'] and \
                    (fm['datatype'] != 'composite' or include_composites):
@@ -477,28 +478,28 @@ class FieldMetadata(object):
         return res
 
     def all_field_keys(self):
-        return [k for k in self._tb_cats.keys() if self._tb_cats[k]['kind']=='field']
+        return [k for k in list(self._tb_cats.keys()) if self._tb_cats[k]['kind']=='field']
 
     def iterkeys(self):
         for key in self._tb_cats:
             yield key
 
     def itervalues(self):
-        return self._tb_cats.itervalues()
+        return iter(self._tb_cats.values())
 
     def values(self):
-        return self._tb_cats.values()
+        return list(self._tb_cats.values())
 
     def iteritems(self):
         for key in self._tb_cats:
             yield (key, self._tb_cats[key])
 
     def custom_iteritems(self):
-        for key, meta in self._tb_custom_fields.iteritems():
+        for key, meta in self._tb_custom_fields.items():
             yield (key, meta)
 
     def items(self):
-        return list(self.iteritems())
+        return list(self.items())
 
     def is_custom_field(self, key):
         return key.startswith(self.custom_field_prefix)
@@ -508,7 +509,7 @@ class FieldMetadata(object):
         return self.is_custom_field(key) or key.startswith('@')
 
     def ignorable_field_keys(self):
-        return [k for k in self._tb_cats.iterkeys() if self.is_ignorable_field(k)]
+        return [k for k in self._tb_cats.keys() if self.is_ignorable_field(k)]
 
     def is_series_index(self, key):
         try:
@@ -666,7 +667,7 @@ class FieldMetadata(object):
         return self._search_term_map.get(term, term)
 
     def searchable_fields(self):
-        return [k for k in self._tb_cats.keys()
+        return [k for k in list(self._tb_cats.keys())
                 if self._tb_cats[k]['kind']=='field' and
                    len(self._tb_cats[k]['search_terms']) > 0]
 
@@ -679,8 +680,8 @@ def fm_as_dict(self):
         'custom_fields': self._tb_custom_fields,
         'search_term_map': self._search_term_map,
         'custom_label_to_key_map': self.custom_label_to_key_map,
-        'user_categories': {k:v for k, v in self._tb_cats.iteritems() if v['kind'] == 'user'},
-        'search_categories': {k:v for k, v in self._tb_cats.iteritems() if v['kind'] == 'search'},
+        'user_categories': {k:v for k, v in self._tb_cats.items() if v['kind'] == 'user'},
+        'search_categories': {k:v for k, v in self._tb_cats.items() if v['kind'] == 'search'},
     }
 
 
@@ -690,6 +691,6 @@ def fm_from_dict(src):
     ans._search_term_map = src['search_term_map']
     ans.custom_label_to_key_map = src['custom_label_to_key_map']
     for q in ('custom_fields', 'user_categories', 'search_categories'):
-        for k, v in src[q].iteritems():
+        for k, v in src[q].items():
             ans._tb_cats[k] = v
     return ans

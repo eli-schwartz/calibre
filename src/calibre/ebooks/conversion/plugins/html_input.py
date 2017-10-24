@@ -1,22 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import re
+import tempfile
+from functools import partial
+
+
+from calibre.constants import isbsd, islinux
+from calibre.customize.conversion import InputFormatPlugin, OptionRecommendation
+from calibre.utils.filenames import ascii_filename
+from calibre.utils.imghdr import what
+from calibre.utils.localization import get_lang
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re, tempfile, os
-from functools import partial
-from itertools import izip
 
-from calibre.constants import islinux, isbsd
-from calibre.customize.conversion import (InputFormatPlugin,
-        OptionRecommendation)
-from calibre.utils.localization import get_lang
-from calibre.utils.filenames import ascii_filename
-from calibre.utils.imghdr import what
 
 
 def sanitize_file_name(x):
@@ -61,7 +61,7 @@ class HTMLInput(InputFormatPlugin):
     def convert(self, stream, opts, file_ext, log,
                 accelerators):
         self._is_case_sensitive = None
-        basedir = os.getcwdu()
+        basedir = os.getcwd()
         self.opts = opts
 
         fname = None
@@ -119,7 +119,7 @@ class HTMLInput(InputFormatPlugin):
         if not metadata.language:
             l = canonicalize_lang(getattr(opts, 'language', None))
             if not l:
-                oeb.logger.warn(u'Language not specified')
+                oeb.logger.warn('Language not specified')
                 l = get_lang().replace('_', '-')
             metadata.add('language', l)
         if not metadata.creator:
@@ -160,7 +160,7 @@ class HTMLInput(InputFormatPlugin):
         self.added_resources = {}
         self.log = log
         self.log('Normalizing filename cases')
-        for path, href in htmlfile_map.items():
+        for path, href in list(htmlfile_map.items()):
             if not self.is_case_sensitive(path):
                 path = path.lower()
             self.added_resources[path] = href
@@ -180,10 +180,10 @@ class HTMLInput(InputFormatPlugin):
                 item = oeb.manifest.hrefs[urlnormalize(href)]
             rewrite_links(item.data, partial(self.resource_adder, base=dpath))
 
-        for item in oeb.manifest.values():
+        for item in list(oeb.manifest.values()):
             if item.media_type in self.OEB_STYLES:
                 dpath = None
-                for path, href in self.added_resources.items():
+                for path, href in list(self.added_resources.items()):
                     if href == item.href:
                         dpath = os.path.dirname(path)
                         break
@@ -213,24 +213,24 @@ class HTMLInput(InputFormatPlugin):
         use = titles
         if len(titles) > len(set(titles)):
             use = headers
-        for title, item in izip(use, self.oeb.spine):
+        for title, item in zip(use, self.oeb.spine):
             if not item.linear:
                 continue
             toc.add(title, item.href)
 
-        oeb.container = DirContainer(os.getcwdu(), oeb.log, ignore_opf=True)
+        oeb.container = DirContainer(os.getcwd(), oeb.log, ignore_opf=True)
         return oeb
 
     def link_to_local_path(self, link_, base=None):
         from calibre.ebooks.html.input import Link
-        if not isinstance(link_, unicode):
+        if not isinstance(link_, str):
             try:
                 link_ = link_.decode('utf-8', 'error')
             except:
                 self.log.warn('Failed to decode link %r. Ignoring'%link_)
                 return None, None
         try:
-            l = Link(link_, base if base else os.getcwdu())
+            l = Link(link_, base if base else os.getcwd())
         except:
             self.log.exception('Failed to process link: %r'%link_)
             return None, None
@@ -244,7 +244,7 @@ class HTMLInput(InputFormatPlugin):
         return link, frag
 
     def resource_adder(self, link_, base=None):
-        from urllib import quote
+        from urllib.parse import quote
         link, frag = self.link_to_local_path(link_, base=base)
         if link is None:
             return link_
@@ -287,7 +287,7 @@ class HTMLInput(InputFormatPlugin):
             # bhref refers to an already existing file. The read() method of
             # DirContainer will call unquote on it before trying to read the
             # file, therefore we quote it here.
-            if isinstance(bhref, unicode):
+            if isinstance(bhref, str):
                 bhref = bhref.encode('utf-8')
             item.html_input_href = quote(bhref).decode('utf-8')
             if guessed in self.OEB_STYLES:

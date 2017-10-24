@@ -1,21 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import subprocess
+from zipfile import ZipFile
+
+from calibre import CurrentDir
+from calibre.ebooks.oeb.polish.container import (
+	OCF_NS, clone_container, get_container as _gc
+)
+from calibre.ebooks.oeb.polish.replace import rationalize_folders, rename_files
+from calibre.ebooks.oeb.polish.split import merge, split
+from calibre.ebooks.oeb.polish.tests.base import BaseTest, get_simple_book, get_split_book
+from calibre.ptempfile import TemporaryDirectory, TemporaryFile
+from calibre.utils.filenames import nlinks_file
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, subprocess
-from zipfile import ZipFile
 
-from calibre import CurrentDir
-from calibre.ebooks.oeb.polish.tests.base import BaseTest, get_simple_book, get_split_book
-from calibre.ebooks.oeb.polish.container import get_container as _gc, clone_container, OCF_NS
-from calibre.ebooks.oeb.polish.replace import rename_files, rationalize_folders
-from calibre.ebooks.oeb.polish.split import split, merge
-from calibre.utils.filenames import nlinks_file
-from calibre.ptempfile import TemporaryFile, TemporaryDirectory
 
 
 def get_container(*args, **kwargs):
@@ -38,7 +40,7 @@ class ContainerTests(BaseTest):
             c2 = clone_container(c1, tdir)
 
             for c in (c1, c2):
-                for name, path in c.name_path_map.iteritems():
+                for name, path in c.name_path_map.items():
                     self.assertEqual(2, nlinks_file(path), 'The file %s is not linked' % name)
 
             for name in c1.name_path_map:
@@ -178,13 +180,13 @@ class ContainerTests(BaseTest):
         name = 'folder/added file.html'
         c.add_file(name, b'xxx')
         self.assertEqual('xxx', c.raw_data(name))
-        self.assertIn(name, set(c.manifest_id_map.itervalues()))
+        self.assertIn(name, set(c.manifest_id_map.values()))
         self.assertIn(name, {x[0] for x in c.spine_names})
 
         name = 'added.css'
         c.add_file(name, b'xxx')
         self.assertEqual('xxx', c.raw_data(name))
-        self.assertIn(name, set(c.manifest_id_map.itervalues()))
+        self.assertIn(name, set(c.manifest_id_map.values()))
         self.assertNotIn(name, {x[0] for x in c.spine_names})
         self.assertEqual(c.make_name_unique(name), 'added-1.css')
         c.add_file('added-1.css', b'xxx')

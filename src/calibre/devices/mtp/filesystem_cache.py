@@ -1,22 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import json
+import sys
+import weakref
+from collections import deque
+from datetime import datetime
+from operator import attrgetter
+
+from calibre import force_unicode, human_readable, prints
+from calibre.ebooks import BOOK_EXTENSIONS
+from calibre.utils.date import as_utc, local_tz
+from calibre.utils.icu import lower, sort_key
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import weakref, sys, json
-from collections import deque
-from operator import attrgetter
-from future_builtins import map
-from datetime import datetime
 
-from calibre import human_readable, prints, force_unicode
-from calibre.utils.date import local_tz, as_utc
-from calibre.utils.icu import sort_key, lower
-from calibre.ebooks import BOOK_EXTENSIONS
 
 bexts = frozenset(BOOK_EXTENSIONS) - {'mbp', 'tan', 'rar', 'zip', 'xml'}
 
@@ -74,7 +74,7 @@ class FileOrFolder(object):
     def __repr__(self):
         name = 'Folder' if self.is_folder else 'File'
         try:
-            path = unicode(self.full_path)
+            path = str(self.full_path)
         except:
             path = ''
         datum = 'size=%s'%(self.size)
@@ -201,7 +201,7 @@ class FilesystemCache(object):
         for entry in entries:
             FileOrFolder(entry, self)
 
-        for item in self.id_map.itervalues():
+        for item in self.id_map.values():
             try:
                 p = item.parent
             except KeyError:
@@ -227,7 +227,7 @@ class FilesystemCache(object):
                 return e
 
     def iterebooks(self, storage_id):
-        for x in self.id_map.itervalues():
+        for x in self.id_map.values():
             if x.storage_id == storage_id and x.is_ebook:
                 if x.parent_id == storage_id and x.name.lower().endswith('.txt'):
                     continue  # Ignore .txt files in the root
@@ -250,5 +250,3 @@ class FilesystemCache(object):
             return self.id_map[object_id]
         except KeyError:
             raise ValueError('No object found with MTP path: %s'%path)
-
-

@@ -1,24 +1,25 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+from collections import Counter
+
+from calibre.ebooks.docx.writer.container import (
+	create_skeleton, page_effective_area, page_size
+)
+from calibre.ebooks.docx.writer.fonts import FontsManager
+from calibre.ebooks.docx.writer.images import ImagesManager
+from calibre.ebooks.docx.writer.links import LinksManager
+from calibre.ebooks.docx.writer.lists import ListsManager
+from calibre.ebooks.docx.writer.styles import FloatSpec, StylesManager
+from calibre.ebooks.docx.writer.tables import Table
+from calibre.ebooks.oeb.base import XPath, barename
+from calibre.ebooks.oeb.stylizer import Style as St, Stylizer as Sz
+from calibre.utils.localization import lang_as_iso639_1
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re
-from collections import Counter
 
-from calibre.ebooks.docx.writer.container import create_skeleton, page_size, page_effective_area
-from calibre.ebooks.docx.writer.styles import StylesManager, FloatSpec
-from calibre.ebooks.docx.writer.links import LinksManager
-from calibre.ebooks.docx.writer.images import ImagesManager
-from calibre.ebooks.docx.writer.fonts import FontsManager
-from calibre.ebooks.docx.writer.tables import Table
-from calibre.ebooks.docx.writer.lists import ListsManager
-from calibre.ebooks.oeb.stylizer import Stylizer as Sz, Style as St
-from calibre.ebooks.oeb.base import XPath, barename
-from calibre.utils.localization import lang_as_iso639_1
 
 
 def lang_for_tag(tag):
@@ -435,8 +436,8 @@ class Convert(object):
         if self.add_toc:
             self.links_manager.process_toc_links(self.oeb)
 
-        if self.add_cover and self.oeb.metadata.cover and unicode(self.oeb.metadata.cover[0]) in self.oeb.manifest.ids:
-            cover_id = unicode(self.oeb.metadata.cover[0])
+        if self.add_cover and self.oeb.metadata.cover and str(self.oeb.metadata.cover[0]) in self.oeb.manifest.ids:
+            cover_id = str(self.oeb.metadata.cover[0])
             item = self.oeb.manifest.ids[cover_id]
             self.cover_img = self.images_manager.read_image(item.href)
 

@@ -4,18 +4,21 @@ COMMAND-LINE SPECIFIC STUFF
 
 """
 
-import sys
-import optparse
 import codecs
+import logging
+import optparse
+import sys
 import warnings
+from logging import CRITICAL, DEBUG, WARNING
+
 import calibre.ebooks.markdown as markdown
+
+
 try:
     import yaml
 except ImportError:  # pragma: no cover
     import json as yaml
 
-import logging
-from logging import DEBUG, WARNING, CRITICAL
 
 logger = logging.getLogger('MARKDOWN')
 

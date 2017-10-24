@@ -1,4 +1,24 @@
-from __future__ import with_statement
+import os
+import sqlite3 as sqlite
+import sys
+import time
+import traceback
+import uuid
+from datetime import datetime
+from functools import partial
+from queue import Queue
+from sqlite3 import IntegrityError, OperationalError
+from threading import RLock, Thread
+
+import reprlib as reprlib
+from calibre import force_unicode, isbytestring, prints
+from calibre.constants import DEBUG, iswindows, plugins
+from calibre.ebooks.metadata import author_to_author_sort, title_sort
+from calibre.utils.date import UNDEFINED_DATE, isoformat, local_tz, parse_date
+from calibre.utils.icu import sort_key
+from dateutil.tz import tzoffset
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
@@ -7,23 +27,8 @@ __docformat__ = 'restructuredtext en'
 Wrapper for multi-threaded access to a single sqlite database connection. Serializes
 all calls.
 '''
-import sqlite3 as sqlite, traceback, time, uuid, sys, os
-import repr as reprlib
-from sqlite3 import IntegrityError, OperationalError
-from threading import Thread
-from Queue import Queue
-from threading import RLock
-from datetime import datetime
-from functools import partial
 
-from calibre.ebooks.metadata import title_sort, author_to_author_sort
-from calibre.utils.date import parse_date, isoformat, local_tz, UNDEFINED_DATE
-from calibre import isbytestring, force_unicode
-from calibre.constants import iswindows, DEBUG, plugins
-from calibre.utils.icu import sort_key
-from calibre import prints
 
-from dateutil.tz import tzoffset
 
 global_lock = RLock()
 
@@ -148,7 +153,7 @@ class IdentifiersConcat(object):
         self.ans = []
 
     def step(self, key, val):
-        self.ans.append(u'%s:%s'%(key, val))
+        self.ans.append('%s:%s'%(key, val))
 
     def finalize(self):
         return ','.join(self.ans)
@@ -165,7 +170,7 @@ class AumSortedConcatenate(object):
             self.ans[ndx] = ':::'.join((author, sort, link))
 
     def finalize(self):
-        keys = self.ans.keys()
+        keys = list(self.ans.keys())
         l = len(keys)
         if l == 0:
             return None
@@ -306,7 +311,7 @@ class DatabaseException(Exception):
     def __init__(self, err, tb):
         tb = '\n\t'.join(('\tRemote'+tb).splitlines())
         try:
-            msg = unicode(err) +'\n' + tb
+            msg = str(err) +'\n' + tb
         except:
             msg = repr(err) + '\n' + tb
         Exception.__init__(self, msg)
@@ -327,7 +332,7 @@ def proxy(fn):
             ok, res = self.proxy.results.get()
             if not ok:
                 if isinstance(res[0], IntegrityError):
-                    raise IntegrityError(unicode(res[0]))
+                    raise IntegrityError(str(res[0]))
                 raise DatabaseException(*res)
             return res
     return run
@@ -398,5 +403,4 @@ def connect(dbpath, row_factory=None):
 def test():
     c = sqlite.connect(':memory:')
     if load_c_extensions(c, True):
-        print 'Loaded C extension successfully'
-
+        print('Loaded C extension successfully')

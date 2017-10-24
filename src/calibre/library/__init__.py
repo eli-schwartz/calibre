@@ -31,36 +31,36 @@ def generate_test_db(library_path,  # {{{
 
     def randstr(length):
         return ''.join(random.choice(letters) for i in
-                xrange(length))
+                range(length))
 
-    all_tags = [randstr(tag_length) for j in xrange(num_of_tags)]
-    print 'Generated', num_of_tags, 'tags'
-    all_authors = [randstr(author_length) for j in xrange(num_of_authors)]
-    print 'Generated', num_of_authors, 'authors'
-    all_titles = [randstr(title_length) for j in xrange(num_of_records)]
-    print 'Generated', num_of_records, 'titles'
+    all_tags = [randstr(tag_length) for j in range(num_of_tags)]
+    print('Generated', num_of_tags, 'tags')
+    all_authors = [randstr(author_length) for j in range(num_of_authors)]
+    print('Generated', num_of_authors, 'authors')
+    all_titles = [randstr(title_length) for j in range(num_of_records)]
+    print('Generated', num_of_records, 'titles')
 
     testdb = db(library_path)
 
-    print 'Creating', num_of_records, 'records...'
+    print('Creating', num_of_records, 'records...')
 
     start = time.time()
 
     for i, title in enumerate(all_titles):
-        print i+1,
+        print(i+1, end=' ')
         sys.stdout.flush()
         authors = random.randint(1, max_authors)
-        authors = [random.choice(all_authors) for i in xrange(authors)]
+        authors = [random.choice(all_authors) for i in range(authors)]
         tags = random.randint(0, max_tags)
-        tags = [random.choice(all_tags) for i in xrange(tags)]
+        tags = [random.choice(all_tags) for i in range(tags)]
         from calibre.ebooks.metadata.book.base import Metadata
         mi = Metadata(title, authors)
         mi.tags = tags
         testdb.import_book(mi, [])
 
     t = time.time() - start
-    print '\nGenerated', num_of_records, 'records in:', t, 'seconds'
-    print 'Time per record:', t/float(num_of_records)
+    print('\nGenerated', num_of_records, 'records in:', t, 'seconds')
+    print('Time per record:', t/float(num_of_records))
 # }}}
 
 
@@ -79,5 +79,3 @@ def current_library_name():
     path = current_library_path()
     if path:
         return posixpath.basename(path)
-
-

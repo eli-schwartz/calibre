@@ -1,20 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import importlib
 import os
 import sys
 import time
 
-from PyQt5.Qt import QIcon
-
 from calibre.constants import EDITOR_APP_UID, islinux, iswindows
 from calibre.gui2 import (
-    Application, decouple, set_app_uid, set_gui_prefs, setup_gui_option_parser
+	Application, decouple, set_app_uid, set_gui_prefs, setup_gui_option_parser
 )
 from calibre.ptempfile import reset_base_dir
 from calibre.utils.config import OptionParser
+from PyQt5.Qt import QIcon
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'

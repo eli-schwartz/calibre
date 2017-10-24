@@ -1,16 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import os
-from urllib import unquote
-
-from PyQt5.Qt import QFileDialog, QObject
+from urllib.parse import unquote
 
 from calibre.gui2.linux_file_dialogs import dialog_name, image_extensions
 from calibre.utils.filenames import expanduser
+from PyQt5.Qt import QFileDialog, QObject
 
 
 def select_initial_dir(q):
@@ -21,7 +17,7 @@ def select_initial_dir(q):
         if os.path.exists(c):
             return c
         q = c
-    return expanduser(u'~')
+    return expanduser('~')
 
 
 class FileDialog(QObject):
@@ -33,7 +29,7 @@ class FileDialog(QObject):
                        modal=True,
                        name='',
                        mode=QFileDialog.ExistingFiles,
-                       default_dir=u'~',
+                       default_dir='~',
                        no_save_dir=False,
                        combine_file_and_saved_dir=False
                        ):
@@ -58,19 +54,19 @@ class FileDialog(QObject):
         if combine_file_and_saved_dir:
             bn = os.path.basename(default_dir)
             prev = dynamic.get(self.dialog_name,
-                    expanduser(u'~'))
+                    expanduser('~'))
             if os.path.exists(prev):
                 if os.path.isfile(prev):
                     prev = os.path.dirname(prev)
             else:
-                prev = expanduser(u'~')
+                prev = expanduser('~')
             initial_dir = os.path.join(prev, bn)
         elif no_save_dir:
             initial_dir = expanduser(default_dir)
         else:
             initial_dir = dynamic.get(self.dialog_name,
                     expanduser(default_dir))
-        if not isinstance(initial_dir, basestring):
+        if not isinstance(initial_dir, str):
             initial_dir = expanduser(default_dir)
         if not initial_dir or (not os.path.exists(initial_dir) and not (
                 mode == QFileDialog.AnyFile and (no_save_dir or combine_file_and_saved_dir))):
@@ -96,7 +92,7 @@ class FileDialog(QObject):
                         ftext, "", opts)
                 if fs and fs[0]:
                     for f in fs[0]:
-                        f = unicode(f)
+                        f = str(f)
                         if not f:
                             continue
                         if not os.path.exists(f):
@@ -108,11 +104,11 @@ class FileDialog(QObject):
             else:
                 if mode == QFileDialog.Directory:
                     opts |= QFileDialog.ShowDirsOnly
-                f = unicode(QFileDialog.getExistingDirectory(parent, title, initial_dir, opts))
+                f = str(QFileDialog.getExistingDirectory(parent, title, initial_dir, opts))
                 if os.path.exists(f):
                     self.selected_files.append(f)
         if self.selected_files:
-            self.selected_files = [unicode(q) for q in self.selected_files]
+            self.selected_files = [str(q) for q in self.selected_files]
             saved_loc = self.selected_files[0]
             if os.path.isfile(saved_loc):
                 saved_loc = os.path.dirname(saved_loc)
@@ -122,7 +118,7 @@ class FileDialog(QObject):
 
     def get_files(self):
         if self.selected_files is None:
-            return tuple(os.path.abspath(unicode(i)) for i in self.fd.selectedFiles())
+            return tuple(os.path.abspath(str(i)) for i in self.fd.selectedFiles())
         return tuple(self.selected_files)
 
 
@@ -137,7 +133,7 @@ def choose_dir(window, name, title, default_dir='~', no_save_dir=False):
 
 
 def choose_files(window, name, title,
-                filters=[], all_files=True, select_only_single_file=False, default_dir=u'~'):
+                filters=[], all_files=True, select_only_single_file=False, default_dir='~'):
     '''
     Ask user to choose a bunch of files.
     :param name: Unique dialog name used to store the opened directory

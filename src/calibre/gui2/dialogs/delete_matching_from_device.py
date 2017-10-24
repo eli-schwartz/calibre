@@ -1,16 +1,14 @@
-#!/usr/bin/env python2
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
 __license__   = 'GPL v3'
 
-from PyQt5.Qt import Qt, QDialog, QTableWidgetItem, QAbstractItemView
-
 from calibre import strftime
-from calibre.ebooks.metadata import authors_to_string, authors_to_sort_string, \
-                                    title_sort
-from calibre.gui2.dialogs.delete_matching_from_device_ui import \
-                                            Ui_DeleteMatchingFromDeviceDialog
+from calibre.ebooks.metadata import authors_to_sort_string, authors_to_string, title_sort
+from calibre.gui2.dialogs.delete_matching_from_device_ui import (
+	Ui_DeleteMatchingFromDeviceDialog
+)
 from calibre.utils.date import UNDEFINED_DATE
+from PyQt5.Qt import QAbstractItemView, QDialog, Qt, QTableWidgetItem
 
 
 class tableItem(QTableWidgetItem):
@@ -116,7 +114,6 @@ class DeleteMatchingFromDeviceDialog(QDialog, Ui_DeleteMatchingFromDeviceDialog)
             if self.table.item(row, 0).checkState() == Qt.Unchecked:
                 continue
             (model, id, path) = self.table.item(row, 0).data(Qt.UserRole)
-            path = unicode(path)
+            path = str(path)
             self.result.append((model, id, path))
         return
-

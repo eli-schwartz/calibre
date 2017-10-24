@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 
 
 class Configure:
@@ -50,7 +51,7 @@ class Configure:
                     msg += ('Options take the form of option = value.\n')
                     msg += ('Please correct the configuration file "%s" before continuing\n'
                         % self.__configuration_file)
-                    raise self.__bug_handler, msg
+                    raise self.__bug_handler(msg)
                 att = fields[0]
                 value = fields[1]
                 att = att.strip()
@@ -60,7 +61,7 @@ class Configure:
         if return_dict == 1:
             msg = ('Please correct the configuration file "%s" before continuing\n'
                     % self.__configuration_file)
-            raise self.__bug_handler, msg
+            raise self.__bug_handler(msg)
         return return_dict
 
     def __get_file_name(self):
@@ -98,7 +99,7 @@ class Configure:
             'config-location',
             'script-name',
         ]
-        the_keys = return_dict.keys()
+        the_keys = list(return_dict.keys())
         for the_key in the_keys:
             if the_key not in allowable:
                 sys.stderr.write('options "%s" not a legal option.\n'

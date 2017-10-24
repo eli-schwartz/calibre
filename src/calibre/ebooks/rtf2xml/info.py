@@ -10,7 +10,9 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import sys, os, re
+import os
+import re
+import sys
 
 from calibre.ebooks.rtf2xml import copy
 from calibre.ptempfile import better_mktemp
@@ -228,7 +230,7 @@ class Info:
             if att_changed is None:
                 if self.__run_level > 3:
                     msg = 'No dictionary match for %s\n' % att
-                    raise self.__bug_handler, msg
+                    raise self.__bug_handler(msg)
             else:
                 self.__text_string += '<%s>%s' % (att_changed, value)
 

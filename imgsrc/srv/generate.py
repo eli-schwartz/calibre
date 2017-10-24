@@ -1,19 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-import os, re, sys
+import os
+import re
+import sys
 
 from lxml import etree
+
 
 SVG_NS       = 'http://www.w3.org/2000/svg'
 XLINK_NS     = 'http://www.w3.org/1999/xlink'
 
 def clone_node(node, parent):
     ans = parent.makeelement(node.tag)
-    for k in node.keys():
+    for k in list(node.keys()):
         ans.set(k, node.get(k))
     ans.text, ans.tail = node.text, node.tail
     for child in node.iterchildren('*'):
@@ -36,7 +36,7 @@ def merge():
         for child in svg.iterchildren('*'):
             clone_node(child, symbol)
         ans.append(symbol)
-    ans = etree.tostring(ans, encoding=unicode, pretty_print=True, with_tail=False)
+    ans = etree.tostring(ans, encoding=str, pretty_print=True, with_tail=False)
     ans = re.sub('<svg[^>]+>', '<svg style="display:none">', ans, count=1)
     return ans
 

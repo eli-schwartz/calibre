@@ -1,15 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import math
+import string
+import uuid as _uuid
+
 
 '''
 Generate UUID encoded using a user specified alphabet.
 '''
 
-import string, math, uuid as _uuid
 
 
 def num_to_string(number, alphabet, alphabet_len, pad_to_length=None):

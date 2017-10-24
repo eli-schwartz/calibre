@@ -1,11 +1,9 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from calibre import prints
 from calibre.db.legacy import LibraryDatabase
+
 
 readonly = False
 version = 0  # change this if you change signature of implementation()
@@ -39,7 +37,7 @@ columns with the custom_columns command.
 
 def do_remove_custom_column(db, label, force):
     if not force:
-        q = raw_input(
+        q = input(
             _('You will lose all data in the column: %s.'
               ' Are you sure (y/n)? ') % label
         )

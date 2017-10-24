@@ -64,7 +64,7 @@ class JETBOOK(USBMS):
 
         def check_unicode(txt):
             txt = txt.replace('_', ' ')
-            if not isinstance(txt, unicode):
+            if not isinstance(txt, str):
                 return txt.decode(sys.getfilesystemencoding(), 'replace')
 
             return txt
@@ -78,7 +78,7 @@ class JETBOOK(USBMS):
             if match is not None:
                 mi.title = check_unicode(match.group('title'))
                 authors = string_to_authors(match.group('authors'))
-                mi.authors = map(check_unicode, authors)
+                mi.authors = list(map(check_unicode, authors))
 
         return mi
 

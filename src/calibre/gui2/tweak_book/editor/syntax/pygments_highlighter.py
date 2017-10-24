@@ -1,18 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from functools import partial
+
+from calibre.gui2.tweak_book.editor.syntax.base import SyntaxHighlighter
+from calibre.gui2.tweak_book.editor.syntax.utils import NULL_FMT, format_for_pygments_token
+from pygments.lexer import Error, _TokenType
+from PyQt5.Qt import QTextBlockUserData
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from functools import partial
 
-from PyQt5.Qt import QTextBlockUserData
-from pygments.lexer import _TokenType, Error
 
-from calibre.gui2.tweak_book.editor.syntax.base import SyntaxHighlighter
-from calibre.gui2.tweak_book.editor.syntax.utils import format_for_pygments_token, NULL_FMT
 
 NORMAL = 0
 

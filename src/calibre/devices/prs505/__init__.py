@@ -9,4 +9,3 @@ CACHE_EXT = 'Sony Reader/database/cacheExt.xml'
 
 MEDIA_THUMBNAIL = 'database/thumbnail'
 CACHE_THUMBNAIL = 'Sony Reader/thumbnail'
-

@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,15 +6,15 @@ __docformat__ = 'restructuredtext en'
 
 import os
 
-from PyQt5.Qt import Qt, QVBoxLayout, QFormLayout
-
-from calibre.gui2.preferences import ConfigWidgetBase, test_widget, \
-    CommaSeparatedList, AbortCommit
-from calibre.gui2.preferences.adding_ui import Ui_Form
-from calibre.utils.config import prefs
-from calibre.gui2.widgets import FilenamePattern
+from calibre.gui2 import choose_dir, error_dialog, gprefs, question_dialog
 from calibre.gui2.auto_add import AUTO_ADDED
-from calibre.gui2 import gprefs, choose_dir, error_dialog, question_dialog
+from calibre.gui2.preferences import (
+	AbortCommit, CommaSeparatedList, ConfigWidgetBase, test_widget
+)
+from calibre.gui2.preferences.adding_ui import Ui_Form
+from calibre.gui2.widgets import FilenamePattern
+from calibre.utils.config import prefs
+from PyQt5.Qt import QFormLayout, Qt, QVBoxLayout
 
 
 class ConfigWidget(ConfigWidgetBase, Ui_Form):
@@ -121,7 +120,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         viewer = self.opt_blocked_auto_formats
         for i in range(viewer.count()):
             if viewer.item(i).checkState() == Qt.Checked:
-                fmts.append(unicode(viewer.item(i).text()))
+                fmts.append(str(viewer.item(i).text()))
         return fmts
     # }}}
 
@@ -133,7 +132,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         self.add_filter_rules = []
 
     def commit(self):
-        path = unicode(self.opt_auto_add_path.text()).strip()
+        path = str(self.opt_auto_add_path.text()).strip()
         if path != gprefs['auto_add_path']:
             if path:
                 path = os.path.abspath(path)

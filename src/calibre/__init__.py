@@ -3,24 +3,27 @@ __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, os, re, time, random, __builtin__, warnings
-__builtin__.__dict__['dynamic_property'] = lambda func: func(None)
-from math import floor
+import os
+import random
+import re
+import sys
+import time
+import warnings
 from functools import partial
+from math import floor
+
+from .constants import (
+	__appname__, __author__, __version__, config_dir, fcntl,
+	filesystem_encoding, isbsd, isfrozen, islinux, isosx, iswindows,
+	plugins, preferred_encoding, win32api, win32event, winerror
+)
+from .startup import winutil, winutilerror
+from .utils.icu import safe_chr
+
 
 if 'CALIBRE_SHOW_DEPRECATION_WARNINGS' not in os.environ:
     warnings.simplefilter('ignore', DeprecationWarning)
-try:
-    os.getcwdu()
-except EnvironmentError:
-    os.chdir(os.path.expanduser('~'))
 
-from .constants import (iswindows, isosx, islinux, isfrozen,
-        isbsd, preferred_encoding, __appname__, __version__, __author__,
-        win32event, win32api, winerror, fcntl,
-        filesystem_encoding, plugins, config_dir)
-from .startup import winutil, winutilerror
-from .utils.icu import safe_chr
 
 if False:
     # Prevent pyflakes from complaining
@@ -70,7 +73,7 @@ def get_types_map():
 
 
 def to_unicode(raw, encoding='utf-8', errors='strict'):
-    if isinstance(raw, unicode):
+    if isinstance(raw, str):
         return raw
     return raw.decode(encoding, errors)
 
@@ -105,8 +108,8 @@ def confirm_config_name(name):
 
 
 _filename_sanitize = re.compile(r'[\xae\0\\|\?\*<":>\+/]')
-_filename_sanitize_unicode = frozenset([u'\\', u'|', u'?', u'*', u'<',
-    u'"', u':', u'>', u'+', u'/'] + list(map(unichr, xrange(32))))
+_filename_sanitize_unicode = frozenset(['\\', '|', '?', '*', '<',
+    '"', ':', '>', '+', '/'] + list(map(chr, range(32))))
 
 
 def sanitize_file_name(name, substitute='_', as_unicode=False):
@@ -119,7 +122,7 @@ def sanitize_file_name(name, substitute='_', as_unicode=False):
     *NOTE:* This function always returns byte strings, not unicode objects. The byte strings
     are encoded in the filesystem encoding of the platform, or UTF-8.
     '''
-    if isinstance(name, unicode):
+    if isinstance(name, str):
         name = name.encode(filesystem_encoding, 'ignore')
     one = _filename_sanitize.sub(substitute, name)
     one = re.sub(r'\s', ' ', one).strip()
@@ -150,7 +153,7 @@ def sanitize_file_name_unicode(name, substitute='_'):
         return sanitize_file_name(name, substitute=substitute, as_unicode=True)
     chars = [substitute if c in _filename_sanitize_unicode else c for c in
             name]
-    one = u''.join(chars)
+    one = ''.join(chars)
     one = re.sub(r'\s', ' ', one).strip()
     bname, ext = os.path.splitext(one)
     one = re.sub(r'^\.+$', '_', bname)
@@ -191,7 +194,7 @@ def prints(*args, **kwargs):
     safe_encode = kwargs.get('safe_encode', False)
     count = 0
     for i, arg in enumerate(args):
-        if isinstance(arg, unicode):
+        if isinstance(arg, str):
             if iswindows:
                 from .utils.terminal import Detect
                 cs = Detect(file)
@@ -215,8 +218,8 @@ def prints(*args, **kwargs):
             try:
                 arg = str(arg)
             except ValueError:
-                arg = unicode(arg)
-            if isinstance(arg, unicode):
+                arg = str(arg)
+            if isinstance(arg, str):
                 try:
                     arg = arg.encode(enc)
                 except UnicodeEncodeError:
@@ -231,7 +234,7 @@ def prints(*args, **kwargs):
             file.write(arg)
             count += len(arg)
         except:
-            import repr as reprlib
+            import reprlib as reprlib
             arg = reprlib.repr(arg)
             file.write(arg)
             count += len(arg)
@@ -281,7 +284,7 @@ def load_library(name, cdll):
 
 def filename_to_utf8(name):
     '''Return C{name} encoded in utf8. Unhandled characters are replaced. '''
-    if isinstance(name, unicode):
+    if isinstance(name, str):
         return name.encode('utf8')
     codec = 'cp1252' if iswindows else 'utf8'
     return name.decode(codec, 'replace').encode('utf8')
@@ -375,16 +378,16 @@ def get_proxy_info(proxy_scheme, proxy_string):
     is not available in the string. If an exception occurs parsing the string
     this method returns None.
     '''
-    import urlparse
+    import urllib.parse
     try:
-        proxy_url = u'%s://%s'%(proxy_scheme, proxy_string)
-        urlinfo = urlparse.urlparse(proxy_url)
+        proxy_url = '%s://%s'%(proxy_scheme, proxy_string)
+        urlinfo = urllib.parse.urlparse(proxy_url)
         ans = {
-            u'scheme': urlinfo.scheme,
-            u'hostname': urlinfo.hostname,
-            u'port': urlinfo.port,
-            u'username': urlinfo.username,
-            u'password': urlinfo.password,
+            'scheme': urlinfo.scheme,
+            'hostname': urlinfo.hostname,
+            'port': urlinfo.port,
+            'username': urlinfo.username,
+            'password': urlinfo.password,
         }
     except:
         return None
@@ -399,9 +402,9 @@ USER_AGENT_MOBILE = 'Mozilla/5.0 (Windows; U; Windows CE 5.1; rv:1.8.1a3) Gecko/
 def random_user_agent(choose=None, allow_ie=True):
     from .utils.random_ua import common_user_agents
     ua_list = common_user_agents()
-    ua_list = filter(lambda x: 'Mobile/' not in x, ua_list)
+    ua_list = [x for x in ua_list if 'Mobile/' not in x]
     if not allow_ie:
-        ua_list = filter(lambda x: 'Trident/' not in x and 'Edge/' not in x, ua_list)
+        ua_list = [x for x in ua_list if 'Trident/' not in x and 'Edge/' not in x]
     return random.choice(ua_list) if choose is None else ua_list[choose]
 
 
@@ -466,7 +469,7 @@ class CurrentDir(object):
         self.workaround_temp_folder_permissions = workaround_temp_folder_permissions
 
     def __enter__(self, *args):
-        self.cwd = os.getcwdu()
+        self.cwd = os.getcwd()
         try:
             os.chdir(self.path)
         except OSError:
@@ -529,7 +532,7 @@ def strftime(fmt, t=None):
     ''' A version of strftime that returns unicode strings and tries to handle dates
     before 1900 '''
     if not fmt:
-        return u''
+        return ''
     if t is None:
         t = time.localtime()
     if hasattr(t, 'timetuple'):
@@ -543,7 +546,7 @@ def strftime(fmt, t=None):
         t[0] = replacement
     ans = None
     if iswindows:
-        if isinstance(fmt, unicode):
+        if isinstance(fmt, str):
             fmt = fmt.encode('mbcs')
         fmt = fmt.replace(b'%e', b'%#d')
         ans = plugins['winutil'][0].strftime(fmt, t)
@@ -558,7 +561,7 @@ def my_unichr(num):
     try:
         return safe_chr(num)
     except (ValueError, OverflowError):
-        return u'?'
+        return '?'
 
 
 def entity_to_unicode(match, exceptions=[], encoding='cp1252',
@@ -605,7 +608,7 @@ def entity_to_unicode(match, exceptions=[], encoding='cp1252',
         return check(html5_entities[ent])
     except KeyError:
         pass
-    from htmlentitydefs import name2codepoint
+    from html.entities import name2codepoint
     try:
         return check(my_unichr(name2codepoint[ent]))
     except KeyError:
@@ -662,7 +665,7 @@ def force_unicode(obj, enc=preferred_encoding):
 def as_unicode(obj, enc=preferred_encoding):
     if not isbytestring(obj):
         try:
-            obj = unicode(obj)
+            obj = str(obj)
         except:
             try:
                 obj = str(obj)
@@ -694,12 +697,12 @@ def human_readable(size, sep=' '):
 
 
 def remove_bracketed_text(src,
-        brackets={u'(':u')', u'[':u']', u'{':u'}'}):
+        brackets={'(':')', '[':']', '{':'}'}):
     from collections import Counter
     counts = Counter()
     buf = []
     src = force_unicode(src)
-    rmap = dict([(v, k) for k, v in brackets.iteritems()])
+    rmap = dict([(v, k) for k, v in brackets.items()])
     for char in src:
         if char in brackets:
             counts[char] += 1
@@ -707,9 +710,9 @@ def remove_bracketed_text(src,
             idx = rmap[char]
             if counts[idx] > 0:
                 counts[idx] -= 1
-        elif sum(counts.itervalues()) < 1:
+        elif sum(counts.values()) < 1:
             buf.append(char)
-    return u''.join(buf)
+    return ''.join(buf)
 
 
 def ipython(user_ns=None):

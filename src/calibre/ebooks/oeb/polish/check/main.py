@@ -1,26 +1,26 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.ebooks.oeb.base import OEB_DOCS, OEB_STYLES
+from calibre.ebooks.oeb.polish.check.base import WARN, run_checkers
+from calibre.ebooks.oeb.polish.check.fonts import check_fonts
+from calibre.ebooks.oeb.polish.check.images import check_raster_images
+from calibre.ebooks.oeb.polish.check.links import (
+	check_link_destinations, check_links, check_mimetypes
+)
+from calibre.ebooks.oeb.polish.check.opf import check_opf
+from calibre.ebooks.oeb.polish.check.parsing import (
+	EmptyFile, check_css_parsing, check_encoding_declarations, check_filenames,
+	check_html_size, check_ids, check_markup, check_xml_parsing, fix_style_tag
+)
+from calibre.ebooks.oeb.polish.cover import is_raster_image
+from calibre.ebooks.oeb.polish.utils import guess_type
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from future_builtins import map
 
-from calibre.ebooks.oeb.base import OEB_DOCS, OEB_STYLES
-from calibre.ebooks.oeb.polish.utils import guess_type
-from calibre.ebooks.oeb.polish.cover import is_raster_image
-from calibre.ebooks.oeb.polish.check.base import run_checkers, WARN
-from calibre.ebooks.oeb.polish.check.parsing import (
-    check_filenames, check_xml_parsing, check_css_parsing, fix_style_tag,
-    check_html_size, check_ids, check_markup, EmptyFile, check_encoding_declarations)
-from calibre.ebooks.oeb.polish.check.images import check_raster_images
-from calibre.ebooks.oeb.polish.check.links import check_links, check_mimetypes, check_link_destinations
-from calibre.ebooks.oeb.polish.check.fonts import check_fonts
-from calibre.ebooks.oeb.polish.check.opf import check_opf
 
-XML_TYPES = frozenset(map(guess_type, ('a.xml', 'a.svg', 'a.opf', 'a.ncx'))) | {'application/oebps-page-map+xml'}
+XML_TYPES = frozenset(list(map(guess_type, ('a.xml', 'a.svg', 'a.opf', 'a.ncx')))) | {'application/oebps-page-map+xml'}
 
 
 def run_checks(container):
@@ -29,7 +29,7 @@ def run_checks(container):
 
     # Check parsing
     xml_items, html_items, raster_images, stylesheets = [], [], [], []
-    for name, mt in container.mime_map.iteritems():
+    for name, mt in container.mime_map.items():
         items = None
         if mt in XML_TYPES:
             items = xml_items
@@ -107,4 +107,3 @@ def fix_errors(container, errors):
                 # better to have a false positive than a false negative)
                 changed = True
     return changed
-

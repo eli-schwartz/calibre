@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,24 +6,25 @@ __docformat__ = 'restructuredtext en'
 
 import sys
 
-from PyQt5.Qt import (Qt, QApplication, QStyle, QIcon,  QDoubleSpinBox, QStyleOptionViewItem,
-        QSpinBox, QStyledItemDelegate, QComboBox, QTextDocument, QMenu, QKeySequence,
-        QAbstractTextDocumentLayout, QFont, QFontInfo, QDate, QDateTimeEdit, QDateTime,
-        QStyleOptionComboBox, QStyleOptionSpinBox, QLocale, QSize, QLineEdit)
-
+from calibre.constants import iswindows
 from calibre.ebooks.metadata import rating_to_stars
 from calibre.gui2 import UNDEFINED_QDATETIME, rating_font
-from calibre.constants import iswindows
-from calibre.gui2.widgets import EnLineEdit
-from calibre.gui2.widgets2 import populate_standard_spinbox_context_menu, RatingEditor
 from calibre.gui2.complete2 import EditWithComplete
-from calibre.utils.date import now, format_date, qt_to_dt, is_date_undefined
-from calibre.utils.config import tweaks
-from calibre.utils.icu import sort_key
 from calibre.gui2.dialogs.comments_dialog import CommentsDialog, PlainTextDialog
-from calibre.gui2.dialogs.template_dialog import TemplateDialog
 from calibre.gui2.dialogs.tag_editor import TagEditor
+from calibre.gui2.dialogs.template_dialog import TemplateDialog
 from calibre.gui2.languages import LanguagesEdit
+from calibre.gui2.widgets import EnLineEdit
+from calibre.gui2.widgets2 import RatingEditor, populate_standard_spinbox_context_menu
+from calibre.utils.config import tweaks
+from calibre.utils.date import format_date, is_date_undefined, now, qt_to_dt
+from calibre.utils.icu import sort_key
+from PyQt5.Qt import (
+	QAbstractTextDocumentLayout, QApplication, QComboBox, QDate, QDateTime,
+	QDateTimeEdit, QDoubleSpinBox, QFont, QFontInfo, QIcon, QKeySequence, QLineEdit,
+	QLocale, QMenu, QSize, QSpinBox, QStyle, QStyledItemDelegate, QStyleOptionComboBox,
+	QStyleOptionSpinBox, QStyleOptionViewItem, Qt, QTextDocument
+)
 
 
 class UpdateEditorGeometry(object):
@@ -49,7 +49,7 @@ class UpdateEditorGeometry(object):
         else:
             # The line edit box seems to extend by the space consumed by an 'M'.
             # So add that to the text
-            text = self.displayText(index.data(Qt.DisplayRole), QLocale()) + u'M'
+            text = self.displayText(index.data(Qt.DisplayRole), QLocale()) + 'M'
             srect = style.itemTextRect(fm, editor.geometry(), Qt.AlignLeft, False, text)
             new_width = srect.width()
 
@@ -174,7 +174,7 @@ def get_val_for_textlike_columns(index_):
         ct = ''
     else:
         ct = index_.data(Qt.DisplayRole) or ''
-    return unicode(ct)
+    return str(ct)
 
 # }}}
 
@@ -559,7 +559,7 @@ class CcNumberDelegate(QStyledItemDelegate, UpdateEditorGeometry):  # {{{
         val = editor.maximum()
         text = editor.textFromValue(val)
         srect = style.itemTextRect(fm, editor.geometry(), Qt.AlignLeft, False,
-                                   text + u'M')
+                                   text + 'M')
         return srect.width()
 
 # }}}
@@ -590,14 +590,14 @@ class CcEnumDelegate(QStyledItemDelegate, UpdateEditorGeometry):  # {{{
         return editor
 
     def setModelData(self, editor, model, index):
-        val = unicode(editor.currentText())
+        val = str(editor.currentText())
         if not val:
             val = None
         model.setData(index, (val), Qt.EditRole)
 
     def get_required_width(self, editor, style, fm):
         srect = style.itemTextRect(fm, editor.geometry(), Qt.AlignLeft, False,
-                                   self.longest_text + u'M')
+                                   self.longest_text + 'M')
         return srect.width()
 
     def setEditorData(self, editor, index):
@@ -700,7 +700,7 @@ class CcBoolDelegate(QStyledItemDelegate, UpdateEditorGeometry):  # {{{
 
     def get_required_width(self, editor, style, fm):
         srect = style.itemTextRect(fm, editor.geometry(), Qt.AlignLeft, False,
-                                   self.longest_text + u'M')
+                                   self.longest_text + 'M')
         return srect.width() + editor.iconSize().width()
 
     def setModelData(self, editor, model, index):
@@ -732,7 +732,7 @@ class CcTemplateDelegate(QStyledItemDelegate):  # {{{
         m = index.model()
         mi = m.db.get_metadata(index.row(), index_is_id=False)
         if check_key_modifier(Qt.ControlModifier):
-            text = u''
+            text = ''
         else:
             text = m.custom_columns[m.column_map[index.column()]]['display']['composite_template']
         editor = TemplateDialog(parent, text, mi)

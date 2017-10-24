@@ -1,19 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import sys
+from collections import defaultdict, deque
+
+from calibre.gui2.tweak_book.widgets import BusyCursor
+from calibre.utils.icu import utf16_length
+from PyQt5.Qt import QTextBlockUserData, QTextCursor, QTextLayout, QTimer
+
+from ..themes import highlight_to_char_format
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import sys
-from collections import defaultdict, deque
 
-from PyQt5.Qt import QTextCursor, QTextBlockUserData, QTextLayout, QTimer
 
-from ..themes import highlight_to_char_format
-from calibre.gui2.tweak_book.widgets import BusyCursor
-from calibre.utils.icu import utf16_length
 
 is_wide_build = sys.maxunicode >= 0x10ffff
 
@@ -38,7 +38,7 @@ def run_loop(user_data, state_map, formats, text):
                 i += num
         if orig_i == i and state.parse in seen_states[i]:
             # Something went wrong in the syntax highlighter
-            print ('Syntax highlighter returned a zero length format, parse state:', state.parse)
+            print(('Syntax highlighter returned a zero length format, parse state:', state.parse))
             break
 
 
@@ -83,7 +83,7 @@ class SyntaxHighlighter(object):
         return bool(self.requests)
 
     def apply_theme(self, theme):
-        self.theme = {k:highlight_to_char_format(v) for k, v in theme.iteritems()}
+        self.theme = {k:highlight_to_char_format(v) for k, v in theme.items()}
         self.create_formats()
         self.rehighlight()
 
@@ -99,7 +99,7 @@ class SyntaxHighlighter(object):
             blk = old_doc.begin()
             while blk.isValid():
                 blk.layout().clearAdditionalFormats()
-                blk = blk.next()
+                blk = next(blk)
             c.endEditBlock()
         self.doc = self.doc_name = None
         if doc is not None:
@@ -195,7 +195,7 @@ class SyntaxHighlighter(object):
                     formats, force_next_highlight = self.parse_single_block(block)
                     self.apply_format_changes(block, formats)
                     doc.markContentsDirty(block.position(), block.length())
-                    block = block.next()
+                    block = next(block)
         finally:
             self.ignore_requests = False
 
@@ -213,7 +213,7 @@ class SyntaxHighlighter(object):
             start_state = self.user_data_factory().state
         ud.clear(state=start_state, doc_name=self.doc_name)  # Ensure no stale user data lingers
         formats = []
-        for i, num, fmt in run_loop(ud, self.state_map, self.formats, unicode(block.text())):
+        for i, num, fmt in run_loop(ud, self.state_map, self.formats, str(block.text())):
             if fmt is not None:
                 r = QTextLayout.FormatRange()
                 r.start, r.length, r.format = i, num, fmt
@@ -237,4 +237,3 @@ class SyntaxHighlighter(object):
                 elif r.start + r.length >= preedit_start:
                     r.length += preedit_length
         layout.setAdditionalFormats(formats)
-

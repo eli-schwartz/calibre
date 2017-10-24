@@ -1,23 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import errno, os
-from functools import partial
+import errno
+import os
 from collections import Counter
-
-from PyQt5.Qt import QObject, QTimer, QModelIndex
+from functools import partial
 
 from calibre.constants import isosx
 from calibre.gui2 import error_dialog, question_dialog
-from calibre.gui2.dialogs.delete_matching_from_device import DeleteMatchingFromDeviceDialog
+from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.dialogs.confirm_delete import confirm
 from calibre.gui2.dialogs.confirm_delete_location import confirm_location
-from calibre.gui2.actions import InterfaceAction
+from calibre.gui2.dialogs.delete_matching_from_device import DeleteMatchingFromDeviceDialog
 from calibre.utils.recycle_bin import can_recycle
+from PyQt5.Qt import QModelIndex, QObject, QTimer
+
 
 single_shot = partial(QTimer.singleShot, 10)
 

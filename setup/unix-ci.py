@@ -2,14 +2,13 @@
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import os
 import shlex
 import subprocess
 import sys
 import time
 from tempfile import NamedTemporaryFile
+
 
 _plat = sys.platform.lower()
 isosx = 'darwin' in _plat
@@ -54,7 +53,7 @@ else:
 def run(*args):
     if len(args) == 1:
         args = shlex.split(args[0])
-    print(' '.join(args))
+    print((' '.join(args)))
     ret = subprocess.Popen(args).wait()
     if ret != 0:
         raise SystemExit(ret)
@@ -68,7 +67,7 @@ def download_and_decompress(url, dest, compression=None):
     if compression is None:
         compression = 'j' if url.endswith('.bz2') else 'J'
     for i in range(5):
-        print('Downloading', url, '...')
+        print(('Downloading', url, '...'))
         with NamedTemporaryFile() as f:
             ret = subprocess.Popen(['curl', '-fSL', url], stdout=f).wait()
             if ret == 0:
@@ -101,7 +100,7 @@ def main():
         )
 
         run('npm install --no-optional rapydscript-ng uglify-js regenerator')
-        print(os.environ['PATH'])
+        print((os.environ['PATH']))
         run('which rapydscript')
         run('rapydscript --version')
 

@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
 import shutil
@@ -14,7 +11,7 @@ import unittest
 from threading import Thread
 
 from calibre.constants import fcntl, iswindows
-from calibre.utils.lock import ExclusiveFile, unix_open, create_single_instance_mutex
+from calibre.utils.lock import ExclusiveFile, create_single_instance_mutex, unix_open
 
 
 def FastFailEF(name):
@@ -49,7 +46,7 @@ def run_worker(mod, func, **kw):
         import win32process
         kw['creationflags'] = win32process.CREATE_NO_WINDOW
     kw['env'] = {str(k): str(v)
-                 for k, v in env.iteritems()}  # windows needs bytes in env
+                 for k, v in env.items()}  # windows needs bytes in env
     return subprocess.Popen(exe, **kw)
 
 

@@ -1,12 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 from calibre.db.cli import integers_from_string
 from calibre.db.delete_service import delete_service
 from calibre.srv.changes import books_deleted
+
 
 readonly = False
 version = 0  # change this if you change signature of implementation()

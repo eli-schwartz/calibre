@@ -1,13 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import sys
+
+from calibre.constants import iswindows, plugins
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, sys
-from calibre.constants import iswindows, plugins
 
 '''
 This module defines a share_open() function which is a replacement for
@@ -119,7 +119,7 @@ if iswindows:
     }
 
     def raise_winerror(pywinerr):
-        raise WindowsError(pywinerr.winerror, (pywinerr.funcname or '') + b': ' + (pywinerr.strerror or '')), None, sys.exc_info()[2]
+        raise WindowsError(pywinerr.winerror, (pywinerr.funcname or '') + b': ' + (pywinerr.strerror or '')).with_traceback(sys.exc_info()[2])
 
     def os_open(path, flags, mode=0o777, share_flags=FILE_SHARE_VALID_FLAGS):
         '''
@@ -173,7 +173,7 @@ else:
         return speedup.fdopen(os.open(path, flags), path, mode, buffering)
 
     def raise_winerror(x):
-        raise NotImplementedError(), None, sys.exc_info()[2]
+        raise NotImplementedError().with_traceback(sys.exc_info()[2])
 
 
 def find_tests():

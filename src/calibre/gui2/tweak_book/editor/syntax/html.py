@@ -1,35 +1,36 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import re
+from collections import namedtuple
+from functools import partial
+
+from calibre.gui2.tweak_book import dictionaries, tprefs, verify_link
+from calibre.gui2.tweak_book.editor import (
+	CLASS_ATTRIBUTE_PROPERTY, LINK_PROPERTY,
+	TAG_NAME_PROPERTY, store_locale, syntax_text_char_format
+)
+from calibre.gui2.tweak_book.editor.syntax.base import SyntaxHighlighter, run_loop
+from calibre.gui2.tweak_book.editor.syntax.css import (
+	CSSState, CSSUserData, create_formats as create_css_formats, state_map as css_state_map
+)
+from PyQt5.Qt import QFont, QTextBlockUserData, QTextCharFormat
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import re
-from functools import partial
-from collections import namedtuple
 
-from PyQt5.Qt import QFont, QTextBlockUserData, QTextCharFormat
 
-from calibre.gui2.tweak_book import dictionaries, tprefs, verify_link
-from calibre.gui2.tweak_book.editor import (
-    syntax_text_char_format,
-    store_locale, LINK_PROPERTY, TAG_NAME_PROPERTY, CLASS_ATTRIBUTE_PROPERTY)
-from calibre.gui2.tweak_book.editor.syntax.base import SyntaxHighlighter, run_loop
-from calibre.gui2.tweak_book.editor.syntax.css import (
-    create_formats as create_css_formats, state_map as css_state_map, CSSState, CSSUserData)
 
 cdata_tags = frozenset(['title', 'textarea', 'style', 'script', 'xmp', 'iframe', 'noembed', 'noframes', 'noscript'])
 normal_pat = re.compile(r'[^<>&]+')
 entity_pat = re.compile(r'&#{0,1}[a-zA-Z0-9]{1,8};')
 tag_name_pat = re.compile(r'/{0,1}[a-zA-Z0-9:-]+')
-space_chars = ' \t\r\n\u000c'
+space_chars = ' \t\r\n\\u000c'
 attribute_name_pat = re.compile(r'''[^%s"'/><=]+''' % space_chars)
 self_closing_pat = re.compile(r'/\s*>')
 unquoted_val_pat = re.compile(r'''[^%s'"=<>`]+''' % space_chars)
 cdata_close_pats = {x:re.compile(r'</%s' % x, flags=re.I) for x in cdata_tags}
-nbsp_pat = re.compile('[\xa0\u2000-\u200A\u202F\u205F\u3000\u2011-\u2015\uFE58\uFE63\uFF0D]+')  # special spaces and hyphens
+nbsp_pat = re.compile('[\xa0\\u2000-\\u200A\\u202F\\u205F\\u3000\\u2011-\\u2015\\uFE58\\uFE63\\uFF0D]+')  # special spaces and hyphens
 
 NORMAL = 0
 IN_OPENING_TAG = 1
@@ -476,7 +477,7 @@ def create_formats(highlighter, add_css=True):
             'bad-closing': _('A closing tag must contain only the tag name and nothing else'),
             'no-attr-value': _('Expecting an attribute value'),
             'only-prefix': _('A tag name cannot end with a colon'),
-    }.iteritems():
+    }.items():
         f = formats[name] = syntax_text_char_format(formats['error'])
         f.setToolTip(msg)
     f = formats['title'] = syntax_text_char_format()
@@ -529,10 +530,10 @@ def profile():
     h.set_document(doc)
     h.join()
     import cProfile
-    print ('Running profile on', sys.argv[-2])
+    print(('Running profile on', sys.argv[-2]))
     h.rehighlight()
     cProfile.runctx('h.join()', {}, {'h':h}, sys.argv[-1])
-    print ('Stats saved to:', sys.argv[-1])
+    print(('Stats saved to:', sys.argv[-1]))
     del h
     del doc
     del app
@@ -565,8 +566,8 @@ if __name__ == '__main__':
         <svg:svg xmlns:svg="http://whatever" />
         <input disabled><input disabled /><span attr=<></span>
         <!-- Non-breaking spaces are rendered differently from normal spaces, so that they stand out -->
-        <p>Some\xa0words\xa0separated\xa0by\xa0non\u2011breaking\xa0spaces and non\u2011breaking hyphens.</p>
-        <p>Some non-BMP unicode text:\U0001f431\U0001f431\U0001f431</p>
+        <p>Some\xa0words\xa0separated\xa0by\xa0non\\u2011breaking\xa0spaces and non\\u2011breaking hyphens.</p>
+        <p>Some non-BMP unicode text:\\U0001f431\\U0001f431\\U0001f431</p>
     </body>
 </html>
 ''', path_is_raw=True)

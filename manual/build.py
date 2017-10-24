@@ -1,22 +1,24 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from functools import partial
+
+from calibre.ebooks.oeb.polish.container import epub_to_azw3
+from setup import __appname__, __version__
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import sys, os, subprocess, shutil
-import tempfile
-from functools import partial
 
 j, d, a = os.path.join, os.path.dirname, os.path.abspath
 BASE = d(a(__file__))
 SPHINX_BUILD = 'sphinx-build2'
 
 sys.path.insert(0, d(BASE))
-from setup import __appname__, __version__
-from calibre.ebooks.oeb.polish.container import epub_to_azw3
 sys.path.remove(d(BASE))
 
 
@@ -45,7 +47,7 @@ def build_manual(language, base):
     onlinedir = sb(t='online')
     epubdir = sb('myepub', 'epub')
     latexdir = sb('mylatex', 'latex')
-    pwd = os.getcwdu()
+    pwd = os.getcwd()
     os.chdir(latexdir)
 
     def run_cmd(cmd):

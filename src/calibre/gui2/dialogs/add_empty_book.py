@@ -1,16 +1,16 @@
-#!/usr/bin/env python2
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
 __license__   = 'GPL v3'
 
 
-from PyQt5.Qt import (
-    QDialog, QGridLayout, QLabel, QDialogButtonBox,  QApplication, QSpinBox,
-    QToolButton, QIcon, QLineEdit, QComboBox, QCheckBox)
 from calibre.ebooks.metadata import string_to_authors
+from calibre.gui2 import gprefs
 from calibre.gui2.complete2 import EditWithComplete
 from calibre.utils.config import tweaks
-from calibre.gui2 import gprefs
+from PyQt5.Qt import (
+	QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+	QGridLayout, QIcon, QLabel, QLineEdit, QSpinBox, QToolButton
+)
 
 
 class AddEmptyBookDialog(QDialog):
@@ -161,11 +161,11 @@ class AddEmptyBookDialog(QDialog):
 
     @property
     def selected_authors(self):
-        return string_to_authors(unicode(self.authors_combo.text()))
+        return string_to_authors(str(self.authors_combo.text()))
 
     @property
     def selected_series(self):
-        return unicode(self.series_combo.text())
+        return str(self.series_combo.text())
 
     @property
     def selected_title(self):

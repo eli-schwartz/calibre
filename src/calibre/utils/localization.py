@@ -1,13 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import absolute_import
+import pickle as cPickle
+import locale
+import os
+import re
+from io import StringIO
+from gettext import GNUTranslations, NullTranslations
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, locale, re, cStringIO, cPickle
-from gettext import GNUTranslations, NullTranslations
 
 _available_translations = None
 
@@ -113,19 +116,19 @@ _lang_trans = None
 
 
 def get_all_translators():
-    from zipfile import ZipFile
+    from .zipfile import ZipFile
     with ZipFile(P('localization/locales.zip', allow_user_override=False), 'r') as zf:
         for lang in available_translations():
             mpath = get_lc_messages_path(lang)
             if mpath is not None:
-                buf = cStringIO.StringIO(zf.read(mpath + '/messages.mo'))
+                buf = StringIO(zf.read(mpath + '/messages.mo'))
                 yield lang, GNUTranslations(buf)
 
 
 def get_single_translator(mpath, which='messages'):
-    from zipfile import ZipFile
+    from .zipfile import ZipFile
     with ZipFile(P('localization/locales.zip', allow_user_override=False), 'r') as zf:
-        buf = cStringIO.StringIO(zf.read(mpath + '/%s.mo' % which))
+        buf = StringIO(zf.read(mpath + '/%s.mo' % which))
         return GNUTranslations(buf)
 
 
@@ -157,31 +160,31 @@ def get_translator(bcp_47_code):
 
 
 lcdata = {
-    u'abday': (u'Sun', u'Mon', u'Tue', u'Wed', u'Thu', u'Fri', u'Sat'),
-    u'abmon': (u'Jan', u'Feb', u'Mar', u'Apr', u'May', u'Jun', u'Jul', u'Aug', u'Sep', u'Oct', u'Nov', u'Dec'),
-    u'd_fmt': u'%m/%d/%Y',
-    u'd_t_fmt': u'%a %d %b %Y %r %Z',
-    u'day': (u'Sunday', u'Monday', u'Tuesday', u'Wednesday', u'Thursday', u'Friday', u'Saturday'),
-    u'mon': (u'January', u'February', u'March', u'April', u'May', u'June', u'July', u'August', u'September', u'October', u'November', u'December'),
-    u'noexpr': u'^[nN].*',
-    u'radixchar': u'.',
-    u't_fmt': u'%r',
-    u't_fmt_ampm': u'%I:%M:%S %p',
-    u'thousep': u',',
-    u'yesexpr': u'^[yY].*'
+    'abday': ('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'),
+    'abmon': ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'),
+    'd_fmt': '%m/%d/%Y',
+    'd_t_fmt': '%a %d %b %Y %r %Z',
+    'day': ('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'),
+    'mon': ('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'),
+    'noexpr': '^[nN].*',
+    'radixchar': '.',
+    't_fmt': '%r',
+    't_fmt_ampm': '%I:%M:%S %p',
+    'thousep': ',',
+    'yesexpr': '^[yY].*'
 }
 
 
 def load_po(path):
     from calibre.translations.msgfmt import make
-    buf = cStringIO.StringIO()
+    buf = StringIO()
     try:
         make(path, buf)
     except Exception:
-        print (('Failed to compile translations file: %s, ignoring') % path)
+        print((('Failed to compile translations file: %s, ignoring') % path))
         buf = None
     else:
-        buf = cStringIO.StringIO(buf.getvalue())
+        buf = StringIO(buf.getvalue())
     return buf
 
 
@@ -201,16 +204,16 @@ def set_translators():
             buf = load_po(mpath + '.po')
 
         if mpath is not None:
-            from zipfile import ZipFile
+            from .zipfile import ZipFile
             with ZipFile(P('localization/locales.zip',
                 allow_user_override=False), 'r') as zf:
                 if buf is None:
-                    buf = cStringIO.StringIO(zf.read(mpath + '/messages.mo'))
+                    buf = StringIO(zf.read(mpath + '/messages.mo'))
                 if mpath == 'nds':
                     mpath = 'de'
                 isof = mpath + '/iso639.mo'
                 try:
-                    iso639 = cStringIO.StringIO(zf.read(isof))
+                    iso639 = StringIO(zf.read(isof))
                 except:
                     pass  # No iso639 translations for this lang
                 if buf is not None:
@@ -232,7 +235,7 @@ def set_translators():
         set_translators.lang = t.info().get('language')
     except Exception:
         pass
-    t.install(unicode=True, names=('ngettext',))
+    t.install(str=True, names=('ngettext',))
     # Now that we have installed a translator, we have to retranslate the help
     # for the global prefs object as it was instantiated in get_lang(), before
     # the translator was installed.
@@ -381,7 +384,7 @@ def calibre_langcode_to_name(lc, localize=True):
 def canonicalize_lang(raw):
     if not raw:
         return None
-    if not isinstance(raw, unicode):
+    if not isinstance(raw, str):
         raw = raw.decode('utf-8', 'ignore')
     raw = raw.lower().strip()
     if not raw:
@@ -414,7 +417,7 @@ def lang_map():
     translate = _
     global _lang_map
     if _lang_map is None:
-        _lang_map = {k:translate(v) for k, v in iso639['by_3t'].iteritems()}
+        _lang_map = {k:translate(v) for k, v in iso639['by_3t'].items()}
     return _lang_map
 
 
@@ -428,7 +431,7 @@ def langnames_to_langcodes(names):
     translate = _
     ans = {}
     names = set(names)
-    for k, v in iso639['by_3t'].iteritems():
+    for k, v in iso639['by_3t'].items():
         tv = translate(v)
         if tv in names:
             names.remove(tv)
@@ -478,7 +481,7 @@ def localize_user_manual_link(url):
     stats = user_manual_stats()
     if stats.get(lc, 0) < 0.3:
         return url
-    from urlparse import urlparse, urlunparse
+    from urllib.parse import urlparse, urlunparse
     parts = urlparse(url)
     path = re.sub(r'/generated/[a-z]+/', '/generated/%s/' % lc, parts.path or '')
     path = '/%s%s' % (lc, path)
@@ -503,7 +506,7 @@ def localize_website_link(url):
     langs = website_languages()
     if lc == 'en' or lc not in langs:
         return url
-    from urlparse import urlparse, urlunparse
+    from urllib.parse import urlparse, urlunparse
     parts = urlparse(url)
     path = '/{}{}'.format(lc, parts.path)
     parts = list(parts)

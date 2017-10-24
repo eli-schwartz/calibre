@@ -1,14 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+
+from calibre.customize import FileTypePlugin
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os
-from calibre.customize import FileTypePlugin
 
 class HelloWorld(FileTypePlugin):
 
@@ -29,5 +28,3 @@ class HelloWorld(FileTypePlugin):
         mi.publisher = 'Hello World'
         set_metadata(file, mi, ext)
         return path_to_ebook
-
-

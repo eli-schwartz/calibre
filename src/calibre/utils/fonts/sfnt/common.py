@@ -1,16 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import OrderedDict, namedtuple
+from struct import calcsize, unpack_from
+
+from calibre.utils.fonts.sfnt.errors import UnsupportedFont
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from struct import unpack_from, calcsize
-from collections import OrderedDict, namedtuple
 
-from calibre.utils.fonts.sfnt.errors import UnsupportedFont
 
 
 class Unpackable(object):
@@ -249,4 +248,3 @@ class UnknownLookupSubTable(object):
                     items.append(read_item(data))
             coverage_to_items_map.append(items)
         return coverage_to_items_map
-

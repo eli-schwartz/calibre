@@ -1,21 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import re, itertools
+import itertools
+import re
 from collections import OrderedDict, defaultdict
 from functools import wraps
 from itertools import chain
 
+from css_selectors.errors import ExpressionError
+from css_selectors.ordered_set import OrderedSet
+from css_selectors.parser import Element, ascii_lower, parse
 from lxml import etree
 
-from css_selectors.errors import ExpressionError
-from css_selectors.parser import parse, ascii_lower, Element
-from css_selectors.ordered_set import OrderedSet
+
+__license__ = 'GPL v3'
+__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 PARSE_CACHE_SIZE = 200
 parse_cache = OrderedDict()
@@ -53,7 +53,7 @@ def trace_wrapper(func):
     @wraps(func)
     def trace(*args, **kwargs):
         targs = args[1:] if args and isinstance(args[0], Select) else args
-        print ('Called:', func.__name__, 'with args:', targs, kwargs or '')
+        print(('Called:', func.__name__, 'with args:', targs, kwargs or ''))
         return func(*args, **kwargs)
     return trace
 
@@ -142,7 +142,7 @@ class Select(object):
         self.invalidate_caches()
         self.default_lang = default_lang
         if trace:
-            self.dispatch_map = {k:trace_wrapper(v) for k, v in self.dispatch_map.iteritems()}
+            self.dispatch_map = {k:trace_wrapper(v) for k, v in self.dispatch_map.items()}
         if ignore_inappropriate_pseudo_classes:
             self.ignore_inappropriate_pseudo_classes = INAPPROPRIATE_PSEUDO_CLASSES
         else:
@@ -231,7 +231,7 @@ class Select(object):
                 def map_attrib_name(x):
                     return ascii_lower(x.rpartition('}')[2])
             for tag in self.itertag():
-                for attr, val in tag.attrib.iteritems():
+                for attr, val in tag.attrib.items():
                     am[map_attrib_name(attr)][val].add(tag)
         return self._attrib_map
 
@@ -244,7 +244,7 @@ class Select(object):
                 def map_attrib_name(x):
                     return ascii_lower(x.rpartition('}')[2])
             for tag in self.itertag():
-                for attr, val in tag.attrib.iteritems():
+                for attr, val in tag.attrib.items():
                     for v in val.split():
                         am[map_attrib_name(attr)][v].add(tag)
         return self._attrib_space_map
@@ -263,7 +263,7 @@ class Select(object):
                     lang = normalize_language_tag(lang)
                     for dtag in self.itertag(tag):
                         lmap[dtag] = lang
-            for tag, langs in lmap.iteritems():
+            for tag, langs in lmap.items():
                 for lang in langs:
                     lm[lang].add(tag)
         return self._lang_map
@@ -409,7 +409,7 @@ def select_attrib(cache, selector):
             yield item
 
 def select_exists(cache, attrib, value=None):
-    for elem_set in cache.attrib_map[attrib].itervalues():
+    for elem_set in cache.attrib_map[attrib].values():
         for elem in elem_set:
             yield elem
 
@@ -424,28 +424,28 @@ def select_includes(cache, attrib, value):
 
 def select_dashmatch(cache, attrib, value):
     if value:
-        for val, elem_set in cache.attrib_map[attrib].iteritems():
+        for val, elem_set in cache.attrib_map[attrib].items():
             if val == value or val.startswith(value + '-'):
                 for elem in elem_set:
                     yield elem
 
 def select_prefixmatch(cache, attrib, value):
     if value:
-        for val, elem_set in cache.attrib_map[attrib].iteritems():
+        for val, elem_set in cache.attrib_map[attrib].items():
             if val.startswith(value):
                 for elem in elem_set:
                     yield elem
 
 def select_suffixmatch(cache, attrib, value):
     if value:
-        for val, elem_set in cache.attrib_map[attrib].iteritems():
+        for val, elem_set in cache.attrib_map[attrib].items():
             if val.endswith(value):
                 for elem in elem_set:
                     yield elem
 
 def select_substringmatch(cache, attrib, value):
     if value:
-        for val, elem_set in cache.attrib_map[attrib].iteritems():
+        for val, elem_set in cache.attrib_map[attrib].items():
             if value in val:
                 for elem in elem_set:
                     yield elem
@@ -480,7 +480,7 @@ def select_lang(cache, function):
     if lang:
         lang = ascii_lower(lang)
         lp = lang + '-'
-        for tlang, elem_set in cache.lang_map.iteritems():
+        for tlang, elem_set in cache.lang_map.items():
             if tlang == lang or (tlang is not None and tlang.startswith(lp)):
                 for elem in elem_set:
                     yield elem
@@ -611,7 +611,7 @@ select_empty.is_pseudo = True
 
 # }}}
 
-default_dispatch_map = {name.partition('_')[2]:obj for name, obj in globals().items() if name.startswith('select_') and callable(obj)}
+default_dispatch_map = {name.partition('_')[2]:obj for name, obj in list(globals().items()) if name.startswith('select_') and callable(obj)}
 
 if __name__ == '__main__':
     from pprint import pprint

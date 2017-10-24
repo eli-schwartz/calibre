@@ -1,14 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.ebooks.metadata.book import ALL_METADATA_FIELDS, TOP_LEVEL_IDENTIFIERS
+from calibre.utils.formatter import TemplateFormatter
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from calibre.ebooks.metadata.book import TOP_LEVEL_IDENTIFIERS, ALL_METADATA_FIELDS
 
-from calibre.utils.formatter import TemplateFormatter
 
 
 class SafeFormat(TemplateFormatter):
@@ -43,5 +41,3 @@ class SafeFormat(TemplateFormatter):
         if v == '':
             return ''
         return v
-
-

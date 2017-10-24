@@ -5,12 +5,15 @@ __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 '''
 Contains the logic for parsing feeds.
 '''
-import time, traceback, copy, re
+import copy
+import re
+import time
+import traceback
 
-from calibre.utils.logging import default_log
-from calibre import entity_to_unicode, strftime, force_unicode
-from calibre.utils.date import dt_factory, utcnow, local_tz
+from calibre import entity_to_unicode, force_unicode, strftime
 from calibre.utils.cleantext import clean_ascii_chars, clean_xml_chars
+from calibre.utils.date import dt_factory, local_tz, utcnow
+from calibre.utils.logging import default_log
 
 
 class Article(object):
@@ -30,21 +33,21 @@ class Article(object):
         self.url = url
         self.author = author
         self.toc_thumbnail = None
-        if author and not isinstance(author, unicode):
+        if author and not isinstance(author, str):
             author = author.decode('utf-8', 'replace')
-        if summary and not isinstance(summary, unicode):
+        if summary and not isinstance(summary, str):
             summary = summary.decode('utf-8', 'replace')
         summary = clean_xml_chars(summary) if summary else summary
         self.summary = summary
         if summary and '<' in summary:
             try:
                 s = html.fragment_fromstring(summary, create_parent=True)
-                summary = html.tostring(s, method='text', encoding=unicode)
+                summary = html.tostring(s, method='text', encoding=str)
             except:
-                print 'Failed to process article summary, deleting:'
-                print summary.encode('utf-8')
+                print('Failed to process article summary, deleting:')
+                print(summary.encode('utf-8'))
                 traceback.print_exc()
-                summary = u''
+                summary = ''
         self.text_summary = clean_ascii_chars(summary)
         self.author = author
         self.content = content
@@ -63,7 +66,7 @@ class Article(object):
             return self._formatted_date
 
         def fset(self, val):
-            if isinstance(val, unicode):
+            if isinstance(val, str):
                 self._formatted_date = val
 
         return property(fget=fget, fset=fset)
@@ -72,7 +75,7 @@ class Article(object):
     def title(self):
         def fget(self):
             t = self._title
-            if not isinstance(t, unicode) and hasattr(t, 'decode'):
+            if not isinstance(t, str) and hasattr(t, 'decode'):
                 t = t.decode('utf-8', 'replace')
             return t
 
@@ -82,7 +85,7 @@ class Article(object):
 
     def __repr__(self):
         return \
-(u'''\
+('''\
 Title       : %s
 URL         : %s
 Author      : %s
@@ -140,7 +143,7 @@ class Feed(object):
 
     def populate_from_preparsed_feed(self, title, articles, oldest_article=7,
                            max_articles_per_feed=100):
-        self.title      = unicode(title if title else _('Unknown feed'))
+        self.title      = str(title if title else _('Unknown feed'))
         self.description = ''
         self.image_url  = None
         self.articles   = []
@@ -170,8 +173,8 @@ class Feed(object):
             if delta.days*24*3600 + delta.seconds <= 24*3600*self.oldest_article:
                 self.articles.append(article)
             else:
-                t = strftime(u'%a, %d %b, %Y %H:%M', article.localtime.timetuple())
-                self.logger.debug(u'Skipping article %s (%s) from feed %s as it is too old.'%
+                t = strftime('%a, %d %b, %Y %H:%M', article.localtime.timetuple())
+                self.logger.debug('Skipping article %s (%s) from feed %s as it is too old.'%
                         (title, t, self.title))
             d = item.get('date', '')
             article.formatted_date = d
@@ -205,9 +208,9 @@ class Feed(object):
         author = item.get('author', None)
 
         content = [i.value for i in item.get('content', []) if i.value]
-        content = [i if isinstance(i, unicode) else i.decode('utf-8', 'replace')
+        content = [i if isinstance(i, str) else i.decode('utf-8', 'replace')
                 for i in content]
-        content = u'\n'.join(content)
+        content = '\n'.join(content)
         if not content.strip():
             content = None
         if not link and not content:
@@ -221,7 +224,7 @@ class Feed(object):
                 self.logger.debug('Skipping article %s (%s) from feed %s as it is too old.'%
                                   (title, article.localtime.strftime('%a, %d %b, %Y %H:%M'), self.title))
             except UnicodeDecodeError:
-                if not isinstance(title, unicode):
+                if not isinstance(title, str):
                     title = title.decode('utf-8', 'replace')
                 self.logger.debug('Skipping article %s as it is too old'%title)
 
@@ -294,8 +297,8 @@ class FeedCollection(list):
                     return x
             return None
 
-        print '#feeds', len(self)
-        print map(len, self)
+        print('#feeds', len(self))
+        print(list(map(len, self)))
         for f in self:
             dups = []
             for a in f:
@@ -309,8 +312,8 @@ class FeedCollection(list):
                 f.articles.remove(x)
 
         self.duplicates = duplicates
-        print len(duplicates)
-        print map(len, self)
+        print(len(duplicates))
+        print(list(map(len, self)))
         # raise
 
     def find_article(self, article):

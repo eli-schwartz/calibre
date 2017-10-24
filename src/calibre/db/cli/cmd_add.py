@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
 import sys
@@ -10,12 +7,15 @@ from io import BytesIO
 from optparse import OptionGroup, OptionValueError
 
 from calibre import prints
-from calibre.db.adding import compile_rule, recursive_import, import_book_directory, import_book_directory_multiple
+from calibre.db.adding import (
+	compile_rule, import_book_directory, import_book_directory_multiple, recursive_import
+)
 from calibre.ebooks.metadata import MetaInformation, string_to_authors
 from calibre.ebooks.metadata.book.serialize import read_cover
 from calibre.ebooks.metadata.meta import get_metadata
 from calibre.srv.changes import books_added
 from calibre.utils.localization import canonicalize_lang
+
 
 readonly = False
 version = 0  # change this if you change signature of implementation()
@@ -51,12 +51,12 @@ def book(db, notify_changes, is_remote, args):
 def add_books(db, notify_changes, is_remote, args):
     books, kwargs = args
     if is_remote:
-        books = [(mi, {k:to_stream(v) for k, v in fmt_map.iteritems()}) for mi, fmt_map in books]
+        books = [(mi, {k:to_stream(v) for k, v in fmt_map.items()}) for mi, fmt_map in books]
     ids, duplicates = db.add_books(books, **kwargs)
     if is_remote:
         notify_changes(books_added(ids))
     db.dump_metadata()
-    return ids, [(mi.title, [getattr(x, 'name', '<stream>') for x in format_map.itervalues()]) for mi, format_map in duplicates]
+    return ids, [(mi.title, [getattr(x, 'name', '<stream>') for x in format_map.values()]) for mi, format_map in duplicates]
 
 
 def implementation(db, notify_changes, action, *args):
@@ -75,7 +75,7 @@ class DBProxy(object):
         self.dbctx = dbctx
 
     def add_books(self, books, **kwargs):
-        books = [(read_cover(mi), {k:self.dbctx.path(v) for k, v in fmt_map.iteritems()}) for mi, fmt_map in books]
+        books = [(read_cover(mi), {k:self.dbctx.path(v) for k, v in fmt_map.items()}) for mi, fmt_map in books]
         return self.dbctx.run('add', 'add_books', books, kwargs)
 
 
@@ -200,7 +200,7 @@ def do_add(
                     prints('   ', path)
 
         if added_ids:
-            prints(_('Added book ids: %s') % (', '.join(map(type(u''), added_ids))))
+            prints(_('Added book ids: %s') % (', '.join(map(type(''), added_ids))))
     finally:
         sys.stdout = orig
 

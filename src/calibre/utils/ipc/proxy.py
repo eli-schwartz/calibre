@@ -1,25 +1,26 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import pickle
+import os
+import struct
+from functools import partial
+from multiprocessing.connection import Listener, arbitrary_address
+from queue import Empty, Queue
+from threading import Thread
+
+from calibre import as_unicode, prints
+from calibre.constants import DEBUG, iswindows
+from calibre.utils.ipc import eintr_retry_call
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, cPickle, struct
-from threading import Thread
-from Queue import Queue, Empty
-from multiprocessing.connection import arbitrary_address, Listener
-from functools import partial
 
-from calibre import as_unicode, prints
-from calibre.constants import iswindows, DEBUG
-from calibre.utils.ipc import eintr_retry_call
 
 
 def _encode(msg):
-    raw = cPickle.dumps(msg, -1)
+    raw = pickle.dumps(msg, -1)
     size = len(raw)
     header = struct.pack('!Q', size)
     return header + raw
@@ -32,7 +33,7 @@ def _decode(raw):
     header, = struct.unpack('!Q', raw[:sz])
     if len(raw) != sz + header or header == 0:
         return 'invalid', None
-    return cPickle.loads(raw[sz:])
+    return pickle.loads(raw[sz:])
 
 
 class Writer(Thread):
@@ -160,10 +161,8 @@ class Server(Thread):
                     import traceback
                     # Try to tell the client process what error happened
                     try:
-                        eintr_retry_call(conn.send_bytes, (_encode(('failed', (unicode(e),
+                        eintr_retry_call(conn.send_bytes, (_encode(('failed', (str(e),
                             as_unicode(traceback.format_exc()))))))
                     except:
                         pass
                 raise
-
-

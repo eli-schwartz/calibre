@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+import re
+
+from calibre.gui2.store.basic_config import BasicStoreConfig
+from calibre.gui2.store.opensearch_store import OpenSearchOPDSStore
+from calibre.gui2.store.search_result import SearchResult
+
+
 store_version = 1  # Needed for dynamic plugin loading
 
 __license__ = 'GPL 3'
 __copyright__ = '2012, Alex Stanev <alex@stanev.org>'
 __docformat__ = 'restructuredtext en'
 
-import re
 
-from calibre.gui2.store.basic_config import BasicStoreConfig
-from calibre.gui2.store.opensearch_store import OpenSearchOPDSStore
-from calibre.gui2.store.search_result import SearchResult
 
 
 class BiblioStore(BasicStoreConfig, OpenSearchOPDSStore):
@@ -21,8 +23,8 @@ class BiblioStore(BasicStoreConfig, OpenSearchOPDSStore):
 
     def search(self, query, max_results=10, timeout=60):
         # check for cyrillic symbols before performing search
-        uquery = unicode(query.strip(), 'utf-8')
-        reObj = re.search(u'^[а-яА-Я\\d\\s]{3,}$', uquery)
+        uquery = str(query.strip(), 'utf-8')
+        reObj = re.search('^[а-яА-Я\\d\\s]{3,}$', uquery)
         if not reObj:
             return
 

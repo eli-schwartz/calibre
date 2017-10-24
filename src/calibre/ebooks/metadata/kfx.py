@@ -1,14 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>, John Howell <jhowell@acm.org>'
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-# Based on work of John Howell reversing the KFX format
-# https://www.mobileread.com/forums/showpost.php?p=3176029&postcount=89
-
-import struct, sys, base64, re
+import base64
+import re
+import struct
+import sys
 from collections import defaultdict
 
 from calibre.ebooks.metadata.book.base import Metadata
@@ -16,8 +12,14 @@ from calibre.ebooks.mobi.utils import decint
 from calibre.utils.cleantext import clean_xml_chars
 from calibre.utils.config_base import tweaks
 from calibre.utils.date import parse_only_date
-from calibre.utils.localization import canonicalize_lang
 from calibre.utils.imghdr import identify
+from calibre.utils.localization import canonicalize_lang
+
+
+# Based on work of John Howell reversing the KFX format
+# https://www.mobileread.com/forums/showpost.php?p=3176029&postcount=89
+
+
 
 
 class InvalidKFX(ValueError):
@@ -254,7 +256,7 @@ def extract_metadata(container_data):
 
     for entity_type, entity_id, entity_value in container_data:
         if entity_type == PROP_METADATA:
-            for key, value in entity_value.items():
+            for key, value in list(entity_value.items()):
                 if key in METADATA_PROPERTIES:
                     metadata[METADATA_PROPERTIES[key]].append(value)
 
@@ -319,7 +321,7 @@ def read_metadata_kfx(stream, read_cover=True):
     elif has('content_id'):
         mi.set_identifier('mobi-asin', get('content_id'))
     if has('languages'):
-        langs = list(filter(None, (canonicalize_lang(x) for x in get('languages', False))))
+        langs = list([_f for _f in (canonicalize_lang(x) for x in get('languages', False)) if _f])
         if langs:
             mi.languages = langs
     if has('issue_date'):
@@ -345,4 +347,4 @@ if __name__ == '__main__':
     from calibre import prints
     with open(sys.argv[-1], 'rb') as f:
         mi = read_metadata_kfx(f)
-        prints(unicode(mi))
+        prints(str(mi))

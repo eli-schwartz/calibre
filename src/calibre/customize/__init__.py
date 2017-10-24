@@ -1,11 +1,16 @@
-from __future__ import with_statement
+import importlib
+import os
+import sys
+import zipfile
+
+from calibre.constants import isosx, iswindows, numeric_version
+from calibre.ptempfile import PersistentTemporaryFile
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, sys, zipfile, importlib
 
-from calibre.constants import numeric_version, iswindows, isosx
-from calibre.ptempfile import PersistentTemporaryFile
 
 platform = 'linux'
 if iswindows:
@@ -194,7 +199,7 @@ class Plugin(object):  # {{{
             config_dialog.exec_()
 
             if config_dialog.result() == QDialog.Accepted:
-                sc = unicode(sc.text()).strip()
+                sc = str(sc.text()).strip()
                 customize_plugin(self, sc)
 
         geom = bytearray(config_dialog.saveGeometry())
@@ -529,9 +534,9 @@ class CatalogPlugin(Plugin):  # {{{
             if requested_fields - all_fields:
                 from calibre.library import current_library_name
                 invalid_fields = sorted(list(requested_fields - all_fields))
-                print("invalid --fields specified: %s" % ', '.join(invalid_fields))
-                print("available fields in '%s': %s" %
-                      (current_library_name(), ', '.join(sorted(list(all_fields)))))
+                print(("invalid --fields specified: %s" % ', '.join(invalid_fields)))
+                print(("available fields in '%s': %s" %
+                      (current_library_name(), ', '.join(sorted(list(all_fields))))))
                 raise ValueError("unable to generate catalog with specified fields")
 
             fields = [x for x in of if x in all_fields]
@@ -565,7 +570,7 @@ class CatalogPlugin(Plugin):  # {{{
                 try:
                     resources.extract(file, self.resources_path)
                 except:
-                    print " customize:__init__.initialize(): %s not found in %s" % (file, os.path.basename(self.plugin_path))
+                    print(" customize:__init__.initialize(): %s not found in %s" % (file, os.path.basename(self.plugin_path)))
                     continue
             resources.close()
 

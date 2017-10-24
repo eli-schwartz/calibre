@@ -1,13 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import ctypes
+import ctypes.wintypes as types
+import datetime
+import struct
+
+import winreg as winreg
+import win32con
+import winerror
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import ctypes, ctypes.wintypes as types, _winreg as winreg, struct, datetime
-import winerror, win32con
 
 # Binding to C library {{{
 advapi32 = ctypes.windll.advapi32
@@ -106,7 +110,7 @@ def convert_to_registry_data(value, has_expansions=False):
     if isinstance(value, (list, tuple)):
         buf = ctypes.create_unicode_buffer('\0'.join(map(type(''), value)) + '\0\0')
         return buf, winreg.REG_MULTI_SZ, len(buf) * 2
-    if isinstance(value, (int, long)):
+    if isinstance(value, int):
         try:
             raw, dtype = struct.pack(str('L'), value), winreg.REG_DWORD
         except struct.error:
@@ -327,7 +331,7 @@ class Key(object):
     def __exit__(self, *args):
         self.close()
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self.hkey)
 
     def close(self):
@@ -347,7 +351,7 @@ if __name__ == '__main__':
     pprint(tuple(k.itervalues(get_data=True)))
     k = Key(r'Software\calibre\winregtest')
     k.set('Moose.Cat.1')
-    k.set('unicode test', 'fällen粗楷体简a\U0001f471')
+    k.set('unicode test', 'fällen粗楷体简a\\U0001f471')
     k.set('none test')
     k.set_default_value(r'other\key', '%PATH%', has_expansions=True)
     pprint(tuple(k.itervalues(get_data=True)))

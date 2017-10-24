@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import atexit
 import errno
@@ -11,11 +8,12 @@ import stat
 import tempfile
 import time
 from functools import partial
+from time import monotonic
 
 from calibre.constants import (
-    __appname__, fcntl, filesystem_encoding, islinux, isosx, iswindows, plugins
+	__appname__, fcntl, filesystem_encoding, islinux, isosx, iswindows, plugins
 )
-from time import monotonic
+
 
 speedup = plugins['speedup'][0]
 if iswindows:

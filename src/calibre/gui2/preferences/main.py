@@ -1,26 +1,25 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import textwrap, re
-from functools import partial
+import re
+import textwrap
 from collections import OrderedDict
-
-from PyQt5.Qt import (
-    Qt, QIcon, QFont, QWidget, QScrollArea, QStackedWidget, QVBoxLayout,
-    QLabel, QFrame, QToolBar, QSize, pyqtSignal, QDialogButtonBox,
-    QHBoxLayout, QDialog, QSizePolicy, QPainter, QTextLayout, QPointF,
-    QStatusTipEvent, QApplication, QTabWidget)
+from functools import partial
 
 from calibre.constants import __appname__, __version__, islinux
-from calibre.gui2 import (gprefs, min_available_height, available_width,
-    show_restart_warning)
-from calibre.gui2.dialogs.message_box import Icon
-from calibre.gui2.preferences import init_gui, AbortCommit, get_plugin
 from calibre.customize.ui import preferences_plugins
+from calibre.gui2 import available_width, gprefs, min_available_height, show_restart_warning
+from calibre.gui2.dialogs.message_box import Icon
+from calibre.gui2.preferences import AbortCommit, get_plugin, init_gui
+from PyQt5.Qt import (
+	QApplication, QDialog, QDialogButtonBox, QFont, QFrame, QHBoxLayout, QIcon, QLabel,
+	QPainter, QPointF, QScrollArea, QSize, QSizePolicy, QStackedWidget, QStatusTipEvent,
+	Qt, QTabWidget, QTextLayout, QToolBar, QVBoxLayout, QWidget, pyqtSignal
+)
+
 
 ICON_SIZE = 32
 
@@ -179,7 +178,7 @@ class Browser(QScrollArea):  # {{{
         for plugin in preferences_plugins():
             self.category_map[plugin.category].append(plugin)
 
-        for plugins in self.category_map.values():
+        for plugins in list(self.category_map.values()):
             plugins.sort(cmp=lambda x, y: cmp(x.name_order, y.name_order))
 
         self.widgets = []
@@ -188,7 +187,7 @@ class Browser(QScrollArea):  # {{{
         self.container.setLayout(self._layout)
         self.setWidget(self.container)
 
-        for name, plugins in self.category_map.items():
+        for name, plugins in list(self.category_map.items()):
             w = Category(name, plugins, self.category_names[name], parent=self)
             self.widgets.append(w)
             self._layout.addWidget(w)
@@ -293,8 +292,8 @@ class Preferences(QDialog):
                 if isinstance(g, QLabel):
                     buddy = g.buddy()
                     if buddy is not None and hasattr(buddy, 'toolTip'):
-                        htext = unicode(buddy.toolTip()).strip()
-                        etext = unicode(g.toolTip()).strip()
+                        htext = str(buddy.toolTip()).strip()
+                        etext = str(g.toolTip()).strip()
                         if htext and not etext:
                             g.setToolTip(htext)
                             g.setWhatsThis(htext)

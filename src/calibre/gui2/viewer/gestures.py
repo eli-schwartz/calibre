@@ -1,18 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import sys
+import time
+from functools import partial
+
+from calibre.constants import iswindows
+from PyQt5.Qt import (
+	QApplication, QContextMenuEvent, QDialog, QDialogButtonBox, QEvent,
+	QLabel, QMouseEvent, QObject, QPointF, Qt, QVBoxLayout, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import time, sys
-from functools import partial
-from PyQt5.Qt import (
-    QObject, QPointF, pyqtSignal, QEvent, QApplication, QMouseEvent, Qt,
-    QContextMenuEvent, QDialog, QDialogButtonBox, QLabel, QVBoxLayout)
 
-from calibre.constants import iswindows
 
 touch_supported = False
 if iswindows and sys.getwindowsversion()[:2] >= (6, 2):  # At least windows 7
@@ -104,7 +105,7 @@ class TouchPoint(object):
     def swipe_type(self):
         x_movement = self.current_screen_position.x() - self.start_screen_position.x()
         y_movement = self.current_screen_position.y() - self.start_screen_position.y()
-        xabs, yabs = map(abs, (x_movement, y_movement))
+        xabs, yabs = list(map(abs, (x_movement, y_movement)))
         if max(xabs, yabs) < SWIPE_DISTANCE or min(xabs/max(yabs, 0.01), yabs/max(xabs, 0.01)) > 0.3:
             return
         d = x_movement if xabs > yabs else y_movement
@@ -182,14 +183,14 @@ class State(QObject):
         else:
             self.check_for_holds()
             if {Swipe, SwipeAndHold} & self.possible_gestures:
-                tp = next(self.touch_points.itervalues())
+                tp = next(iter(self.touch_points.values()))
                 self.swiping.emit(*tp.swipe_live)
 
     def check_for_holds(self):
         if not {SwipeAndHold, TapAndHold} & self.possible_gestures:
             return
         now = time.time()
-        tp = next(self.touch_points.itervalues())
+        tp = next(iter(self.touch_points.values()))
         if now - tp.time_of_last_move < HOLD_THRESHOLD:
             return
         if self.hold_started:
@@ -216,20 +217,20 @@ class State(QObject):
 
     def finalize(self):
         if Tap in self.possible_gestures:
-            tp = next(self.touch_points.itervalues())
+            tp = next(iter(self.touch_points.values()))
             if tp.total_movement <= TAP_THRESHOLD:
                 self.tapped.emit(tp)
                 return
 
         if Swipe in self.possible_gestures:
-            tp = next(self.touch_points.itervalues())
+            tp = next(iter(self.touch_points.values()))
             st = tp.swipe_type
             if st is not None:
                 self.swiped.emit(st)
                 return
 
         if Pinch in self.possible_gestures:
-            points = tuple(self.touch_points.itervalues())
+            points = tuple(self.touch_points.values())
             if len(points) == 2:
                 pinch_dir = get_pinch(*points)
                 if pinch_dir is not None:
@@ -239,7 +240,7 @@ class State(QObject):
             return
 
         if TapAndHold in self.possible_gestures:
-            tp = next(self.touch_points.itervalues())
+            tp = next(iter(self.touch_points.values()))
             self.tap_hold_finished.emit(tp)
             return
 

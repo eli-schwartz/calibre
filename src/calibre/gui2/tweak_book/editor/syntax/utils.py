@@ -1,12 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from PyQt5.Qt import QTextCharFormat
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from PyQt5.Qt import QTextCharFormat
 
 NULL_FMT = QTextCharFormat()
 
@@ -49,6 +47,3 @@ def format_for_pygments_token(theme, cache, token):
         return ans
     cache[token] = ans = NULL_FMT
     return ans
-
-
-

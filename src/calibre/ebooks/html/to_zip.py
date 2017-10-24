@@ -1,16 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import glob
+import os
+import textwrap
+
+from calibre.constants import numeric_version
+from calibre.customize import FileTypePlugin
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import textwrap, os, glob
 
-from calibre.customize import FileTypePlugin
-from calibre.constants import numeric_version
 
 
 class HTML2ZIP(FileTypePlugin):
@@ -114,10 +115,9 @@ every time you add an HTML file to the library.\
         config_dialog.exec_()
 
         if config_dialog.result() == QDialog.Accepted:
-            sc = unicode(sc.text()).strip()
+            sc = str(sc.text()).strip()
             if bf.isChecked():
                 sc += '|bf'
             customize_plugin(self, sc)
 
         return config_dialog.result()
-

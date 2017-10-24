@@ -1,18 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import argparse
+import sys
+import unittest
+
+from css_selectors.errors import ExpressionError, SelectorSyntaxError
+from css_selectors.parser import parse, tokenize
+from css_selectors.select import Select
+from lxml import etree, html
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import unittest, sys, argparse
 
-from lxml import etree, html
 
-from css_selectors.errors import SelectorSyntaxError, ExpressionError
-from css_selectors.parser import tokenize, parse
-from css_selectors.select import Select
 
 class TestCSSSelectors(unittest.TestCase):
 
@@ -821,7 +822,7 @@ def run_tests(find_tests=find_tests, for_build=False):
         except StopIteration:
             pass
         if ans is None:
-            print ('No test named %s found' % args.name)
+            print(('No test named %s found' % args.name))
             raise SystemExit(1)
         tests = ans
     else:

@@ -1,17 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import os
+
+from calibre import sanitize_file_name
+from calibre.customize.conversion import OptionRecommendation
+from calibre.utils.config import config_dir
+from calibre.utils.lock import ExclusiveFile
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os
 
-from calibre.utils.config import config_dir
-from calibre.utils.lock import ExclusiveFile
-from calibre import sanitize_file_name
-from calibre.customize.conversion import OptionRecommendation
 
 
 config_dir = os.path.join(config_dir, 'conversion')
@@ -71,13 +71,13 @@ class GuiRecommendations(dict):
 
     def to_recommendations(self, level=OptionRecommendation.LOW):
         ans = []
-        for key, val in self.items():
+        for key, val in list(self.items()):
             ans.append((key, val, level))
         return ans
 
     def __str__(self):
         ans = ['{']
-        for key, val in self.items():
+        for key, val in list(self.items()):
             ans.append('\t'+repr(key)+' : '+repr(val)+',')
         ans.append('}')
         return '\n'.join(ans)
@@ -103,5 +103,3 @@ class GuiRecommendations(dict):
                 self.disabled_options.add(name)
             elif opt.level > level or name not in self:
                 self[name] = opt.recommended_value
-
-

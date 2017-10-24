@@ -1,7 +1,10 @@
-#! /usr/bin/env python2
 # coding: utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import struct
+import sys
+
+from calibre.constants import plugins
+from calibre.ebooks.djvu.djvubzzdec import BZZDecoder
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Anthon van der Neut <A.van.der.Neut@ruamel.eu>'
@@ -11,11 +14,7 @@ __copyright__ = '2011, Anthon van der Neut <A.van.der.Neut@ruamel.eu>'
 # DjVu v3
 # November 2005
 
-import sys
-import struct
 
-from calibre.ebooks.djvu.djvubzzdec import BZZDecoder
-from calibre.constants import plugins
 
 
 class DjvuChunk(object):

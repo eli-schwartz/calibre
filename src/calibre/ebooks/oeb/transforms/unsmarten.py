@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+from calibre.ebooks.oeb.base import OEB_DOCS, XPath, barename
+from calibre.utils.unsmarten import unsmarten_text
+
 
 __license__ = 'GPL 3'
 __copyright__ = '2011, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-from calibre.ebooks.oeb.base import OEB_DOCS, XPath, barename
-from calibre.utils.unsmarten import unsmarten_text
 
 
 class UnsmartenPunctuation(object):
@@ -29,4 +29,3 @@ class UnsmartenPunctuation(object):
             if x.media_type in OEB_DOCS:
                 for body in bx(x.data):
                     self.unsmarten(body)
-

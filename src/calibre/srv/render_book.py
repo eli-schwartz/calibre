@@ -1,35 +1,35 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-import sys, os, json, re
-from base64 import standard_b64encode, standard_b64decode
-from collections import defaultdict, OrderedDict
-from itertools import count
+import json
+import os
+import re
+import sys
+from base64 import standard_b64decode, standard_b64encode
+from collections import OrderedDict, defaultdict
 from functools import partial
-from future_builtins import map
-from urlparse import urlparse
-from urllib import quote
+from itertools import count
+from urllib.parse import quote
+from urllib.parse import urlparse
 
+from calibre import force_unicode, prepare_string_for_xml
+from calibre.ebooks import parse_css_length
+from calibre.ebooks.css_transform_rules import StyleDeclaration
+from calibre.ebooks.oeb.base import (
+	EPUB_NS, OEB_DOCS, OEB_STYLES, OPF, XHTML,
+	XHTML_NS, XLINK, XPath, rewrite_links, urlunquote
+)
+from calibre.ebooks.oeb.iterator.book import extract_book
+from calibre.ebooks.oeb.polish.container import Container as ContainerBase
+from calibre.ebooks.oeb.polish.cover import find_cover_image, set_epub_cover
+from calibre.ebooks.oeb.polish.css import transform_css
+from calibre.ebooks.oeb.polish.toc import get_landmarks, get_toc
+from calibre.ebooks.oeb.polish.utils import extract, guess_type
+from calibre.utils.logging import default_log
+from calibre.utils.short_uuid import uuid4
 from cssutils import replaceUrls
 from cssutils.css import CSSRule
 
-from calibre import prepare_string_for_xml, force_unicode
-from calibre.ebooks import parse_css_length
-from calibre.ebooks.oeb.base import (
-    OEB_DOCS, OEB_STYLES, rewrite_links, XPath, urlunquote, XLINK, XHTML_NS, OPF, XHTML, EPUB_NS)
-from calibre.ebooks.oeb.iterator.book import extract_book
-from calibre.ebooks.oeb.polish.container import Container as ContainerBase
-from calibre.ebooks.oeb.polish.cover import set_epub_cover, find_cover_image
-from calibre.ebooks.oeb.polish.css import transform_css
-from calibre.ebooks.oeb.polish.utils import extract
-from calibre.ebooks.css_transform_rules import StyleDeclaration
-from calibre.ebooks.oeb.polish.toc import get_toc, get_landmarks
-from calibre.ebooks.oeb.polish.utils import guess_type
-from calibre.utils.short_uuid import uuid4
-from calibre.utils.logging import default_log
 
 RENDER_VERSION = 1
 
@@ -177,7 +177,7 @@ class Container(ContainerBase):
         book_fmt, opfpath, input_fmt = extract_book(path_to_ebook, tdir, log=log)
         ContainerBase.__init__(self, tdir, opfpath, log)
         excluded_names = {
-            name for name, mt in self.mime_map.iteritems() if
+            name for name, mt in self.mime_map.items() if
             name == self.opf_name or mt == guess_type('a.ncx') or name.startswith('META-INF/') or
             name == 'mimetype'
         }
@@ -275,7 +275,7 @@ class Container(ContainerBase):
         # Firefox flakes out sometimes when dynamically creating <style> tags,
         # so convert them to external stylesheets to ensure they never fail
         style_xpath = XPath('//h:style')
-        for name, mt in tuple(self.mime_map.iteritems()):
+        for name, mt in tuple(self.mime_map.items()):
             mt = mt.lower()
             if mt in OEB_DOCS:
                 head = ensure_head(self.parsed(name))
@@ -323,7 +323,7 @@ class Container(ContainerBase):
                     frag = urlunquote(frag)
                     url = resource_template.format(encode_url(name, frag))
                 else:
-                    if isinstance(name, unicode):
+                    if isinstance(name, str):
                         name = name.encode('utf-8')
                     url = 'missing:' + force_unicode(quote(name), 'utf-8')
                 changed.add(base)
@@ -331,7 +331,7 @@ class Container(ContainerBase):
 
         ltm = self.book_render_data['link_to_map']
 
-        for name, mt in self.mime_map.iteritems():
+        for name, mt in self.mime_map.items():
             mt = mt.lower()
             if mt in OEB_STYLES:
                 replaceUrls(self.parsed(name), partial(link_replacer, name))
@@ -367,8 +367,8 @@ class Container(ContainerBase):
                 for elem in xlink_xpath(self.parsed(name)):
                     elem.set(xlink, link_replacer(name, elem.get(xlink)))
 
-        for name, amap in ltm.iteritems():
-            for k, v in tuple(amap.iteritems()):
+        for name, amap in ltm.items():
+            for k, v in tuple(amap.items()):
                 amap[k] = tuple(v)  # needed for JSON serialization
 
         tuple(map(self.dirty, changed))
@@ -414,7 +414,7 @@ def map_epub_type(epub_type, attribs, elem):
         roles = OrderedDict([(k, True) for k in role.split()]) if role else OrderedDict()
         if val not in roles:
             roles[val] = True
-        role = ' '.join(roles.iterkeys())
+        role = ' '.join(iter(roles.keys()))
         if in_attribs is None:
             attribs.append(['role', role])
         else:
@@ -440,7 +440,7 @@ def serialize_elem(elem, nsmap):
         if ns:
             ans['s'] = ns
     attribs = []
-    for attr, val in elem.items():
+    for attr, val in list(elem.items()):
         attr_ns, aname = split_name(attr)
         al = aname.lower()
         if not attr_ns and al in boolean_attributes:
@@ -500,7 +500,7 @@ def html_as_dict(root):
         if child.tag.partition('}')[-1] not in ('head', 'body'):
             root.remove(child)
     root.text = root.tail = None
-    nsmap = defaultdict(count().next)
+    nsmap = defaultdict(count().__next__)
     nsmap[XHTML_NS]
     tags = [serialize_elem(root, nsmap)]
     tree = [0]
@@ -514,7 +514,7 @@ def html_as_dict(root):
                 child_tree_node = [len(tags)-1]
                 node.append(child_tree_node)
                 stack.append((child, child_tree_node))
-    ns_map = [ns for ns, nsnum in sorted(nsmap.iteritems(), key=lambda x: x[1])]
+    ns_map = [ns for ns, nsnum in sorted(iter(nsmap.items()), key=lambda x: x[1])]
     return {'ns_map':ns_map, 'tag_map':tags, 'tree':tree}
 
 

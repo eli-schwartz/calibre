@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 """
     Tokenizer, parser and parsed objects for CSS selectors.
@@ -9,16 +8,17 @@
 
 """
 
-import sys
-import re
 import operator
+import re
 import string
+import sys
 
-from css_selectors.errors import SelectorSyntaxError, ExpressionError
+from css_selectors.errors import ExpressionError, SelectorSyntaxError
+
 
 if sys.version_info[0] < 3:
-    _unicode = unicode
-    _unichr = unichr
+    _unicode = str
+    _unichr = chr
 else:
     _unicode = str
     _unichr = chr
@@ -32,7 +32,7 @@ def ascii_lower(string):
 
 def urepr(x):
     if isinstance(x, list):
-        return '[%s]' % ', '.join((map(urepr, x)))
+        return '[%s]' % ', '.join((list(map(urepr, x))))
     ans = repr(x)
     if ans.startswith("u'") or ans.startswith('u"'):
         ans = ans[1:]
@@ -380,7 +380,7 @@ def parse_selector_group(stream):
     while 1:
         yield Selector(*parse_selector(stream))
         if stream.peek() == ('DELIM', ','):
-            stream.next()
+            next(stream)
             stream.skip_whitespace()
         else:
             break
@@ -417,10 +417,10 @@ def parse_simple_selector(stream, inside_negation=False):
         if peek.type == 'IDENT':
             namespace = stream.next().value
         else:
-            stream.next()
+            next(stream)
             namespace = None
         if stream.peek() == ('DELIM', '|'):
-            stream.next()
+            next(stream)
             element = stream.next_ident_or_star()
         else:
             element = namespace
@@ -441,18 +441,18 @@ def parse_simple_selector(stream, inside_negation=False):
         if peek.type == 'HASH':
             result = Hash(result, stream.next().value)
         elif peek == ('DELIM', '.'):
-            stream.next()
+            next(stream)
             result = Class(result, stream.next_ident())
         elif peek == ('DELIM', '['):
-            stream.next()
+            next(stream)
             result = parse_attrib(result, stream)
         elif peek == ('DELIM', ':'):
-            stream.next()
+            next(stream)
             if stream.peek() == ('DELIM', ':'):
-                stream.next()
+                next(stream)
                 pseudo_element = stream.next_ident()
                 if stream.peek() == ('DELIM', '('):
-                    stream.next()
+                    next(stream)
                     pseudo_element = FunctionalPseudoElement(
                         pseudo_element, parse_arguments(stream))
                 continue
@@ -466,14 +466,14 @@ def parse_simple_selector(stream, inside_negation=False):
             if stream.peek() != ('DELIM', '('):
                 result = Pseudo(result, ident)
                 continue
-            stream.next()
+            next(stream)
             stream.skip_whitespace()
             if ident.lower() == 'not':
                 if inside_negation:
                     raise SelectorSyntaxError('Got nested :not()')
                 argument, argument_pseudo_element = parse_simple_selector(
                     stream, inside_negation=True)
-                next = stream.next()
+                next = next(stream)
                 if argument_pseudo_element:
                     raise SelectorSyntaxError(
                         'Got pseudo-element ::%s inside :not() at %s'
@@ -496,7 +496,7 @@ def parse_arguments(stream):
     arguments = []
     while 1:
         stream.skip_whitespace()
-        next = stream.next()
+        next = next(stream)
         if next.type in ('IDENT', 'STRING', 'NUMBER') or next in [
                 ('DELIM', '+'), ('DELIM', '-')]:
             arguments.append(next)
@@ -514,10 +514,10 @@ def parse_attrib(selector, stream):
         raise SelectorSyntaxError(
             "Expected '|', got %s" % (stream.peek(),))
     if stream.peek() == ('DELIM', '|'):
-        stream.next()
+        next(stream)
         if stream.peek() == ('DELIM', '='):
             namespace = None
-            stream.next()
+            next(stream)
             op = '|='
         else:
             namespace = attrib
@@ -527,7 +527,7 @@ def parse_attrib(selector, stream):
         namespace = op = None
     if op is None:
         stream.skip_whitespace()
-        next = stream.next()
+        next = next(stream)
         if next == ('DELIM', ']'):
             return Attrib(selector, namespace, attrib, 'exists', None)
         elif next == ('DELIM', '='):
@@ -535,17 +535,17 @@ def parse_attrib(selector, stream):
         elif next.is_delim('^', '$', '*', '~', '|', '!') and (
                 stream.peek() == ('DELIM', '=')):
             op = next.value + '='
-            stream.next()
+            next(stream)
         else:
             raise SelectorSyntaxError(
                 "Operator expected, got %s" % (next,))
     stream.skip_whitespace()
-    value = stream.next()
+    value = next(stream)
     if value.type not in ('IDENT', 'STRING'):
         raise SelectorSyntaxError(
             "Expected string or ident, got %s" % (value,))
     stream.skip_whitespace()
-    next = stream.next()
+    next = next(stream)
     if next != ('DELIM', ']'):
         raise SelectorSyntaxError(
             "Expected ']', got %s" % (next,))
@@ -737,12 +737,12 @@ class TokenStream(object):
         self.peeked = None
         self._peeking = False
         try:
-            self.next_token = self.tokens.next
+            self.next_token = self.tokens.__next__
         except AttributeError:
             # Python 3
             self.next_token = self.tokens.__next__
 
-    def next(self):
+    def __next__(self):
         if self._peeking:
             self._peeking = False
             self.used.append(self.peeked)
@@ -759,13 +759,13 @@ class TokenStream(object):
         return self.peeked
 
     def next_ident(self):
-        next = self.next()
+        next = next(self)
         if next.type != 'IDENT':
             raise SelectorSyntaxError('Expected ident, got %s' % (next,))
         return next.value
 
     def next_ident_or_star(self):
-        next = self.next()
+        next = next(self)
         if next.type == 'IDENT':
             return next.value
         elif next == ('DELIM', '*'):
@@ -777,4 +777,4 @@ class TokenStream(object):
     def skip_whitespace(self):
         peek = self.peek()
         if peek.type == 'S':
-            self.next()
+            next(self)

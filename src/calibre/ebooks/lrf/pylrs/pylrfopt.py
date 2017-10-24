@@ -39,5 +39,3 @@ def tagListOptimizer(tagList):
     _optimize(tagList, "fontsize", int)
     _optimize(tagList, "fontweight", int)
     return oldSize - len(tagList)
-
-

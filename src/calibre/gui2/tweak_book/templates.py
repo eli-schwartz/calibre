@@ -1,13 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre import prepare_string_for_xml
+from calibre.gui2.tweak_book import current_container, tprefs
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from calibre import prepare_string_for_xml
-from calibre.gui2.tweak_book import current_container, tprefs
 
 DEFAULT_TEMPLATES = {
     'html':
@@ -45,5 +43,4 @@ def template_for(syntax):
         'AUTHOR': ' & '.join(mi.authors),
     }
     return raw_template_for(syntax).format(
-        **{k:prepare_string_for_xml(v, True) for k, v in data.iteritems()})
-
+        **{k:prepare_string_for_xml(v, True) for k, v in data.items()})

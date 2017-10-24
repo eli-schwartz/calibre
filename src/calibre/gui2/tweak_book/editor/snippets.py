@@ -1,20 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import re, copy, weakref
+import copy
+import re
+import weakref
 from collections import OrderedDict, namedtuple
 from itertools import groupby
 from operator import attrgetter, itemgetter
-
-from PyQt5.Qt import (
-    Qt, QObject, QSize, QVBoxLayout, QStackedLayout, QWidget, QLineEdit,
-    QToolButton, QIcon, QHBoxLayout, QPushButton, QListWidget, QListWidgetItem,
-    QGridLayout, QPlainTextEdit, QLabel, QFrame, QDialog, QDialogButtonBox)
 
 from calibre.constants import isosx
 from calibre.gui2 import error_dialog
@@ -24,8 +14,20 @@ from calibre.gui2.tweak_book.widgets import Dialog, PlainTextEdit
 from calibre.utils.config import JSONConfig
 from calibre.utils.icu import string_length as strlen
 from calibre.utils.localization import localize_user_manual_link
+from PyQt5.Qt import (
+	QDialog, QDialogButtonBox, QFrame, QGridLayout, QHBoxLayout, QIcon,
+	QLabel, QLineEdit, QListWidget, QListWidgetItem, QObject, QPlainTextEdit,
+	QPushButton, QSize, QStackedLayout, Qt, QToolButton, QVBoxLayout, QWidget
+)
 
-string_length = lambda x: strlen(unicode(x))  # Needed on narrow python builds, as subclasses of unicode dont work
+
+__license__ = 'GPL v3'
+__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
+
+string_length = lambda x: strlen(str(x))  # Needed on narrow python builds, as subclasses of unicode dont work
 KEY = Qt.Key_J
 MODIFIER = Qt.META if isosx else Qt.CTRL
 
@@ -94,16 +96,16 @@ escape = unescape = None
 def escape_funcs():
     global escape, unescape
     if escape is None:
-        escapem = {('\\' + x):unichr(i+1) for i, x in enumerate('\\${}')}
+        escapem = {('\\' + x):chr(i+1) for i, x in enumerate('\\${}')}
         escape_pat = re.compile('|'.join(map(re.escape, escapem)))
         escape = lambda x: escape_pat.sub(lambda m: escapem[m.group()], x.replace(r'\\', '\x01'))
-        unescapem = {v:k[1] for k, v in escapem.iteritems()}
+        unescapem = {v:k[1] for k, v in escapem.items()}
         unescape_pat = re.compile('|'.join(unescapem))
         unescape = lambda x:unescape_pat.sub(lambda m:unescapem[m.group()], x)
     return escape, unescape
 
 
-class TabStop(unicode):
+class TabStop(str):
 
     def __new__(self, raw, start_offset, tab_stops, is_toplevel=True):
         if raw.endswith('}'):
@@ -114,7 +116,7 @@ class TabStop(unicode):
             for c in child_stops:
                 c.parent = self
             tab_stops.extend(child_stops)
-            self = unicode.__new__(self, uraw)
+            self = str.__new__(self, uraw)
             if num.endswith('*'):
                 self.takes_selection = True
                 num = num[:-1]
@@ -122,7 +124,7 @@ class TabStop(unicode):
                 self.takes_selection = False
             self.num = int(num)
         else:
-            self = unicode.__new__(self, '')
+            self = str.__new__(self, '')
             self.num = int(raw[1:])
             self.takes_selection = False
         self.start = start_offset
@@ -134,7 +136,7 @@ class TabStop(unicode):
 
     def __repr__(self):
         return 'TabStop(text=%s num=%d start=%d is_mirror=%s takes_selection=%s is_toplevel=%s)' % (
-            unicode.__repr__(self), self.num, self.start, self.is_mirror, self.takes_selection, self.is_toplevel)
+            str.__repr__(self), self.num, self.start, self.is_mirror, self.takes_selection, self.is_toplevel)
 
 
 def parse_template(template, start_offset=0, is_toplevel=True, grouped=True):
@@ -176,7 +178,7 @@ def snippets(refresh=False):
             if snip['trigger'] and isinstance(snip['trigger'], type('')):
                 key = snip_key(snip['trigger'], *snip['syntaxes'])
                 _snippets[key] = {'template':snip['template'], 'description':snip['description']}
-        _snippets = sorted(_snippets.iteritems(), key=(lambda (key, snip):string_length(key.trigger)), reverse=True)
+        _snippets = sorted(iter(_snippets.items()), key=(lambda key_snip:string_length(key_snip[0].trigger)), reverse=True)
     return _snippets
 
 # Editor integration {{{
@@ -351,7 +353,7 @@ def expand_template(editor, trigger, template):
     left = right - string_length(trigger)
     text, tab_stops = parse_template(template)
     c.setPosition(left), c.setPosition(right, c.KeepAnchor), c.insertText(text)
-    editor_tab_stops = [EditorTabStop(left, ts, editor) for ts in tab_stops.itervalues()]
+    editor_tab_stops = [EditorTabStop(left, ts, editor) for ts in tab_stops.values()]
 
     tl = Template(editor_tab_stops)
     if tl.has_tab_stops:
@@ -528,7 +530,7 @@ class EditSnippet(QWidget):
         self.template.setPlainText(snip.get('template') or '')
 
         ftypes = snip.get('syntaxes', ())
-        for i in xrange(self.types.count()):
+        for i in range(self.types.count()):
             i = self.types.item(i)
             ftype = i.data(Qt.UserRole)
             i.setCheckState(Qt.Checked if ftype in ftypes else Qt.Unchecked)
@@ -543,7 +545,7 @@ class EditSnippet(QWidget):
 
         def fget(self):
             ftypes = []
-            for i in xrange(self.types.count()):
+            for i in range(self.types.count()):
                 i = self.types.item(i)
                 if i.checkState() == Qt.Checked:
                     ftypes.append(i.data(Qt.UserRole))
@@ -656,7 +658,7 @@ class UserSnippets(Dialog):
             else:
                 error_dialog(self, _('Invalid snippet'), err, show=True)
             return
-        user_snippets['snippets'] = [self.snip_list.item(i).data(Qt.UserRole) for i in xrange(self.snip_list.count())]
+        user_snippets['snippets'] = [self.snip_list.item(i).data(Qt.UserRole) for i in range(self.snip_list.count())]
         snippets(refresh=True)
         return Dialog.accept(self)
 
@@ -698,7 +700,7 @@ class UserSnippets(Dialog):
     def change_builtin(self):
         d = QDialog(self)
         lw = QListWidget(d)
-        for (trigger, syntaxes), snip in builtin_snippets.iteritems():
+        for (trigger, syntaxes), snip in builtin_snippets.items():
             snip = copy.deepcopy(snip)
             snip['trigger'], snip['syntaxes'] = trigger, syntaxes
             i = QListWidgetItem(self.snip_to_text(snip), lw)

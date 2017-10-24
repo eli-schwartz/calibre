@@ -1,22 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import threading
+import time
+import traceback
+from functools import partial, wraps
+from itertools import chain
+
+from calibre import as_unicode, force_unicode, prints
+from calibre.constants import __appname__, isxp, numeric_version, plugins
+from calibre.devices.errors import BlacklistedDevice, DeviceError, OpenFailed
+from calibre.devices.mtp.base import MTPDeviceBase, debug
+from calibre.ptempfile import SpooledTemporaryFile
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import time, threading, traceback
-from functools import wraps, partial
-from future_builtins import zip
-from itertools import chain
 
-from calibre import as_unicode, prints, force_unicode
-from calibre.constants import plugins, __appname__, numeric_version, isxp
-from calibre.ptempfile import SpooledTemporaryFile
-from calibre.devices.errors import OpenFailed, DeviceError, BlacklistedDevice
-from calibre.devices.mtp.base import MTPDeviceBase, debug
 
 null = object()
 
@@ -107,7 +107,7 @@ class MTP_DEVICE(MTPDeviceBase):
 
         # Get device data for detected devices. If there is an error, we will
         # try again for that device the next time this method is called.
-        for dev in tuple(self.detected_devices.iterkeys()):
+        for dev in tuple(self.detected_devices.keys()):
             data = self.detected_devices.get(dev, None)
             if data is None or data is False:
                 try:
@@ -130,7 +130,7 @@ class MTP_DEVICE(MTPDeviceBase):
                     self.currently_connected_pnp_id in self.detected_devices
                     else None)
 
-        for dev, data in self.detected_devices.iteritems():
+        for dev, data in self.detected_devices.items():
             if dev in self.blacklisted_devices or dev in self.ejected_devices:
                 # Ignore blacklisted and ejected devices
                 continue
@@ -264,13 +264,13 @@ class MTP_DEVICE(MTPDeviceBase):
                         break
                 storage = {'id':storage_id, 'size':capacity, 'name':name,
                         'is_folder':True, 'can_delete':False, 'is_system':True}
-                self._currently_getting_sid = unicode(storage_id)
+                self._currently_getting_sid = str(storage_id)
                 id_map = self.dev.get_filesystem(storage_id, partial(
                         self._filesystem_callback, {}))
-                for x in id_map.itervalues():
+                for x in id_map.values():
                     x['storage_id'] = storage_id
                 all_storage.append(storage)
-                items.append(id_map.itervalues())
+                items.append(iter(id_map.values()))
             self._filesystem_cache = FilesystemCache(all_storage, chain(*items))
             debug('Filesystem metadata loaded in %g seconds (%d objects)'%(
                 time.time()-st, len(self._filesystem_cache)))
@@ -441,5 +441,3 @@ class MTP_DEVICE(MTPDeviceBase):
         ans = self.dev.put_file(pid, name, stream, size, callback)
         ans['storage_id'] = sid
         return parent.add_child(ans)
-
-

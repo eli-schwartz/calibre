@@ -1,16 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import array
+import errno
+import os
+import re
+import sys
+
+import dbus
+from calibre.ptempfile import PersistentTemporaryDirectory
+from PyQt5.Qt import QBuffer, QByteArray, QImage, QKeySequence, QSize, Qt
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import sys, array, re, os, errno
 
-import dbus
 
-from PyQt5.Qt import QSize, QImage, Qt, QKeySequence, QBuffer, QByteArray
 
 
 def log(*args, **kw):
@@ -18,7 +22,6 @@ def log(*args, **kw):
     print('DBusExport:', *args, **kw)
     kw['file'].flush()
 
-from calibre.ptempfile import PersistentTemporaryDirectory
 
 
 class IconCache(object):

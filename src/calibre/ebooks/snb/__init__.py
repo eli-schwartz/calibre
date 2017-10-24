@@ -6,4 +6,3 @@ __docformat__ = 'restructuredtext en'
 '''
 Used for snb output
 '''
-

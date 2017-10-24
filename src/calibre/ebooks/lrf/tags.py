@@ -179,7 +179,7 @@ class Tag(object):
                 0xF9 : (6, None),
                 }
     name_map = {}
-    for key in tags.keys():
+    for key in list(tags.keys()):
         temp = tags[key][1]
         if temp is not None:
             name_map[key] = temp
@@ -195,7 +195,7 @@ class Tag(object):
         self.id = 0xF500 + tag_id[0]
 
         size, self.name = self.__class__.tags[tag_id[0]]
-        if isinstance(size, basestring):
+        if isinstance(size, str):
             parser = getattr(self, size + '_parser')
             self.contents = parser(stream)
         else:
@@ -246,7 +246,7 @@ class Tag(object):
     @classmethod
     def string_parser(self, stream):
         size = struct.unpack("<H", stream.read(2))[0]
-        return unicode(stream.read(size), "utf_16")
+        return str(stream.read(size), "utf_16")
 
     def type_one_parser(self, stream):
         cnt = struct.unpack("<H", stream.read(2))[0]

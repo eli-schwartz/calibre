@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
+from operator import attrgetter
+
+from calibre.db.search import CONTAINS_MATCH, EQUALS_MATCH, REGEXP_MATCH, _match
+from calibre.utils.config_base import prefs
+from calibre.utils.icu import sort_key
+from calibre.utils.search_query_parser import SearchQueryParser
+from PyQt5.Qt import QAbstractItemModel, QModelIndex, Qt, pyqtSignal
+
 
 __license__ = 'GPL 3'
 __copyright__ = '2011, John Schember <john@nachtimwald.com>'
 __docformat__ = 'restructuredtext en'
 
-from operator import attrgetter
 
-from PyQt5.Qt import (Qt, QAbstractItemModel, QModelIndex, pyqtSignal)
 
-from calibre.db.search import _match, CONTAINS_MATCH, EQUALS_MATCH, REGEXP_MATCH
-from calibre.utils.config_base import prefs
-from calibre.utils.icu import sort_key
-from calibre.utils.search_query_parser import SearchQueryParser
 
 
 class BooksModel(QAbstractItemModel):
@@ -105,7 +106,7 @@ class BooksModel(QAbstractItemModel):
             return
         descending = order == Qt.DescendingOrder
         self.books.sort(None,
-            lambda x: sort_key(unicode(self.data_as_text(x, col))),
+            lambda x: sort_key(str(self.data_as_text(x, col))),
             descending)
         if reset:
             self.beginResetModel(), self.endResetModel()

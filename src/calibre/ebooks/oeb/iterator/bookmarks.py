@@ -1,19 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__   = 'GPL v3'
-__copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
-__docformat__ = 'restructuredtext en'
-
 import os
 from io import BytesIO
 
 from calibre.utils.zipfile import safe_replace
 
-BM_FIELD_SEP = u'*|!|?|*'
-BM_LEGACY_ESC = u'esc-text-%&*#%(){}ads19-end-esc'
+
+__license__   = 'GPL v3'
+__copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
+__docformat__ = 'restructuredtext en'
+
+
+
+BM_FIELD_SEP = '*|!|?|*'
+BM_LEGACY_ESC = 'esc-text-%&*#%(){}ads19-end-esc'
 
 
 class BookmarksMixin(object):
@@ -40,7 +39,7 @@ class BookmarksMixin(object):
                 except:
                     continue
                 # Unescape from serialization
-                pos = pos.replace(BM_LEGACY_ESC, u'^')
+                pos = pos.replace(BM_LEGACY_ESC, '^')
                 # Check for pos being a scroll fraction
                 try:
                     pos = float(pos)
@@ -55,16 +54,16 @@ class BookmarksMixin(object):
         dat = []
         for bm in bookmarks:
             if bm['type'] == 'legacy':
-                rec = u'%s^%d#%s'%(bm['title'], bm['spine'], bm['pos'])
+                rec = '%s^%d#%s'%(bm['title'], bm['spine'], bm['pos'])
             else:
                 pos = bm['pos']
                 if isinstance(pos, (int, float)):
-                    pos = unicode(pos)
+                    pos = str(pos)
                 else:
-                    pos = pos.replace(u'^', BM_LEGACY_ESC)
-                rec = BM_FIELD_SEP.join([bm['title'], unicode(bm['spine']), pos])
+                    pos = pos.replace('^', BM_LEGACY_ESC)
+                rec = BM_FIELD_SEP.join([bm['title'], str(bm['spine']), pos])
             dat.append(rec)
-        return (u'\n'.join(dat) +u'\n')
+        return ('\n'.join(dat) +'\n')
 
     def read_bookmarks(self):
         self.bookmarks = []
@@ -102,5 +101,3 @@ class BookmarksMixin(object):
 
     def set_bookmarks(self, bookmarks):
         self.bookmarks = bookmarks
-
-

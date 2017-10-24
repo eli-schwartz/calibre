@@ -23,4 +23,3 @@ def join_with_timeout(q, timeout=2):
             q.all_tasks_done.wait(remaining)
     finally:
         q.all_tasks_done.release()
-

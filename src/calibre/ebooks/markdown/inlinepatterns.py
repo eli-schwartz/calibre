@@ -41,19 +41,19 @@ So, we apply the expressions in the following order:
 * finally we apply strong and emphasis
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from . import util
-from . import odict
 import re
+
+from . import odict, util
+
+
 try:  # pragma: no cover
     from urllib.parse import urlparse, urlunparse
 except ImportError:  # pragma: no cover
-    from urlparse import urlparse, urlunparse
+    from urllib.parse import urlparse, urlunparse
 try:  # pragma: no cover
     from html import entities
 except ImportError:  # pragma: no cover
-    import htmlentitydefs as entities
+    import html.entities as entities
 
 
 def build_inlinepatterns(md_instance, **kwargs):

@@ -7,16 +7,19 @@ __docformat__ = 'restructuredtext en'
 Module to implement the Cover Flow feature
 '''
 
-import sys, os, time
-
-from PyQt5.Qt import (QImage, QSizePolicy, QTimer, QDialog, Qt, QSize, QAction,
-        QStackedLayout, QLabel, QByteArray, pyqtSignal, QKeySequence, QFont)
+import os
+import sys
+import time
 
 from calibre import plugins
-from calibre.ebooks.metadata import rating_to_stars
 from calibre.constants import islinux
-from calibre.gui2 import (config, available_height, available_width, gprefs,
-        rating_font)
+from calibre.ebooks.metadata import rating_to_stars
+from calibre.gui2 import available_height, available_width, config, gprefs, rating_font
+from PyQt5.Qt import (
+	QAction, QByteArray, QDialog, QFont, QImage, QKeySequence, QLabel,
+	QSize, QSizePolicy, QStackedLayout, Qt, QTimer, pyqtSignal
+)
+
 
 pictureflow, pictureflowerror = plugins['pictureflow']
 
@@ -55,7 +58,7 @@ if pictureflow is not None:
             return self.subtitles[index]
 
         def currentChanged(self, index):
-            print 'current changed:', index
+            print('current changed:', index)
 
     class DummyImageList(pictureflow.FlowImages):
 

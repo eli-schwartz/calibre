@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,13 +6,12 @@ __docformat__ = 'restructuredtext en'
 
 from functools import partial
 
-from PyQt5.Qt import QIcon, QMenu, QTimer, QToolButton, pyqtSignal
-
 from calibre.gui2 import info_dialog, question_dialog
 from calibre.gui2.actions import InterfaceAction
 from calibre.gui2.dialogs.smartdevice import SmartdeviceDialog
 from calibre.utils.icu import primary_sort_key
 from calibre.utils.smtp import config as email_config
+from PyQt5.Qt import QIcon, QMenu, QTimer, QToolButton, pyqtSignal
 
 
 class ShareConnMenu(QMenu):  # {{{
@@ -58,7 +56,7 @@ class ShareConnMenu(QMenu):  # {{{
             gr = ConnectShareAction.action_spec[0]
             for attr in ('folder', ):
                 ac = getattr(self, 'connect_to_%s_action'%attr)
-                r(prefix + attr, unicode(ac.text()), action=ac,
+                r(prefix + attr, str(ac.text()), action=ac,
                         group=gr)
             r(prefix+' content server', _('Start/stop Content server'),
                     action=self.toggle_server_action, group=gr)
@@ -114,7 +112,7 @@ class ShareConnMenu(QMenu):  # {{{
                         (alias or account) + ' ' + _('(delete from library)'))
                 self.email_to_menu.addAction(action1)
                 self.email_to_and_delete_menu.addAction(action2)
-                map(self.memory.append, (action1, action2))
+                list(map(self.memory.append, (action1, action2)))
                 if default:
                     ac = DeviceAction(dest, False, False,
                             I('mail.png'), _('Email to') + ' ' +(alias or
@@ -130,7 +128,7 @@ class ShareConnMenu(QMenu):  # {{{
                     _('Select recipients') + ' ' + _('(delete from library)'))
             self.email_to_menu.addAction(action1)
             self.email_to_and_delete_menu.addAction(action2)
-            map(self.memory.append, (action1, action2))
+            list(map(self.memory.append, (action1, action2)))
             tac1 = DeviceAction('choosemail:', False, False, I('mail.png'),
                     _('Email to selected recipients...'))
             self.addAction(tac1)

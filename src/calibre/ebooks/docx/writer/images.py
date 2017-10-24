@@ -1,24 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
-
 import os
 import posixpath
 from collections import namedtuple
 from functools import partial
-from future_builtins import map
-
-from lxml import etree
 
 from calibre import fit_image
-from calibre.ebooks.oeb.base import urlunquote
 from calibre.ebooks.docx.images import pt_to_emu
+from calibre.ebooks.oeb.base import urlunquote
 from calibre.utils.filenames import ascii_filename
 from calibre.utils.imghdr import identify
+from lxml import etree
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 Image = namedtuple('Image', 'rid fname width height fmt item')
 
@@ -110,7 +108,7 @@ class ImagesManager(object):
         name = urlunquote(posixpath.basename(href))
         width, height = style.img_size(img.width, img.height)
         scaled, width, height = fit_image(width, height, self.page_width, self.page_height)
-        width, height = map(pt_to_emu, (width, height))
+        width, height = list(map(pt_to_emu, (width, height)))
 
         makeelement, namespaces = self.document_relationships.namespace.makeelement, self.document_relationships.namespace.namespaces
 
@@ -131,7 +129,7 @@ class ImagesManager(object):
         if fake_margins:
             # DOCX does not support setting margins for inline images, so we
             # fake it by using effect extents to simulate margins
-            makeelement(parent, 'wp:effectExtent', **{k[-1].lower():v for k, v in get_image_margins(style).iteritems()})
+            makeelement(parent, 'wp:effectExtent', **{k[-1].lower():v for k, v in get_image_margins(style).items()})
         else:
             makeelement(parent, 'wp:effectExtent', l='0', r='0', t='0', b='0')
         if floating is not None:
@@ -175,7 +173,7 @@ class ImagesManager(object):
         return fname
 
     def serialize(self, images_map):
-        for img in self.images.itervalues():
+        for img in self.images.values():
             images_map['word/' + img.fname] = partial(self.get_data, img.item)
 
     def get_data(self, item):
@@ -203,7 +201,7 @@ class ImagesManager(object):
         makeelement(parent, 'wp:simplePos', x='0', y='0')
         makeelement(makeelement(parent, 'wp:positionH', relativeFrom='page'), 'wp:align').text = 'center'
         makeelement(makeelement(parent, 'wp:positionV', relativeFrom='page'), 'wp:align').text = 'center'
-        width, height = map(pt_to_emu, (width, height))
+        width, height = list(map(pt_to_emu, (width, height)))
         makeelement(parent, 'wp:extent', cx=str(width), cy=str(height))
         makeelement(parent, 'wp:effectExtent', l='0', r='0', t='0', b='0')
         makeelement(parent, 'wp:wrapTopAndBottom')

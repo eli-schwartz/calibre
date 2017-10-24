@@ -7,8 +7,8 @@ class Recipe(object):
 
 
 def get_download_filename_from_response(response):
-    from urlparse import urlparse
-    from urllib2 import unquote as urllib2_unquote
+    from urllib.parse import urlparse
+    from urllib.parse import unquote as urllib2_unquote
     filename = last_part_name = ''
     try:
         purl = urlparse(response.geturl())

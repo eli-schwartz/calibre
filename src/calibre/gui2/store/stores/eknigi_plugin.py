@@ -1,20 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import (unicode_literals, division, absolute_import, print_function)
-store_version = 1  # Needed for dynamic plugin loading
-
-__license__ = 'GPL 3'
-__copyright__ = '2011, Alex Stanev <alex@stanev.org>'
-__docformat__ = 'restructuredtext en'
-
-import re
 import random
-import urllib2
+import re
+import urllib.request, urllib.error, urllib.parse
 from contextlib import closing
-
-from lxml import html
-
-from PyQt5.Qt import QUrl
 
 from calibre import browser, url_slash_cleaner
 from calibre.gui2 import open_url
@@ -22,6 +11,19 @@ from calibre.gui2.store import StorePlugin
 from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.gui2.store.search_result import SearchResult
 from calibre.gui2.store.web_store_dialog import WebStoreDialog
+from lxml import html
+from PyQt5.Qt import QUrl
+
+
+store_version = 1  # Needed for dynamic plugin loading
+
+__license__ = 'GPL 3'
+__copyright__ = '2011, Alex Stanev <alex@stanev.org>'
+__docformat__ = 'restructuredtext en'
+
+
+
+
 
 
 class eKnigiStore(BasicStoreConfig, StorePlugin):
@@ -49,13 +51,13 @@ class eKnigiStore(BasicStoreConfig, StorePlugin):
 
     def search(self, query, max_results=10, timeout=60):
         # check for cyrillic symbols before performing search
-        uquery = unicode(query.strip(), 'utf-8')
-        reObj = re.search(u'^[а-яА-Я\\d\\s]{2,}$', uquery)
+        uquery = str(query.strip(), 'utf-8')
+        reObj = re.search('^[а-яА-Я\\d\\s]{2,}$', uquery)
         if not reObj:
             return
 
         base_url = 'http://e-knigi.net'
-        url = base_url + '/virtuemart?page=shop.browse&search_category=0&search_limiter=anywhere&keyword=' + urllib2.quote(query)
+        url = base_url + '/virtuemart?page=shop.browse&search_category=0&search_limiter=anywhere&keyword=' + urllib.parse.quote(query)
 
         br = browser()
 

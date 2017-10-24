@@ -7,22 +7,23 @@ __docformat__ = 'restructuredtext en'
 Logic for setting up conversion jobs
 '''
 
-import cPickle, os
+import pickle
+import os
 
-from PyQt5.Qt import QDialog, QProgressDialog, QTimer
-
-from calibre.ptempfile import PersistentTemporaryFile
-from calibre.gui2 import warning_dialog, question_dialog
-from calibre.gui2.convert.single import NoSupportedInputFormats
-from calibre.gui2.convert.single import Config as SingleConfig, \
-    get_input_format_for_book
-from calibre.gui2.convert.bulk import BulkConfig
-from calibre.gui2.convert.metadata import create_opf_file, create_cover_file
 from calibre.customize.conversion import OptionRecommendation
-from calibre.utils.config import prefs
-from calibre.ebooks.conversion.config import GuiRecommendations, \
-    load_defaults, load_specifics, save_specifics
+from calibre.ebooks.conversion.config import (
+	GuiRecommendations, load_defaults, load_specifics, save_specifics
+)
+from calibre.gui2 import question_dialog, warning_dialog
 from calibre.gui2.convert import bulk_defaults_for_input_format
+from calibre.gui2.convert.bulk import BulkConfig
+from calibre.gui2.convert.metadata import create_cover_file, create_opf_file
+from calibre.gui2.convert.single import (
+	Config as SingleConfig, NoSupportedInputFormats, get_input_format_for_book
+)
+from calibre.ptempfile import PersistentTemporaryFile
+from calibre.utils.config import prefs
+from PyQt5.Qt import QDialog, QProgressDialog, QTimer
 
 
 def convert_single_ebook(parent, db, book_ids, auto_conversion=False,  # {{{
@@ -65,13 +66,13 @@ def convert_single_ebook(parent, db, book_ids, auto_conversion=False,  # {{{
                 temp_files = [in_file]
 
                 try:
-                    dtitle = unicode(mi.title)
+                    dtitle = str(mi.title)
                 except:
                     dtitle = repr(mi.title)
                 desc = _('Convert book %(num)d of %(total)d (%(title)s)') % \
                         {'num':i + 1, 'total':total, 'title':dtitle}
 
-                recs = cPickle.loads(d.recommendations)
+                recs = pickle.loads(d.recommendations)
                 if d.opf_file is not None:
                     recs.append(('read_metadata_from_opf', d.opf_file.name,
                         OptionRecommendation.HIGH))
@@ -144,7 +145,7 @@ def convert_bulk_ebook(parent, queue, db, book_ids, out_format=None, args=[]):
         return None
 
     output_format = d.output_format
-    user_recs = cPickle.loads(d.recommendations)
+    user_recs = pickle.loads(d.recommendations)
 
     book_ids = convert_existing(parent, db, book_ids, output_format)
     use_saved_single_settings = d.opt_individual_saved_settings.isChecked()
@@ -225,7 +226,7 @@ class QueueBulk(QProgressDialog):
                 if x[0] == 'debug_pipeline':
                     lrecs.remove(x)
             try:
-                dtitle = unicode(mi.title)
+                dtitle = str(mi.title)
             except:
                 dtitle = repr(mi.title)
             if len(dtitle) > 50:

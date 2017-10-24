@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -7,14 +6,13 @@ __docformat__ = 'restructuredtext en'
 
 import os
 
-from PyQt5.Qt import (
-    QDialog, QApplication, QIcon, QVBoxLayout, QHBoxLayout, QDialogButtonBox,
-    QPlainTextEdit, QPushButton, QLabel, QLineEdit, Qt
-)
-
-from calibre.ebooks.metadata import check_isbn
 from calibre.constants import iswindows
-from calibre.gui2 import gprefs, question_dialog, error_dialog
+from calibre.ebooks.metadata import check_isbn
+from calibre.gui2 import error_dialog, gprefs, question_dialog
+from PyQt5.Qt import (
+	QApplication, QDialog, QDialogButtonBox, QHBoxLayout, QIcon,
+	QLabel, QLineEdit, QPlainTextEdit, QPushButton, Qt, QVBoxLayout
+)
 
 
 class AddFromISBN(QDialog):
@@ -25,7 +23,7 @@ class AddFromISBN(QDialog):
 
         path = r'C:\Users\kovid\e-books\some_book.epub' if iswindows else \
                 '/Users/kovid/e-books/some_book.epub'
-        self.label.setText(unicode(self.label.text())%path)
+        self.label.setText(str(self.label.text())%path)
 
         self.isbns = []
         self.books = []
@@ -70,19 +68,19 @@ class AddFromISBN(QDialog):
     def paste(self, *args):
         app = QApplication.instance()
         c = app.clipboard()
-        txt = unicode(c.text()).strip()
+        txt = str(c.text()).strip()
         if txt:
-            old = unicode(self.isbn_box.toPlainText()).strip()
+            old = str(self.isbn_box.toPlainText()).strip()
             new = old + '\n' + txt
             self.isbn_box.setPlainText(new)
 
     def accept(self, *args):
-        tags = unicode(self.add_tags.text()).strip().split(',')
-        tags = list(filter(None, [x.strip() for x in tags]))
+        tags = str(self.add_tags.text()).strip().split(',')
+        tags = list([_f for _f in [x.strip() for x in tags] if _f])
         gprefs['add from ISBN tags'] = tags
         self.set_tags = tags
         bad = set()
-        for line in unicode(self.isbn_box.toPlainText()).strip().splitlines():
+        for line in str(self.isbn_box.toPlainText()).strip().splitlines():
             line = line.strip()
             if not line:
                 continue
@@ -117,4 +115,3 @@ class AddFromISBN(QDialog):
                         _('All the ISBNs you entered were invalid. No books'
                             ' can be added.'), show=True)
         QDialog.accept(self, *args)
-

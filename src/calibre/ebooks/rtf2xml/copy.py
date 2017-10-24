@@ -10,7 +10,8 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import os, shutil
+import os
+import shutil
 
 
 class Copy:
@@ -25,11 +26,11 @@ class Copy:
         """Set the temporary directory to write files to"""
         if deb_dir is None:
             message = "No directory has been provided to write to in the copy.py"
-            raise self.__bug_handler, message
+            raise self.__bug_handler(message)
         check = os.path.isdir(deb_dir)
         if not check:
             message = "%(deb_dir)s is not a directory" % vars()
-            raise self.__bug_handler , message
+            raise self.__bug_handler(message)
         Copy.__dir = deb_dir
 
     def remove_files(self):

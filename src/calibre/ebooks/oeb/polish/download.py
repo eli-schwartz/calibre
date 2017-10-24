@@ -1,21 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-import shutil, os, posixpath, cgi, mimetypes
+import cgi
+import mimetypes
+import os
+import posixpath
+import shutil
 from collections import defaultdict
 from contextlib import closing
-from urlparse import urlparse
-from multiprocessing.dummy import Pool
 from functools import partial
+from multiprocessing.dummy import Pool
 from tempfile import NamedTemporaryFile
-from urllib2 import urlopen
+from urllib.request import urlopen
+from urllib.parse import urlparse
 
 from calibre import as_unicode, sanitize_file_name2
+from calibre.ebooks.oeb.base import OEB_DOCS, OEB_STYLES, barename, iterlinks
 from calibre.ebooks.oeb.polish.utils import guess_type
-from calibre.ebooks.oeb.base import OEB_DOCS, iterlinks, barename, OEB_STYLES
 from calibre.ptempfile import TemporaryDirectory
 from calibre.web import get_download_filename_from_response
 
@@ -37,7 +38,7 @@ def iterhtmllinks(container, name):
 
 def get_external_resources(container):
     ans = defaultdict(list)
-    for name, media_type in container.mime_map.iteritems():
+    for name, media_type in container.mime_map.items():
         if container.has_name(name) and container.exists(name):
             if media_type in OEB_DOCS:
                 for el, attr, link in iterhtmllinks(container, name):
@@ -153,12 +154,12 @@ def replacer(url_map):
 def replace_resources(container, urls, replacements):
     url_maps = defaultdict(dict)
     changed = False
-    for url, names in urls.iteritems():
+    for url, names in urls.items():
         replacement = replacements.get(url)
         if replacement is not None:
             for name in names:
                 url_maps[name][url] = container.name_to_href(replacement, name)
-    for name, url_map in url_maps.iteritems():
+    for name, url_map in url_maps.items():
         r = replacer(url_map)
         container.replace_links(name, r)
         changed |= r.replaced

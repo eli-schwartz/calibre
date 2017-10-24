@@ -1,16 +1,19 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import atexit
+import gc
+import os
+import shutil
+import tempfile
+import time
+import unittest
+from functools import partial
+from io import BytesIO
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import unittest, os, shutil, tempfile, atexit, gc, time
-from functools import partial
-from io import BytesIO
-from future_builtins import map
 
 rmtree = partial(shutil.rmtree, ignore_errors=True)
 
@@ -105,7 +108,7 @@ class BaseTest(unittest.TestCase):
                 continue
             attr1, attr2 = getattr(mi1, attr), getattr(mi2, attr)
             if attr == 'formats':
-                attr1, attr2 = map(lambda x:tuple(x) if x else (), (attr1, attr2))
+                attr1, attr2 = [tuple(x) if x else () for x in (attr1, attr2)]
             if isinstance(attr1, (tuple, list)) and 'authors' not in attr and 'languages' not in attr:
                 attr1, attr2 = set(attr1), set(attr2)
             self.assertEqual(attr1, attr2,
@@ -114,5 +117,3 @@ class BaseTest(unittest.TestCase):
                 attr1, attr2 = mi1.get_extra(attr), mi2.get_extra(attr)
                 self.assertEqual(attr1, attr2,
                     '%s {#extra} not the same: %r != %r'%(attr, attr1, attr2))
-
-

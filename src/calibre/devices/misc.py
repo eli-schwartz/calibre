@@ -1,15 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import os
+
+from calibre import fsync
+from calibre.devices.usbms.driver import USBMS
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os
 
-from calibre.devices.usbms.driver import USBMS
-from calibre import fsync
 
 
 class PALMPRE(USBMS):
@@ -238,7 +238,7 @@ class TREKSTOR(USBMS):
             0x0067,  # This is for the Pyrus Mini
             0x006f,  # This is for the Pyrus Maxi
             0x003e,  # This is for the EBOOK_PLAYER_5M https://bugs.launchpad.net/bugs/792091
-            0x05cL,  # This is for the 4ink https://www.mobileread.com/forums/showthread.php?t=191318
+            0x05c,  # This is for the 4ink https://www.mobileread.com/forums/showthread.php?t=191318
             0x006c,  # This is for the 4ink https://www.mobileread.com/forums/showthread.php?t=218273
             0x006d,  # Another Pyrus? https://www.mobileread.com/forums/showthread.php?t=231982
             0x73,    # This is for the Pyrus 2 LED https://bugs.launchpad.net/bugs/1376018

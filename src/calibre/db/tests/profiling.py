@@ -1,15 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import cProfile
+import os
+from tempfile import gettempdir
+
+from calibre.db.legacy import LibraryDatabase
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, cProfile
-from tempfile import gettempdir
 
-from calibre.db.legacy import LibraryDatabase
 
 db = None
 
@@ -38,7 +38,7 @@ def main():
     pr.disable()
     pr.dump_stats(stats)
     show_stats(stats)
-    print ('Stats saved to', stats)
+    print(('Stats saved to', stats))
 
 if __name__ == '__main__':
     main()

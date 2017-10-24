@@ -1,15 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import os
+import re
+import subprocess
+import sys
+import sysconfig
+from distutils.spawn import find_executable
+
+from PyQt5.QtCore import PYQT_CONFIGURATION
+from setup import is64bit, ishaiku, islinux, isosx, iswindows
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import os, subprocess, re, sys, sysconfig
-from distutils.spawn import find_executable
 
-from setup import isosx, iswindows, is64bit, islinux, ishaiku
 is64bit
 
 NMAKE = RC = msvc = MT = win_inc = win_lib = None
@@ -50,7 +55,7 @@ def run_pkgconfig(name, envvar, default, flag, prefix):
             ans = [x.strip() for x in raw.split(prefix)]
             ans = [x for x in ans if x and (prefix=='-l' or os.path.exists(x))]
         except:
-            print 'Failed to run pkg-config:', PKGCONFIG, 'for:', name
+            print('Failed to run pkg-config:', PKGCONFIG, 'for:', name)
 
     return ans or ([default] if default else [])
 
@@ -76,12 +81,11 @@ def readvar(name):
 pyqt = {x:readvar(y) for x, y in (
     ('inc', 'QT_INSTALL_HEADERS'), ('lib', 'QT_INSTALL_LIBS')
 )}
-qt = {x:readvar(y) for x, y in {'libs':'QT_INSTALL_LIBS', 'plugins':'QT_INSTALL_PLUGINS'}.iteritems()}
+qt = {x:readvar(y) for x, y in {'libs':'QT_INSTALL_LIBS', 'plugins':'QT_INSTALL_PLUGINS'}.items()}
 qmakespec = readvar('QMAKE_SPEC') if iswindows else None
 
 pyqt['sip_bin'] = os.environ.get('SIP_BIN', 'sip')
 
-from PyQt5.QtCore import PYQT_CONFIGURATION
 pyqt['sip_flags'] = PYQT_CONFIGURATION['sip_flags']
 def get_sip_dir():
     q = os.environ.get('SIP_DIR', os.path.join(sys.prefix, 'share', 'sip') if iswindows else os.path.join(sys.prefix, 'share', 'sip'))

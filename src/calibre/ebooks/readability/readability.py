@@ -1,21 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-import re, sys
+import re
+import sys
 from collections import defaultdict
 
-from lxml.etree import tostring
-from lxml.html import (fragment_fromstring, document_fromstring,
-        tostring as htostring)
-
+from calibre.ebooks.readability.cleaners import clean_attributes, html_cleaner
 from calibre.ebooks.readability.htmls import build_doc, get_body, get_title, shorten_title
-from calibre.ebooks.readability.cleaners import html_cleaner, clean_attributes
+from lxml.etree import tostring
+from lxml.html import document_fromstring, fragment_fromstring, tostring as htostring
 
 
 def tounicode(tree_or_node, **kwargs):
-    kwargs['encoding'] = unicode
+    kwargs['encoding'] = str
     return htostring(tree_or_node, **kwargs)
 
 
@@ -82,7 +77,7 @@ class Document:
     def __init__(self, input, log, **options):
         self.input = input
         self.options = defaultdict(lambda: None)
-        for k, v in options.items():
+        for k, v in list(options.items()):
             self.options[k] = v
         self.html = None
         self.log = log
@@ -154,9 +149,9 @@ class Document:
                     continue  # try again
                 else:
                     return cleaned_article
-        except StandardError, e:
+        except Exception as e:
             self.log.exception('error getting summary: ')
-            raise Unparseable(str(e)), None, sys.exc_info()[2]
+            raise Unparseable(str(e)).with_traceback(sys.exc_info()[2])
 
     def get_article(self, candidates, best_candidate):
         # Now that we have the top candidate, look through its siblings for content that might also be related.
@@ -193,7 +188,7 @@ class Document:
         return output.find('body')
 
     def select_best_candidate(self, candidates):
-        sorted_candidates = sorted(candidates.values(), key=lambda x: x['content_score'], reverse=True)
+        sorted_candidates = sorted(list(candidates.values()), key=lambda x: x['content_score'], reverse=True)
         for candidate in sorted_candidates[:5]:
             elem = candidate['elem']
             self.debug("Top 5 : %6.3f %s" % (candidate['content_score'], describe(elem)))
@@ -313,7 +308,7 @@ class Document:
     def transform_misused_divs_into_paragraphs(self):
         for elem in self.tags(self.html, 'div'):
             # transform <div>s that do not contain other block elements into <p>s
-            if not REGEXES['divToPElementsRe'].search(unicode(''.join(map(tostring, list(elem))))):
+            if not REGEXES['divToPElementsRe'].search(str(''.join(map(tostring, list(elem))))):
                 # self.debug("Altering %s to p" % (describe(elem)))
                 elem.tag = "p"
                 # print "Fixed element "+describe(elem)
@@ -502,10 +497,10 @@ def main():
     enc = sys.__stdout__.encoding or 'utf-8'
     if options.verbose:
         default_log.filter_level = default_log.DEBUG
-    print (Document(raw, default_log,
+    print((Document(raw, default_log,
             debug=options.verbose,
             keep_elements=options.keep_elements).summary().encode(enc,
-                'replace'))
+                'replace')))
 
 
 if __name__ == '__main__':

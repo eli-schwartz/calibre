@@ -1,32 +1,36 @@
 '''
 CSS flattening transform.
 '''
-from __future__ import with_statement
+import math
+import operator
+import re
+from collections import defaultdict
+from xml.dom import SyntaxErr
+
+import cssutils
+from calibre import guess_type
+from calibre.ebooks.oeb.base import (
+	CSS_MIME, OEB_STYLES, XHTML, XHTML_NS, XPath, barename, namespace
+)
+from calibre.ebooks.oeb.stylizer import Stylizer
+from calibre.utils.filenames import ascii_filename, ascii_text
+from calibre.utils.icu import numeric_sort_key
+from cssutils.css import Property
+from lxml import etree
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2008, Marshall T. Vandegrift <llasram@gmail.com>'
 
-import re, operator, math
-from collections import defaultdict
-from xml.dom import SyntaxErr
 
-from lxml import etree
-import cssutils
-from cssutils.css import Property
 
-from calibre import guess_type
-from calibre.ebooks.oeb.base import (XHTML, XHTML_NS, CSS_MIME, OEB_STYLES,
-        namespace, barename, XPath)
-from calibre.ebooks.oeb.stylizer import Stylizer
-from calibre.utils.filenames import ascii_filename, ascii_text
-from calibre.utils.icu import numeric_sort_key
 
 COLLAPSE = re.compile(r'[ \t\r\n\v]+')
 STRIPNUM = re.compile(r'[-0-9]+$')
 
 
 def asfloat(value, default):
-    if not isinstance(value, (int, long, float)):
+    if not isinstance(value, (int, float)):
         value = default
     return float(value)
 
@@ -135,9 +139,9 @@ class EmbedFontsCSSRules(object):
         if not self.body_font_family:
             return None
         if not self.href:
-            iid, href = oeb.manifest.generate(u'page_styles', u'page_styles.css')
+            iid, href = oeb.manifest.generate('page_styles', 'page_styles.css')
             rules = [x.cssText for x in self.rules]
-            rules = u'\n\n'.join(rules)
+            rules = '\n\n'.join(rules)
             sheet = cssutils.parseString(rules, validate=False)
             self.href = oeb.manifest.add(iid, href, guess_type(href)[0],
                     data=sheet).href
@@ -193,7 +197,7 @@ class CSSFlattener(object):
                 self.oeb.log.debug('Filtering CSS properties: %s'%
                     ', '.join(self.filter_css))
 
-        for item in oeb.manifest.values():
+        for item in list(oeb.manifest.values()):
             # Make all links to resources absolute, as these sheets will be
             # consolidated into a single stylesheet at the root of the document
             if item.media_type in OEB_STYLES:
@@ -221,13 +225,13 @@ class CSSFlattener(object):
         try:
             faces = font_scanner.fonts_for_family(family)
         except NoFonts:
-            msg = (u'No embeddable fonts found for family: %r'%family)
+            msg = ('No embeddable fonts found for family: %r'%family)
             if failure_critical:
                 raise ValueError(msg)
             self.oeb.log.warn(msg)
             return body_font_family, efi
         if not faces:
-            msg = (u'No embeddable fonts found for family: %r'%family)
+            msg = ('No embeddable fonts found for family: %r'%family)
             if failure_critical:
                 raise ValueError(msg)
             self.oeb.log.warn(msg)
@@ -235,28 +239,28 @@ class CSSFlattener(object):
 
         for i, font in enumerate(faces):
             ext = 'otf' if font['is_otf'] else 'ttf'
-            fid, href = self.oeb.manifest.generate(id=u'font',
-                href=u'fonts/%s.%s'%(ascii_filename(font['full_name']).replace(u' ', u'-'), ext))
+            fid, href = self.oeb.manifest.generate(id='font',
+                href='fonts/%s.%s'%(ascii_filename(font['full_name']).replace(' ', '-'), ext))
             item = self.oeb.manifest.add(fid, href,
                     guess_type('dummy.'+ext)[0],
                     data=font_scanner.get_font_data(font))
             item.unload_data_from_memory()
 
             cfont = {
-                    u'font-family':u'"%s"'%font['font-family'],
-                    u'panose-1': u' '.join(map(unicode, font['panose'])),
-                    u'src': u'url(%s)'%item.href,
+                    'font-family':'"%s"'%font['font-family'],
+                    'panose-1': ' '.join(map(str, font['panose'])),
+                    'src': 'url(%s)'%item.href,
             }
 
             if i == 0:
                 generic_family = panose_to_css_generic_family(font['panose'])
-                body_font_family = u"'%s',%s"%(font['font-family'], generic_family)
-                self.oeb.log(u'Embedding font: %s'%font['font-family'])
-            for k in (u'font-weight', u'font-style', u'font-stretch'):
-                if font[k] != u'normal':
+                body_font_family = "'%s',%s"%(font['font-family'], generic_family)
+                self.oeb.log('Embedding font: %s'%font['font-family'])
+            for k in ('font-weight', 'font-style', 'font-stretch'):
+                if font[k] != 'normal':
                     cfont[k] = font[k]
-            rule = '@font-face { %s }'%('; '.join(u'%s:%s'%(k, v) for k, v in
-                cfont.iteritems()))
+            rule = '@font-face { %s }'%('; '.join('%s:%s'%(k, v) for k, v in
+                cfont.items()))
             rule = cssutils.parseString(rule)
             efi.append(rule)
 
@@ -288,7 +292,7 @@ class CSSFlattener(object):
             if self.context.change_justification != 'original':
                 bs.append('text-align: '+ self.context.change_justification)
             if self.body_font_family:
-                bs.append(u'font-family: '+self.body_font_family)
+                bs.append('font-family: '+self.body_font_family)
             body.set('style', '; '.join(bs))
             stylizer = Stylizer(html, item.href, self.oeb, self.context, profile,
                     user_css=self.context.extra_css,
@@ -313,7 +317,7 @@ class CSSFlattener(object):
             fsize = self.context.source.fbase
             self.baseline_node(body, stylizer, sizes, fsize)
         try:
-            sbase = max(sizes.items(), key=operator.itemgetter(1))[0]
+            sbase = max(list(sizes.items()), key=operator.itemgetter(1))[0]
         except:
             sbase = 12.0
         self.oeb.logger.info(
@@ -345,7 +349,7 @@ class CSSFlattener(object):
                     cssdict[property] = "%0.5fem" % (value / fsize)
 
     def flatten_node(self, node, stylizer, names, styles, pseudo_styles, psize, item_id):
-        if not isinstance(node.tag, basestring) \
+        if not isinstance(node.tag, str) \
            or namespace(node.tag) != XHTML_NS:
             return
         tag = barename(node.tag)
@@ -513,8 +517,8 @@ class CSSFlattener(object):
             keep_classes = set()
 
             if cssdict:
-                items = sorted(cssdict.iteritems())
-                css = u';\n'.join(u'%s: %s' % (key, val) for key, val in items)
+                items = sorted(cssdict.items())
+                css = ';\n'.join('%s: %s' % (key, val) for key, val in items)
                 classes = node.get('class', '').strip() or 'calibre'
                 # lower() because otherwise if the document uses the same class
                 # name with different case, both cases will apply, leading
@@ -529,9 +533,9 @@ class CSSFlattener(object):
                 node.attrib['class'] = match
                 keep_classes.add(match)
 
-            for psel, cssdict in pseudo_classes.iteritems():
-                items = sorted(cssdict.iteritems())
-                css = u';\n'.join(u'%s: %s' % (key, val) for key, val in items)
+            for psel, cssdict in pseudo_classes.items():
+                items = sorted(cssdict.items())
+                css = ';\n'.join('%s: %s' % (key, val) for key, val in items)
                 pstyles = pseudo_styles[psel]
                 if css in pstyles:
                     match = pstyles[css]
@@ -587,7 +591,7 @@ class CSSFlattener(object):
 
     def replace_css(self, css):
         manifest = self.oeb.manifest
-        for item in manifest.values():
+        for item in list(manifest.values()):
             if item.media_type in OEB_STYLES:
                 manifest.remove(item)
         id, href = manifest.generate('css', 'stylesheet.css')
@@ -632,7 +636,7 @@ class CSSFlattener(object):
             gc_map[css] = href
 
         ans = {}
-        for css, items in global_css.iteritems():
+        for css, items in global_css.items():
             for item in items:
                 ans[item] = gc_map[css]
         return ans
@@ -648,15 +652,15 @@ class CSSFlattener(object):
             body = html.find(XHTML('body'))
             fsize = self.context.dest.fbase
             self.flatten_node(body, stylizer, names, styles, pseudo_styles, fsize, item.id)
-        items = sorted(((key, val) for (val, key) in styles.iteritems()), key=lambda x:numeric_sort_key(x[0]))
+        items = sorted(((key, val) for (val, key) in styles.items()), key=lambda x:numeric_sort_key(x[0]))
         # :hover must come after link and :active must come after :hover
-        psels = sorted(pseudo_styles.iterkeys(), key=lambda x :
+        psels = sorted(iter(pseudo_styles.keys()), key=lambda x :
                 {'hover':1, 'active':2}.get(x, 0))
         for psel in psels:
             styles = pseudo_styles[psel]
             if not styles:
                 continue
-            x = sorted(((k+':'+psel, v) for v, k in styles.iteritems()))
+            x = sorted(((k+':'+psel, v) for v, k in styles.items()))
             items.extend(x)
 
         css = ''.join(".%s {\n%s;\n}\n\n" % (key, val) for key, val in items)

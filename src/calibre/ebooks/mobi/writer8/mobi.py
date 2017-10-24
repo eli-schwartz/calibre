@@ -1,21 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import random
+import time
+from struct import pack
+
+from calibre.ebooks.mobi.langcodes import iana2mobi
+from calibre.ebooks.mobi.utils import RECORD_SIZE, utf8_text
+from calibre.ebooks.mobi.writer2 import PALMDOC, UNCOMPRESSED
+from calibre.ebooks.mobi.writer8.exth import build_exth
+from calibre.ebooks.mobi.writer8.header import Header
+from calibre.utils.filenames import ascii_filename
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import time, random
-from struct import pack
 
-from calibre.ebooks.mobi.utils import RECORD_SIZE, utf8_text
-from calibre.ebooks.mobi.writer8.header import Header
-from calibre.ebooks.mobi.writer2 import (PALMDOC, UNCOMPRESSED)
-from calibre.ebooks.mobi.langcodes import iana2mobi
-from calibre.ebooks.mobi.writer8.exth import build_exth
-from calibre.utils.filenames import ascii_filename
 
 NULL_INDEX = 0xffffffff
 FLIS = b'FLIS\0\0\0\x08\0\x41\0\0\0\0\0\0\xff\xff\xff\xff\0\x01\0\x03\0\0\0\x03\0\0\0\x01'+ b'\xff'*4
@@ -282,7 +282,7 @@ class KF8Book(object):
         # Miscellaneous header fields
         self.compression = writer.compress
         self.book_type = 0x101 if writer.opts.mobi_periodical else 2
-        self.full_title = utf8_text(unicode(metadata.title[0]))
+        self.full_title = utf8_text(str(metadata.title[0]))
         self.title_length = len(self.full_title)
         self.extra_data_flags = 0b1
         if writer.has_tbs:

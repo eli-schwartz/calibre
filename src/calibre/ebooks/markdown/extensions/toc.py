@@ -13,13 +13,12 @@ License: [BSD](http://www.opensource.org/licenses/bsd-license.php)
 
 """
 
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from . import Extension
-from ..treeprocessors import Treeprocessor
-from ..util import etree, parseBoolValue, AMP_SUBSTITUTE, HTML_PLACEHOLDER_RE, string_type
 import re
 import unicodedata
+
+from . import Extension
+from ..treeprocessors import Treeprocessor
+from ..util import AMP_SUBSTITUTE, HTML_PLACEHOLDER_RE, etree, parseBoolValue, string_type
 
 
 def slugify(value, separator):
@@ -257,7 +256,7 @@ class TocTreeprocessor(Treeprocessor):
 
         # serialize and attach to markdown instance.
         toc = self.markdown.serializer(div)
-        for pp in self.markdown.postprocessors.values():
+        for pp in list(self.markdown.postprocessors.values()):
             toc = pp.run(toc)
         self.markdown.toc = toc
 

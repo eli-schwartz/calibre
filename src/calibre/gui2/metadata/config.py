@@ -1,19 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import textwrap
+
+from calibre.gui2.preferences.metadata_sources import FieldsModel as FM
+from calibre.utils.icu import sort_key
+from PyQt5.Qt import (
+	QCheckBox, QComboBox, QDoubleSpinBox, QGridLayout, QGroupBox,
+	QLabel, QLineEdit, QListView, QSpinBox, Qt, QWidget
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import textwrap
 
-from PyQt5.Qt import (QWidget, QGridLayout, QGroupBox, QListView, Qt, QSpinBox,
-        QDoubleSpinBox, QCheckBox, QLineEdit, QComboBox, QLabel)
 
-from calibre.gui2.preferences.metadata_sources import FieldsModel as FM
-from calibre.utils.icu import sort_key
 
 
 class FieldsModel(FM):  # {{{
@@ -47,7 +48,7 @@ class FieldsModel(FM):  # {{{
     def commit(self):
         ignored_fields = set([x for x in self.prefs['ignore_fields'] if x not in
             self.overrides])
-        changed = set([k for k, v in self.overrides.iteritems() if v ==
+        changed = set([k for k, v in self.overrides.items() if v ==
             Qt.Unchecked])
         self.prefs['ignore_fields'] = list(ignored_fields.union(changed))
 
@@ -100,8 +101,8 @@ class ConfigWidget(QWidget):
             widget.setChecked(bool(val))
         elif opt.type == 'choices':
             widget = QComboBox(self)
-            items = list(opt.choices.iteritems())
-            items.sort(key=lambda (k, v): sort_key(v))
+            items = list(opt.choices.items())
+            items.sort(key=lambda k_v: sort_key(k_v[1]))
             for key, label in items:
                 widget.addItem(label, (key))
             idx = widget.findData((val))
@@ -126,10 +127,10 @@ class ConfigWidget(QWidget):
             if isinstance(w, (QSpinBox, QDoubleSpinBox)):
                 val = w.value()
             elif isinstance(w, QLineEdit):
-                val = unicode(w.text())
+                val = str(w.text())
             elif isinstance(w, QCheckBox):
                 val = w.isChecked()
             elif isinstance(w, QComboBox):
                 idx = w.currentIndex()
-                val = unicode(w.itemData(idx) or '')
+                val = str(w.itemData(idx) or '')
             self.plugin.prefs[w.opt.name] = val

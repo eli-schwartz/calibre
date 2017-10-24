@@ -100,4 +100,3 @@ def get_writer(extension):
     if FORMAT_WRITERS is None:
         _import_writers()
     return FORMAT_WRITERS.get(extension, None)
-

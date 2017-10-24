@@ -89,11 +89,11 @@ class OverrideTable:
         list_id = override_dict.get('list-id')
         if list_id is None and self.__level > 3:
             msg = 'This override does not appear to have a list-id\n'
-            raise self.__bug_handler, msg
+            raise self.__bug_handler(msg)
         current_table_id = override_dict.get('list-table-id')
         if current_table_id is None and self.__run_level > 3:
             msg = 'This override does not appear to have a list-table-id\n'
-            raise self.__bug_handler, msg
+            raise self.__bug_handler(msg)
         counter = 0
         for list in self.__list_of_lists:
             info_dict = list[0]
@@ -126,7 +126,7 @@ class OverrideTable:
                 self.__ob_group -= 1
             action = self.__state_dict.get(self.__state)
             if action is None:
-                print self.__state
+                print(self.__state)
             action(line)
         self.__write_final_string()
         # self.__add_to_final_line()
@@ -165,7 +165,7 @@ class OverrideTable:
         elif self.__run_level > 3:
             msg = 'No matching token after open bracket\n'
             msg += 'token is "%s\n"' % (line)
-            raise self.__bug_handler, msg
+            raise self.__bug_handler(msg)
 
     def __write_final_string(self):
         """
@@ -184,7 +184,7 @@ class OverrideTable:
         'mi<mk<overbeg__\n' + self.__override_table_final
         for the_dict in self.__override_list:
             self.__override_table_final += 'mi<tg<empty-att_<override-list'
-            the_keys = the_dict.keys()
+            the_keys = list(the_dict.keys())
             for the_key in the_keys:
                 self.__override_table_final += \
                     '<%s>%s' % (the_key, the_dict[the_key])

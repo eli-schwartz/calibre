@@ -1,15 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re, os, traceback, fnmatch
+import fnmatch
+import os
+import re
+import traceback
 
 from calibre import isbytestring
 from calibre.constants import filesystem_encoding
 from calibre.ebooks import BOOK_EXTENSIONS
+
 
 EBOOK_EXTENSIONS = frozenset(BOOK_EXTENSIONS)
 NORMALS = frozenset(['metadata.opf', 'cover.jpg'])
@@ -177,7 +180,7 @@ class CheckLibrary(object):
                                if os.path.splitext(f)[1] not in self.ignore_ext or
                                f == 'cover.jpg'])
         book_id = int(book_id)
-        formats = frozenset(filter(self.is_ebook_file, filenames))
+        formats = frozenset(list(filter(self.is_ebook_file, filenames)))
         book_formats = frozenset([x[0]+'.'+x[1].lower() for x in
                             self.db.format_files(book_id, index_is_id=True)])
 
@@ -219,14 +222,14 @@ class CheckLibrary(object):
             missing = book_formats_lc - formats_lc
 
             # Check: any books that aren't formats or normally there?
-            for lcfn,ccfn in lc_map(filenames, unknowns).iteritems():
+            for lcfn,ccfn in lc_map(filenames, unknowns).items():
                 if lcfn in missing:  # An unknown format correctly registered
                     continue
                 self.extra_files.append((title_dir, os.path.join(db_path, ccfn),
                                          book_id))
 
             # Check: any book formats that should be there?
-            for lcfn,ccfn in lc_map(book_formats, missing).iteritems():
+            for lcfn,ccfn in lc_map(book_formats, missing).items():
                 if lcfn in unknowns:  # An unknown format correctly registered
                     continue
                 self.missing_formats.append((title_dir,

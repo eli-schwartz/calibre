@@ -1,20 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
-
 import re
-
-from PyQt5.Qt import Qt
 
 from calibre.gui2.tweak_book import current_container
 from calibre.gui2.tweak_book.editor.smarts import NullSmarts
 from calibre.gui2.tweak_book.editor.smarts.utils import (
-    no_modifiers, get_leading_whitespace_on_block, get_text_before_cursor,
-    smart_home, smart_backspace, smart_tab, expand_tabs)
+	expand_tabs, get_leading_whitespace_on_block, get_text_before_cursor,
+	no_modifiers, smart_backspace, smart_home, smart_tab
+)
+from PyQt5.Qt import Qt
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
+
 
 
 def find_rule(raw, rule_address):

@@ -1,22 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-store_version = 7  # Needed for dynamic plugin loading
-
+import urllib.request, urllib.parse, urllib.error
 from contextlib import closing
-import urllib
-
-from lxml import html
-
-from PyQt5.Qt import QUrl
 
 from calibre import browser
 from calibre.gui2 import open_url
 from calibre.gui2.store import StorePlugin
 from calibre.gui2.store.search_result import SearchResult
+from lxml import html
+from PyQt5.Qt import QUrl
+
+
+store_version = 7  # Needed for dynamic plugin loading
+
+
+
+
 
 SEARCH_BASE_URL = 'https://www.amazon.ca/s/'
 SEARCH_BASE_QUERY = {'url': 'search-alias=digital-text'}
@@ -43,8 +43,8 @@ def search_amazon(query, max_results=10, timeout=60,
         if isinstance(x, type('')):
             x = x.encode('utf-8')
         return x
-    uquery = {asbytes(k):asbytes(v) for k, v in uquery.iteritems()}
-    url = base_url + '?' + urllib.urlencode(uquery).decode('ascii')
+    uquery = {asbytes(k):asbytes(v) for k, v in uquery.items()}
+    url = base_url + '?' + urllib.parse.urlencode(uquery).decode('ascii')
     br = browser(user_agent=get_user_agent())
 
     counter = max_results

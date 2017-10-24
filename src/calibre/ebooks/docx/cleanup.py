@@ -1,12 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os
 
 NBSP = '\xa0'
 
@@ -53,7 +51,7 @@ def merge_run(run):
 def liftable(css):
     # A <span> is liftable if all its styling would work just as well if it is
     # specified on the parent element.
-    prefixes = {x.partition('-')[0] for x in css.iterkeys()}
+    prefixes = {x.partition('-')[0] for x in css.keys()}
     return not (prefixes - {'text', 'font', 'letter', 'color', 'background'})
 
 
@@ -133,8 +131,8 @@ def cleanup_markup(log, root, styles, dest_dir, detect_cover, XPath):
                 current_run = [span]
 
     # Process dir attributes
-    class_map = dict(styles.classes.itervalues())
-    parents = ('p', 'div') + tuple('h%d' % i for i in xrange(1, 7))
+    class_map = dict(iter(styles.classes.values()))
+    parents = ('p', 'div') + tuple('h%d' % i for i in range(1, 7))
     for parent in root.xpath('//*[(%s)]' % ' or '.join('name()="%s"' % t for t in parents)):
         # Ensure that children of rtl parents that are not rtl have an
         # explicit dir set. Also, remove dir from children if it is the same as

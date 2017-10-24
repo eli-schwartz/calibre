@@ -1,16 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+from calibre.gui2 import file_icon_provider
+from PyQt5.Qt import (
+	QAbstractListModel, QDialog, QDialogButtonBox, QLabel, QListView, QSize, Qt, QVBoxLayout
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
 
-from PyQt5.Qt import QVBoxLayout, QDialog, QLabel, QDialogButtonBox, Qt, \
-        QAbstractListModel, QListView, QSize
 
-from calibre.gui2 import file_icon_provider
 
 
 class Formats(QAbstractListModel):
@@ -97,4 +97,4 @@ if __name__ == '__main__':
     app = QApplication([])
     d = SelectFormats(['epub', 'lrf', 'lit', 'mobi'], 'Choose a format')
     d.exec_()
-    print d.selected_formats
+    print(d.selected_formats)

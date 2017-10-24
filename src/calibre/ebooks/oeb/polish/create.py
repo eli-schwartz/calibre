@@ -1,28 +1,28 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import sys
+
+from calibre import CurrentDir, prepare_string_for_xml
+from calibre.ebooks.metadata import authors_to_string
+from calibre.ebooks.metadata.opf2 import metadata_to_opf
+from calibre.ebooks.oeb.base import serialize
+from calibre.ebooks.oeb.polish.container import OPF_NAMESPACES, Container, opf_to_azw3
+from calibre.ebooks.oeb.polish.parsing import parse
+from calibre.ebooks.oeb.polish.pretty import pretty_html_tree, pretty_xml_tree
+from calibre.ebooks.oeb.polish.toc import TOC, create_ncx
+from calibre.ebooks.oeb.polish.utils import guess_type
+from calibre.ptempfile import TemporaryDirectory
+from calibre.utils.localization import lang_as_iso639_1
+from calibre.utils.logging import DevNull
+from calibre.utils.zipfile import ZIP_STORED, ZipFile
+from lxml import etree
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import sys, os
 
-from lxml import etree
 
-from calibre import prepare_string_for_xml, CurrentDir
-from calibre.ptempfile import TemporaryDirectory
-from calibre.ebooks.oeb.base import serialize
-from calibre.ebooks.metadata import authors_to_string
-from calibre.ebooks.metadata.opf2 import metadata_to_opf
-from calibre.ebooks.oeb.polish.parsing import parse
-from calibre.ebooks.oeb.polish.container import OPF_NAMESPACES, opf_to_azw3, Container
-from calibre.ebooks.oeb.polish.utils import guess_type
-from calibre.ebooks.oeb.polish.pretty import pretty_xml_tree, pretty_html_tree
-from calibre.ebooks.oeb.polish.toc import TOC, create_ncx
-from calibre.utils.localization import lang_as_iso639_1
-from calibre.utils.logging import DevNull
-from calibre.utils.zipfile import ZipFile, ZIP_STORED
 
 valid_empty_formats = {'epub', 'txt', 'docx', 'azw3'}
 
@@ -109,7 +109,7 @@ def create_book(mi, path, fmt='epub', opf_name='metadata.opf', html_name='start.
     else:
         with ZipFile(path, 'w', compression=ZIP_STORED) as zf:
             zf.writestr('mimetype', b'application/epub+zip', compression=ZIP_STORED)
-            zf.writestr('META-INF/', b'', 0755)
+            zf.writestr('META-INF/', b'', 0o755)
             zf.writestr('META-INF/container.xml', CONTAINER)
             zf.writestr(opf_name, opf)
             zf.writestr(html_name, HTML)
@@ -121,6 +121,6 @@ if __name__ == '__main__':
     path = sys.argv[-1]
     ext = path.rpartition('.')[-1].lower()
     if ext not in valid_empty_formats:
-        print ('Unsupported format:', ext)
+        print(('Unsupported format:', ext))
         raise SystemExit(1)
     create_book(mi, path, fmt=ext)

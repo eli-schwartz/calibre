@@ -1,16 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import sys
+from collections import namedtuple
+from struct import unpack_from
+
+from calibre.utils.wmf import create_bmp_from_dib, to_png
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import sys
-from struct import unpack_from
-from collections import namedtuple
 
-from calibre.utils.wmf import create_bmp_from_dib, to_png
 
 # Record types {{{
 # See: http://msdn.microsoft.com/en-us/library/cc231166.aspx
@@ -26,7 +25,7 @@ RECORD_TYPES = {
     'EOF' : 0xe,
     'HEADER' : 0x1,
 }
-RECORD_RMAP = {v:k for k, v in RECORD_TYPES.iteritems()}
+RECORD_RMAP = {v:k for k, v in RECORD_TYPES.items()}
 
 # See http://msdn.microsoft.com/en-us/library/cc230601.aspx
 StretchDiBits = namedtuple(
@@ -42,7 +41,7 @@ class EMF(object):
         self.pos = 0
         self.found_eof = False
         self.verbose = verbose
-        self.func_map = {v:getattr(self, 'handle_%s' % (k.replace('EMR_', '').lower()), self.handle_unknown) for k, v in RECORD_TYPES.iteritems()}
+        self.func_map = {v:getattr(self, 'handle_%s' % (k.replace('EMR_', '').lower()), self.handle_unknown) for k, v in RECORD_TYPES.items()}
         self.bitmaps = []
         while self.pos < len(raw) and not self.found_eof:
             self.read_record(raw)
@@ -50,7 +49,7 @@ class EMF(object):
 
     def handle_unknown(self, rtype, size, raw):
         if self.verbose:
-            print ('Ignoring unknown record:', RECORD_RMAP.get(rtype, hex(rtype).upper()))
+            print(('Ignoring unknown record:', RECORD_RMAP.get(rtype, hex(rtype).upper())))
 
     def handle_header(self, rtype, size, raw):
         pass
@@ -94,4 +93,3 @@ if __name__ == '__main__':
     emf = EMF(raw, verbose=4)
     open('/t/test.bmp', 'wb').write(emf.bitmaps[0])
     open('/t/test.png', 'wb').write(emf.to_png())
-

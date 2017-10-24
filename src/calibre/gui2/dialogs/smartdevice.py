@@ -1,15 +1,14 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-__license__   = 'GPL v3'
-__copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
-
-from PyQt5.Qt import (QDialog, QLineEdit, Qt)
-
 from calibre.gui2 import error_dialog
 from calibre.gui2.dialogs.smartdevice_ui import Ui_Dialog
 from calibre.utils.mdns import get_all_ips
+from PyQt5.Qt import QDialog, QLineEdit, Qt
+
+
+__license__   = 'GPL v3'
+__copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
 
 
 def _cmp_ipaddr(l, r):
@@ -29,7 +28,7 @@ def _cmp_ipaddr(l, r):
 
 def get_all_ip_addresses():
     ipaddrs = list()
-    for iface in get_all_ips().itervalues():
+    for iface in get_all_ips().values():
         for addrs in iface:
             if 'broadcast' in addrs and addrs['addr'] != '127.0.0.1':
                 ipaddrs.append(addrs['addr'])
@@ -115,7 +114,7 @@ class SmartdeviceDialog(QDialog, Ui_Dialog):
                 Qt.Unchecked else QLineEdit.Normal)
 
     def accept(self):
-        port = unicode(self.fixed_port.text())
+        port = str(self.fixed_port.text())
         if not port:
             error_dialog(self, _('Invalid port number'),
                 _('You must provide a port number.'), show=True)
@@ -133,13 +132,13 @@ class SmartdeviceDialog(QDialog, Ui_Dialog):
             return
 
         self.device_manager.set_option('smartdevice', 'password',
-                                       unicode(self.password_box.text()))
+                                       str(self.password_box.text()))
         self.device_manager.set_option('smartdevice', 'autostart',
                                        self.autostart_box.isChecked())
         self.device_manager.set_option('smartdevice', 'use_fixed_port',
                                        self.use_fixed_port.isChecked())
         self.device_manager.set_option('smartdevice', 'port_number',
-                                       unicode(self.fixed_port.text()))
+                                       str(self.fixed_port.text()))
 
         message = self.device_manager.start_plugin('smartdevice')
 
@@ -153,4 +152,3 @@ class SmartdeviceDialog(QDialog, Ui_Dialog):
                                            self.orig_port_number)
         else:
             QDialog.accept(self)
-

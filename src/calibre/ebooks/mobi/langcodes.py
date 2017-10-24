@@ -4,7 +4,9 @@ __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
 
 from struct import pack
+
 from calibre.utils.localization import lang_as_iso639_1
+
 
 lang_codes = {
         }
@@ -336,8 +338,8 @@ def iana2mobi(icode):
 
 def mobi2iana(langcode, sublangcode):
     prefix = suffix = None
-    for code, d in IANA_MOBI.items():
-        for subcode, t in d.items():
+    for code, d in list(IANA_MOBI.items()):
+        for subcode, t in list(d.items()):
             cc, cl = t
             if cc == langcode:
                 prefix = code

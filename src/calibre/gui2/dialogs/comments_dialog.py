@@ -1,14 +1,12 @@
-#!/usr/bin/env python2
 __copyright__ = '2008, Kovid Goyal kovid@kovidgoyal.net'
 __docformat__ = 'restructuredtext en'
 __license__   = 'GPL v3'
 
-from PyQt5.Qt import Qt, QDialog, QDialogButtonBox, QVBoxLayout, QPlainTextEdit, QSize
-
-from calibre.gui2 import gprefs, Application
+from calibre.gui2 import Application, gprefs
 from calibre.gui2.dialogs.comments_dialog_ui import Ui_CommentsDialog
-from calibre.library.comments import comments_to_html
 from calibre.gui2.widgets2 import Dialog
+from calibre.library.comments import comments_to_html
+from PyQt5.Qt import QDialog, QDialogButtonBox, QPlainTextEdit, QSize, Qt, QVBoxLayout
 
 
 class CommentsDialog(QDialog, Ui_CommentsDialog):

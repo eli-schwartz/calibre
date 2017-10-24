@@ -1,19 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import copy, sys
+import copy
+import sys
 
-from PyQt5.Qt import Qt, QTableWidgetItem, QIcon
-
-from calibre.gui2 import gprefs, Application
+from calibre.gui2 import ALL_COLUMNS, Application, error_dialog, gprefs, question_dialog
 from calibre.gui2.preferences import ConfigWidgetBase, test_widget
 from calibre.gui2.preferences.columns_ui import Ui_Form
 from calibre.gui2.preferences.create_custom_column import CreateCustomColumn
-from calibre.gui2 import error_dialog, question_dialog, ALL_COLUMNS
+from PyQt5.Qt import QIcon, Qt, QTableWidgetItem
 
 
 class ConfigWidget(ConfigWidgetBase, Ui_Form):
@@ -85,9 +83,8 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         self.opt_columns.setHorizontalHeaderItem(3, item)
 
         self.opt_columns.setRowCount(len(colmap))
-        self.column_desc = dict(map(lambda x:(CreateCustomColumn.column_types[x]['datatype'],
-                                         CreateCustomColumn.column_types[x]['text']),
-                                  CreateCustomColumn.column_types))
+        self.column_desc = dict([(CreateCustomColumn.column_types[x]['datatype'],
+                                         CreateCustomColumn.column_types[x]['text']) for x in CreateCustomColumn.column_types])
 
         for row, col in enumerate(colmap):
             self.setup_row(self.field_metadata, row, col)
@@ -192,7 +189,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         if idx < 0:
             return error_dialog(self, '', _('You must select a column to delete it'),
                     show=True)
-        col = unicode(self.opt_columns.item(idx, 0).data(Qt.UserRole) or '')
+        col = str(self.opt_columns.item(idx, 0).data(Qt.UserRole) or '')
         if col not in self.custcols:
             return error_dialog(self, '',
                     _('The selected column is not a custom column'), show=True)
@@ -221,7 +218,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         model = self.gui.library_view.model()
         row = self.opt_columns.currentRow()
         try:
-            key = unicode(self.opt_columns.item(row, 0).data(Qt.UserRole))
+            key = str(self.opt_columns.item(row, 0).data(Qt.UserRole))
         except:
             key = ''
         CreateCustomColumn(self, row, key, model.orig_headers, ALL_COLUMNS)
@@ -234,12 +231,12 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
     def apply_custom_column_changes(self):
         model = self.gui.library_view.model()
         db = model.db
-        config_cols = [unicode(self.opt_columns.item(i, 0).data(Qt.UserRole) or '')
+        config_cols = [str(self.opt_columns.item(i, 0).data(Qt.UserRole) or '')
                  for i in range(self.opt_columns.rowCount())]
         if not config_cols:
             config_cols = ['title']
         removed_cols = set(model.column_map) - set(config_cols)
-        hidden_cols = set([unicode(self.opt_columns.item(i, 0).data(Qt.UserRole) or '')
+        hidden_cols = set([str(self.opt_columns.item(i, 0).data(Qt.UserRole) or '')
                  for i in range(self.opt_columns.rowCount())
                  if self.opt_columns.item(i, 0).checkState()==Qt.Unchecked])
         hidden_cols = hidden_cols.union(removed_cols)  # Hide removed cols
@@ -248,8 +245,8 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
             hidden_cols.remove('ondevice')
 
         def col_pos(x, y):
-            xidx = config_cols.index(x) if x in config_cols else sys.maxint
-            yidx = config_cols.index(y) if y in config_cols else sys.maxint
+            xidx = config_cols.index(x) if x in config_cols else sys.maxsize
+            yidx = config_cols.index(y) if y in config_cols else sys.maxsize
             return cmp(xidx, yidx)
         positions = {}
         for i, col in enumerate((sorted(model.column_map, cmp=col_pos))):

@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2015, Kovid Goyal <kovid at kovidgoyal.net>
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import json
 from functools import partial
 from importlib import import_module
@@ -31,8 +28,8 @@ class Context(object):
         self.testing = testing
         self.lock = Lock()
         self.user_manager = UserManager(opts.userdb)
-        self.ignored_fields = frozenset(filter(None, (x.strip() for x in (opts.ignored_fields or '').split(','))))
-        self.displayed_fields = frozenset(filter(None, (x.strip() for x in (opts.displayed_fields or '').split(','))))
+        self.ignored_fields = frozenset([_f for _f in (x.strip() for x in (opts.ignored_fields or '').split(',')) if _f])
+        self.displayed_fields = frozenset([_f for _f in (x.strip() for x in (opts.displayed_fields or '').split(',')) if _f])
         self._notify_changes = notify_changes
 
     def notify_changes(self, library_path, change_event):
@@ -63,7 +60,7 @@ class Context(object):
         allowed_libraries = self.library_broker.allowed_libraries(lf)
         if not allowed_libraries:
             raise HTTPForbidden('The user {} is not allowed to access any libraries on this server'.format(request_data.username))
-        library_id = library_id or next(allowed_libraries.iterkeys())
+        library_id = library_id or next(iter(allowed_libraries.keys()))
         if library_id in allowed_libraries:
             return self.library_broker.get(library_id)
         raise HTTPForbidden('The user {} is not allowed to access the library {}'.format(request_data.username, library_id))
@@ -75,7 +72,7 @@ class Context(object):
         allowed_libraries = self.library_broker.allowed_libraries(lf)
         if not allowed_libraries:
             raise HTTPForbidden('The user {} is not allowed to access any libraries on this server'.format(request_data.username))
-        return dict(allowed_libraries), next(allowed_libraries.iterkeys())
+        return dict(allowed_libraries), next(iter(allowed_libraries.keys()))
 
     def restriction_for(self, request_data, db):
         return self.user_manager.library_restriction(request_data.username, path_for_db(db))
@@ -195,7 +192,7 @@ class Handler(object):
         self.router = Router(ctx=ctx, url_prefix=opts.url_prefix, auth_controller=self.auth_controller)
         for module in SRV_MODULES:
             module = import_module('calibre.srv.' + module)
-            self.router.load_routes(vars(module).itervalues())
+            self.router.load_routes(iter(vars(module).values()))
         self.router.finalize()
         self.router.ctx.url_for = self.router.url_for
         self.dispatch = self.router.dispatch

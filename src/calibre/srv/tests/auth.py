@@ -1,22 +1,27 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import base64
+import http.cookiejar
+import http.client
+import os
+import subprocess
+import time
+import urllib.request, urllib.error, urllib.parse
+from collections import namedtuple
+
+from calibre.ptempfile import TemporaryDirectory
+from calibre.srv.errors import HTTPForbidden
+from calibre.srv.routes import Router, endpoint
+from calibre.srv.tests.base import BaseTest, TestServer
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import httplib, base64, urllib2, subprocess, os, cookielib, time
-from collections import namedtuple
 try:
     from distutils.spawn import find_executable
 except ImportError:  # windows
     find_executable = lambda x: None
 
-from calibre.ptempfile import TemporaryDirectory
-from calibre.srv.errors import HTTPForbidden
-from calibre.srv.tests.base import BaseTest, TestServer
-from calibre.srv.routes import endpoint, Router
 
 REALM = 'calibre-test'
 
@@ -43,17 +48,17 @@ def android2(ctx, data):
 
 def router(prefer_basic_auth=False, ban_for=0, ban_after=5):
     from calibre.srv.auth import AuthController
-    return Router(globals().itervalues(), auth_controller=AuthController(
+    return Router(iter(globals().values()), auth_controller=AuthController(
         {'testuser':'testpw', '!@#$%^&*()-=_+':'!@#$%^&*()-=_+'},
         ban_time_in_minutes=ban_for, ban_after=ban_after,
         prefer_basic_auth=prefer_basic_auth, realm=REALM, max_age_seconds=1))
 
 
 def urlopen(server, path='/closed', un='testuser', pw='testpw', method='digest'):
-    auth_handler = urllib2.HTTPBasicAuthHandler() if method == 'basic' else urllib2.HTTPDigestAuthHandler()
+    auth_handler = urllib.request.HTTPBasicAuthHandler() if method == 'basic' else urllib.request.HTTPDigestAuthHandler()
     url = 'http://localhost:%d%s' % (server.address[1], path)
     auth_handler.add_password(realm=REALM, uri=url, user=un, passwd=pw)
-    return urllib2.build_opener(auth_handler).open(url)
+    return urllib.request.build_opener(auth_handler).open(url)
 
 
 def digest(un, pw, nonce=None, uri=None, method='GET', nc=1, qop='auth', realm=REALM, cnonce=None, algorithm='MD5', body=b'', modify=lambda x:None):
@@ -88,18 +93,18 @@ class TestAuth(BaseTest):
             conn = server.connect()
             conn.request('GET', '/open')
             r = conn.getresponse()
-            self.ae(r.status, httplib.OK)
+            self.ae(r.status, http.client.OK)
             self.ae(r.read(), b'open')
 
             conn.request('GET', '/closed')
             r = conn.getresponse()
-            self.ae(r.status, httplib.UNAUTHORIZED)
+            self.ae(r.status, http.client.UNAUTHORIZED)
             self.ae(r.getheader('WWW-Authenticate'), b'Basic realm="%s"' % bytes(REALM))
             self.assertFalse(r.read())
             conn.request('GET', '/closed', headers={'Authorization': b'Basic ' + base64.standard_b64encode(b'testuser:testpw')})
             r = conn.getresponse()
             self.ae(r.read(), b'closed')
-            self.ae(r.status, httplib.OK)
+            self.ae(r.status, http.client.OK)
             self.ae(b'closed', urlopen(server, method='basic').read())
             self.ae(b'closed', urlopen(server, un='!@#$%^&*()-=_+', pw='!@#$%^&*()-=_+', method='basic').read())
 
@@ -110,14 +115,14 @@ class TestAuth(BaseTest):
 
             warnings = []
             server.loop.log.warn = lambda *args, **kwargs: warnings.append(' '.join(args))
-            self.ae((httplib.OK, b'closed'), request())
-            self.ae((httplib.UNAUTHORIZED, b''), request('x', 'y'))
-            self.ae((httplib.BAD_REQUEST, b'The username or password was empty'), request('', ''))
+            self.ae((http.client.OK, b'closed'), request())
+            self.ae((http.client.UNAUTHORIZED, b''), request('x', 'y'))
+            self.ae((http.client.BAD_REQUEST, b'The username or password was empty'), request('', ''))
             self.ae(1, len(warnings))
-            self.ae((httplib.UNAUTHORIZED, b''), request('testuser', 'y'))
-            self.ae((httplib.BAD_REQUEST, b'The username or password was empty'), request('testuser', ''))
-            self.ae((httplib.BAD_REQUEST, b'The username or password was empty'), request(''))
-            self.ae((httplib.UNAUTHORIZED, b''), request('asf', 'testpw'))
+            self.ae((http.client.UNAUTHORIZED, b''), request('testuser', 'y'))
+            self.ae((http.client.BAD_REQUEST, b'The username or password was empty'), request('testuser', ''))
+            self.ae((http.client.BAD_REQUEST, b'The username or password was empty'), request(''))
+            self.ae((http.client.UNAUTHORIZED, b''), request('asf', 'testpw'))
     # }}}
 
     def test_library_restrictions(self):  # {{{
@@ -127,7 +132,7 @@ class TestAuth(BaseTest):
         opts = Options(userdb=':memory:')
         Data = namedtuple('Data', 'username')
         with TemporaryDirectory() as base:
-            l1, l2, l3 = map(lambda x: os.path.join(base, 'l' + x), '123')
+            l1, l2, l3 = [os.path.join(base, 'l' + x) for x in '123']
             for l in (l1, l2, l3):
                 create_backend(l).close()
             ctx = Handler((l1, l2, l3), opts).router.ctx
@@ -139,7 +144,7 @@ class TestAuth(BaseTest):
 
             def library_info(username=None):
                 lmap, defaultlib = ctx.library_info(Data(username))
-                lmap = {k:os.path.basename(v) for k, v in lmap.iteritems()}
+                lmap = {k:os.path.basename(v) for k, v in lmap.items()}
                 return lmap, defaultlib
 
             self.assertEqual(get_library(), 'l1')
@@ -166,7 +171,7 @@ class TestAuth(BaseTest):
         with TestServer(r.dispatch) as server:
             r.auth_controller.log = server.log
 
-            def test(conn, path, headers={}, status=httplib.OK, body=b'', request_body=b''):
+            def test(conn, path, headers={}, status=http.client.OK, body=b'', request_body=b''):
                 conn.request('GET', path, request_body, headers)
                 r = conn.getresponse()
                 self.ae(r.status, status)
@@ -174,9 +179,9 @@ class TestAuth(BaseTest):
                 return {normalize_header_name(k):v for k, v in r.getheaders()}
             conn = server.connect()
             test(conn, '/open', body=b'open')
-            auth = parse_http_dict(test(conn, '/closed', status=httplib.UNAUTHORIZED)['WWW-Authenticate'].partition(b' ')[2])
+            auth = parse_http_dict(test(conn, '/closed', status=http.client.UNAUTHORIZED)['WWW-Authenticate'].partition(b' ')[2])
             nonce = auth['nonce']
-            auth = parse_http_dict(test(conn, '/closed', status=httplib.UNAUTHORIZED)['WWW-Authenticate'].partition(b' ')[2])
+            auth = parse_http_dict(test(conn, '/closed', status=http.client.UNAUTHORIZED)['WWW-Authenticate'].partition(b' ')[2])
             self.assertNotEqual(nonce, auth['nonce'], 'nonce was re-used')
             self.ae(auth[b'realm'], bytes(REALM)), self.ae(auth[b'algorithm'], b'MD5'), self.ae(auth[b'qop'], b'auth')
             self.assertNotIn('stale', auth)
@@ -196,14 +201,14 @@ class TestAuth(BaseTest):
             # Check stale nonces
             orig, r.auth_controller.max_age_seconds = r.auth_controller.max_age_seconds, -1
             auth = parse_http_dict(test(conn, '/closed', headers={
-                'Authorization':digest(**args)},status=httplib.UNAUTHORIZED)['WWW-Authenticate'].partition(b' ')[2])
+                'Authorization':digest(**args)},status=http.client.UNAUTHORIZED)['WWW-Authenticate'].partition(b' ')[2])
             self.assertIn('stale', auth)
             r.auth_controller.max_age_seconds = orig
             ok_test(conn, digest(**args))
 
             def fail_test(conn, modify, **kw):
                 kw['body'] = kw.get('body', b'')
-                kw['status'] = kw.get('status', httplib.UNAUTHORIZED)
+                kw['status'] = kw.get('status', http.client.UNAUTHORIZED)
                 args['modify'] = modify
                 return test(conn, '/closed', headers={'Authorization':digest(**args)}, **kw)
 
@@ -255,13 +260,13 @@ class TestAuth(BaseTest):
 
             warnings = []
             server.loop.log.warn = lambda *args, **kwargs: warnings.append(' '.join(args))
-            self.ae((httplib.OK, b'closed'), request())
-            self.ae((httplib.UNAUTHORIZED, b''), request('x', 'y'))
-            self.ae((httplib.UNAUTHORIZED, b''), request('x', 'y'))
-            self.ae(httplib.FORBIDDEN, request('x', 'y')[0])
-            self.ae(httplib.FORBIDDEN, request()[0])
+            self.ae((http.client.OK, b'closed'), request())
+            self.ae((http.client.UNAUTHORIZED, b''), request('x', 'y'))
+            self.ae((http.client.UNAUTHORIZED, b''), request('x', 'y'))
+            self.ae(http.client.FORBIDDEN, request('x', 'y')[0])
+            self.ae(http.client.FORBIDDEN, request()[0])
             time.sleep(ban_for * 60 + 0.01)
-            self.ae((httplib.OK, b'closed'), request())
+            self.ae((http.client.OK, b'closed'), request())
     # }}}
 
     def test_android_auth_workaround(self):  # {{{
@@ -274,28 +279,28 @@ class TestAuth(BaseTest):
             # First check that unauth access fails
             conn.request('GET', '/android')
             r = conn.getresponse()
-            self.ae(r.status, httplib.UNAUTHORIZED)
+            self.ae(r.status, http.client.UNAUTHORIZED)
 
-            auth_handler = urllib2.HTTPDigestAuthHandler()
+            auth_handler = urllib.request.HTTPDigestAuthHandler()
             url = 'http://localhost:%d%s' % (server.address[1], '/android')
             auth_handler.add_password(realm=REALM, uri=url, user='testuser', passwd='testpw')
-            cj = cookielib.CookieJar()
-            cookie_handler = urllib2.HTTPCookieProcessor(cj)
-            r = urllib2.build_opener(auth_handler, cookie_handler).open(url)
-            self.ae(r.getcode(), httplib.OK)
+            cj = http.cookiejar.CookieJar()
+            cookie_handler = urllib.request.HTTPCookieProcessor(cj)
+            r = urllib.request.build_opener(auth_handler, cookie_handler).open(url)
+            self.ae(r.getcode(), http.client.OK)
             cookies = tuple(cj)
             self.ae(len(cookies), 1)
             cookie = cookies[0]
             self.assertIn(b':', cookie.value)
             self.ae(cookie.path, b'/android')
-            r = urllib2.build_opener(cookie_handler).open(url)
-            self.ae(r.getcode(), httplib.OK)
+            r = urllib.request.build_opener(cookie_handler).open(url)
+            self.ae(r.getcode(), http.client.OK)
             self.ae(r.read(), b'android')
             # Test that a replay attack against a different URL does not work
             try:
-                urllib2.build_opener(cookie_handler).open(url+'2')
+                urllib.request.build_opener(cookie_handler).open(url+'2')
                 assert ('Replay attack succeeded')
-            except urllib2.HTTPError as e:
-                self.ae(e.code, httplib.UNAUTHORIZED)
+            except urllib.error.HTTPError as e:
+                self.ae(e.code, http.client.UNAUTHORIZED)
 
     # }}}

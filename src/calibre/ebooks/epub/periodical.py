@@ -1,18 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from uuid import uuid4
 import time
+from uuid import uuid4
 
+from calibre import prepare_string_for_xml as xml, strftime
 from calibre.constants import __appname__, __version__
-from calibre import strftime, prepare_string_for_xml as xml
 from calibre.utils.date import parse_date
 
-SONY_METADATA = u'''\
+
+SONY_METADATA = '''\
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
     xmlns:dcterms="http://purl.org/dc/terms/"
@@ -31,7 +31,7 @@ SONY_METADATA = u'''\
 </rdf:RDF>
 '''
 
-SONY_ATOM = u'''\
+SONY_ATOM = '''\
 <?xml version="1.0" encoding="utf-8" ?>
 <feed xmlns="http://www.w3.org/2005/Atom"
     xmlns:dc="http://purl.org/dc/elements/1.1/"
@@ -48,7 +48,7 @@ SONY_ATOM = u'''\
 </feed>
 '''
 
-SONY_ATOM_SECTION = u'''\
+SONY_ATOM_SECTION = '''\
 <entry rdf:ID="{title}">
   <title>{title}</title>
   <link href="{href}"/>
@@ -62,7 +62,7 @@ SONY_ATOM_SECTION = u'''\
 </entry>
 '''
 
-SONY_ATOM_ENTRY = u'''\
+SONY_ATOM_ENTRY = '''\
 <entry>
   <title>{title}</title>
   <author><name>{author}</name></author>
@@ -81,21 +81,21 @@ SONY_ATOM_ENTRY = u'''\
 
 def sony_metadata(oeb):
     m = oeb.metadata
-    title = short_title = unicode(m.title[0])
+    title = short_title = str(m.title[0])
     publisher = __appname__ + ' ' + __version__
     try:
-        pt = unicode(oeb.metadata.publication_type[0])
-        short_title = u':'.join(pt.split(':')[2:])
+        pt = str(oeb.metadata.publication_type[0])
+        short_title = ':'.join(pt.split(':')[2:])
     except:
         pass
 
     try:
-        date = parse_date(unicode(m.date[0]),
+        date = parse_date(str(m.date[0]),
                 as_utc=False).strftime('%Y-%m-%d')
     except:
         date = strftime('%Y-%m-%d')
     try:
-        language = unicode(m.language[0]).replace('_', '-')
+        language = str(m.language[0]).replace('_', '-')
     except:
         language = 'en'
     short_title = xml(short_title, True)
@@ -108,12 +108,12 @@ def sony_metadata(oeb):
     updated = strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
 
     def cal_id(x):
-        for k, v in x.attrib.items():
+        for k, v in list(x.attrib.items()):
             if k.endswith('scheme') and v == 'uuid':
                 return True
 
     try:
-        base_id = unicode(list(filter(cal_id, m.identifier))[0])
+        base_id = str(list(filter(cal_id, m.identifier))[0])
     except:
         base_id = str(uuid4())
 
@@ -128,7 +128,7 @@ def sony_metadata(oeb):
         for x in toc:
             section.nodes.append(x)
         toc = TOC(klass='periodical', href=oeb.spine[2].href,
-                    title=unicode(oeb.metadata.title[0]))
+                    title=str(oeb.metadata.title[0]))
         toc.nodes.append(section)
 
     entries = []
@@ -188,4 +188,3 @@ def sony_metadata(oeb):
             id=xml(base_id)).encode('utf-8')
 
     return metadata, atom
-

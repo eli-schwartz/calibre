@@ -1,17 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import shutil
+import sys
+
+from calibre import walk
+from calibre.utils.zipfile import ZipFile
+from lxml import etree
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import sys, os, shutil
 
-from lxml import etree
 
-from calibre import walk
-from calibre.utils.zipfile import ZipFile
 
 
 def pretty_all_xml_in_dir(path):
@@ -39,8 +40,7 @@ def dump(path):
     dest += '-dumped'
     do_dump(path, dest)
 
-    print (path, 'dumped to', dest)
+    print((path, 'dumped to', dest))
 
 if __name__ == '__main__':
     dump(sys.argv[-1])
-

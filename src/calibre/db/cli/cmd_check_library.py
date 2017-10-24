@@ -1,8 +1,5 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import csv
 import sys
@@ -10,6 +7,7 @@ import sys
 from calibre import prints
 from calibre.db.legacy import LibraryDatabase
 from calibre.library.check_library import CHECKS, CheckLibrary
+
 
 readonly = False
 version = 0  # change this if you change signature of implementation()

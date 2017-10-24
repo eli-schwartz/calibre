@@ -11,12 +11,12 @@ Generates and writes an APNX page mapping file.
 import re
 import struct
 
+from calibre import fsync, prints
+from calibre.constants import DEBUG
+from calibre.ebooks.mobi.reader.headers import MetadataHeader
 from calibre.ebooks.mobi.reader.mobi6 import MobiReader
 from calibre.ebooks.pdb.header import PdbHeaderReader
-from calibre.ebooks.mobi.reader.headers import MetadataHeader
 from calibre.utils.logging import default_log
-from calibre import prints, fsync
-from calibre.constants import DEBUG
 
 
 class APNXBuilder(object):
@@ -267,7 +267,7 @@ class APNXBuilder(object):
                     p_char_count = 0
 
         # Every 30 lines is a new page
-        for i in xrange(0, len(lines), 32):
+        for i in range(0, len(lines), 32):
             pages.append(lines[i])
 
         return pages

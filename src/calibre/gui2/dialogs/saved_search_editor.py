@@ -2,13 +2,12 @@ __license__ = 'GPL v3'
 
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from PyQt5.Qt import QDialog, QFormLayout, Qt, QLineEdit, QLabel
-
-from calibre.gui2.dialogs.saved_search_editor_ui import Ui_SavedSearchEditor
-from calibre.utils.icu import sort_key
 from calibre.gui2 import error_dialog
 from calibre.gui2.dialogs.confirm_delete import confirm
+from calibre.gui2.dialogs.saved_search_editor_ui import Ui_SavedSearchEditor
 from calibre.gui2.widgets2 import Dialog
+from calibre.utils.icu import sort_key
+from PyQt5.Qt import QDialog, QFormLayout, QLabel, QLineEdit, Qt
 
 
 def commit_searches(searches):
@@ -105,13 +104,13 @@ class SavedSearchEditor(QDialog, Ui_SavedSearchEditor):
         self.search_name_box.blockSignals(True)
         self.search_name_box.clear()
         self.search_name_box.addItem('')
-        for name in sorted(self.searches.keys(), key=sort_key):
+        for name in sorted(list(self.searches.keys()), key=sort_key):
             self.search_name_box.addItem(name)
-        self.search_names = set([icu_lower(n) for n in self.searches.keys()])
+        self.search_names = set([icu_lower(n) for n in list(self.searches.keys())])
         self.search_name_box.blockSignals(False)
 
     def sanitize_name(self):
-        n = unicode(self.input_box.text()).strip().replace('\\', '')
+        n = str(self.input_box.text()).strip().replace('\\', '')
         self.input_box.setText(n)
         return n
 
@@ -174,9 +173,9 @@ class SavedSearchEditor(QDialog, Ui_SavedSearchEditor):
 
     def current_index_changed(self, idx):
         if self.current_search_name:
-            self.searches[self.current_search_name] = unicode(
+            self.searches[self.current_search_name] = str(
                 self.search_text.toPlainText())
-        name = unicode(self.search_name_box.itemText(idx))
+        name = str(self.search_name_box.itemText(idx))
         if name:
             self.current_search_name = name
             self.search_text.setPlainText(self.searches[name])
@@ -186,7 +185,7 @@ class SavedSearchEditor(QDialog, Ui_SavedSearchEditor):
 
     def save_current_search(self):
         if self.current_search_name:
-            self.searches[self.current_search_name] = unicode(
+            self.searches[self.current_search_name] = str(
                 self.search_text.toPlainText())
 
     def accept(self):

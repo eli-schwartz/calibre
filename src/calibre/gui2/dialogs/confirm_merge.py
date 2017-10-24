@@ -1,22 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.ebooks.metadata import authors_to_string
+from calibre.ebooks.metadata.book.base import field_metadata
+from calibre.gui2 import dynamic
+from calibre.gui2.dialogs.confirm_delete import confirm_config_name
+from calibre.gui2.widgets2 import Dialog
+from calibre.utils.config import tweaks
+from calibre.utils.date import format_date
+from PyQt5.Qt import QCheckBox, QLabel, QSplitter, QTextBrowser, QVBoxLayout, QWidget
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from PyQt5.Qt import (
-    QVBoxLayout, QSplitter, QWidget, QLabel, QCheckBox, QTextBrowser
-)
 
-from calibre.ebooks.metadata import authors_to_string
-from calibre.ebooks.metadata.book.base import field_metadata
-from calibre.gui2 import dynamic
-from calibre.gui2.widgets2 import Dialog
-from calibre.gui2.dialogs.confirm_delete import confirm_config_name
-from calibre.utils.config import tweaks
-from calibre.utils.date import format_date
 
 
 class ConfirmMerge(Dialog):

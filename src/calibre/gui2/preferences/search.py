@@ -1,19 +1,18 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import QApplication
-
-from calibre.gui2.preferences import ConfigWidgetBase, test_widget, \
-        CommaSeparatedList, AbortCommit
-from calibre.gui2.preferences.search_ui import Ui_Form
 from calibre.gui2 import config, error_dialog, gprefs
+from calibre.gui2.preferences import (
+	AbortCommit, CommaSeparatedList, ConfigWidgetBase, test_widget
+)
+from calibre.gui2.preferences.search_ui import Ui_Form
+from calibre.library.caches import set_use_primary_find_in_search
 from calibre.utils.config import prefs
 from calibre.utils.icu import sort_key
-from calibre.library.caches import set_use_primary_find_in_search
+from PyQt5.Qt import QApplication
 
 
 class ConfigWidget(ConfigWidgetBase, Ui_Form):
@@ -63,7 +62,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
     "a particular item, or to have hierarchical categories (categories "
     "that contain categories)."))
         self.gst = db.prefs.get('grouped_search_terms', {}).copy()
-        self.orig_gst_keys = self.gst.keys()
+        self.orig_gst_keys = list(self.gst.keys())
 
         fl = []
         for f in db.all_field_keys():
@@ -120,7 +119,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         field.clear()
         choices = []
         choices.extend(self.category_fields)
-        choices.extend(sorted(self.gst.keys(), key=sort_key))
+        choices.extend(sorted(list(self.gst.keys()), key=sort_key))
         field.addItems(choices)
         dex = field.findText(val)
         if dex >= 0:
@@ -137,13 +136,13 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
 
     def gst_save_clicked(self):
         idx = self.gst_names.currentIndex()
-        name = icu_lower(unicode(self.gst_names.currentText()))
+        name = icu_lower(str(self.gst_names.currentText()))
         if not name:
             return error_dialog(self.gui, _('Grouped search terms'),
                                 _('The search term cannot be blank'),
                                 show=True)
         if idx != 0:
-            orig_name = unicode(self.gst_names.itemData(idx) or '')
+            orig_name = str(self.gst_names.itemData(idx) or '')
         else:
             orig_name = ''
         if name != orig_name:
@@ -157,7 +156,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
                     _('That name is already used for User category'),
                     show=True)
 
-        val = [v.strip() for v in unicode(self.gst_value.text()).split(',') if v.strip()]
+        val = [v.strip() for v in str(self.gst_value.text()).split(',') if v.strip()]
         if not val:
             return error_dialog(self.gui, _('Grouped search terms'),
                 _('The value box cannot be empty'), show=True)
@@ -174,7 +173,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         if self.gst_names.currentIndex() == 0:
             return error_dialog(self.gui, _('Grouped search terms'),
                 _('The empty grouped search term cannot be deleted'), show=True)
-        name = unicode(self.gst_names.currentText())
+        name = str(self.gst_names.currentText())
         if name in self.gst:
             del self.gst[name]
             self.fill_gst_box(select='')
@@ -183,7 +182,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
             self.set_similar_fields(initial=False)
 
     def fill_gst_box(self, select=None):
-        terms = sorted(self.gst.keys(), key=sort_key)
+        terms = sorted(list(self.gst.keys()), key=sort_key)
         self.opt_grouped_search_make_user_categories.update_items_cache(terms)
         self.gst_names.blockSignals(True)
         self.gst_names.clear()
@@ -208,7 +207,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         if idx == 0:
             self.gst_value.setText('')
         else:
-            name = unicode(self.gst_names.itemData(idx) or '')
+            name = str(self.gst_names.itemData(idx) or '')
             self.gst_value.setText(','.join(self.gst[name]))
         self.gst_value.blockSignals(False)
 
@@ -222,13 +221,13 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
             self.db.new_api.set_pref('grouped_search_terms', self.gst)
             self.db.field_metadata.add_grouped_search_terms(self.gst)
         self.db.new_api.set_pref('similar_authors_search_key',
-                          unicode(self.similar_authors_search_key.currentText()))
+                          str(self.similar_authors_search_key.currentText()))
         self.db.new_api.set_pref('similar_tags_search_key',
-                          unicode(self.similar_tags_search_key.currentText()))
+                          str(self.similar_tags_search_key.currentText()))
         self.db.new_api.set_pref('similar_series_search_key',
-                          unicode(self.similar_series_search_key.currentText()))
+                          str(self.similar_series_search_key.currentText()))
         self.db.new_api.set_pref('similar_publisher_search_key',
-                          unicode(self.similar_publisher_search_key.currentText()))
+                          str(self.similar_publisher_search_key.currentText()))
         return ConfigWidgetBase.commit(self)
 
     def refresh_gui(self, gui):
@@ -241,7 +240,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         gui.search.do_search()
 
     def clear_histories(self, *args):
-        for key, val in config.defaults.iteritems():
+        for key, val in config.defaults.items():
             if key.endswith('_search_history') and isinstance(val, list):
                 config[key] = []
         self.gui.search.clear_history()

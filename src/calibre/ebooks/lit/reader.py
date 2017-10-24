@@ -1,26 +1,30 @@
 '''
 Support for reading LIT files.
 '''
-from __future__ import with_statement
+import functools
+import os
+import re
+import struct
+from io import StringIO
+from urllib.parse import unquote as urlunquote
+from urllib.parse import urldefrag
+
+import calibre.ebooks.lit.mssha1 as mssha1
+from calibre import plugins
+from calibre.ebooks import DRMError
+from calibre.ebooks.lit import LitError
+from calibre.ebooks.lit.maps import HTML_MAP, OPF_MAP
+from calibre.ebooks.oeb.base import urlnormalize, xpath
+from calibre.ebooks.oeb.reader import OEBReader
+from lxml import etree
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net> ' \
     'and Marshall T. Vandegrift <llasram@gmail.com>'
 
-import struct, os, functools, re
-from urlparse import urldefrag
-from cStringIO import StringIO
-from urllib import unquote as urlunquote
 
-from lxml import etree
 
-from calibre.ebooks.lit import LitError
-from calibre.ebooks.lit.maps import OPF_MAP, HTML_MAP
-import calibre.ebooks.lit.mssha1 as mssha1
-from calibre.ebooks.oeb.base import urlnormalize, xpath
-from calibre.ebooks.oeb.reader import OEBReader
-from calibre.ebooks import DRMError
-from calibre import plugins
 
 lzx, lxzerror = plugins['lzx']
 msdes, msdeserror = plugins['msdes']
@@ -103,28 +107,28 @@ def read_utf8_char(bytes, pos):
         if elsize + pos > len(bytes):
             raise LitError('Invalid UTF8 character: %s' % repr(bytes[pos]))
         c &= (mask - 1)
-        for i in xrange(1, elsize):
+        for i in range(1, elsize):
             b = ord(bytes[pos+i])
             if (b & 0xC0) != 0x80:
                 raise LitError(
                     'Invalid UTF8 character: %s' % repr(bytes[pos:pos+i]))
             c = (c << 6) | (b & 0x3F)
-    return unichr(c), pos+elsize
+    return chr(c), pos+elsize
 
 
 def consume_sized_utf8_string(bytes, zpad=False):
     result = []
     slen, pos = read_utf8_char(bytes, 0)
-    for i in xrange(ord(slen)):
+    for i in range(ord(slen)):
         char, pos = read_utf8_char(bytes, pos)
         result.append(char)
     if zpad and bytes[pos] == '\000':
         pos += 1
-    return u''.join(result), bytes[pos:]
+    return ''.join(result), bytes[pos:]
 
 
 def encode(string):
-    return unicode(string).encode('ascii', 'xmlcharrefreplace')
+    return str(string).encode('ascii', 'xmlcharrefreplace')
 
 
 class UnBinary(object):
@@ -164,7 +168,7 @@ class UnBinary(object):
             return target
         target = target.split('/')
         base = self.dir.split('/')
-        for index in xrange(min(len(base), len(target))):
+        for index in range(min(len(base), len(target))):
             if base[index] != target[index]:
                 break
         else:
@@ -192,7 +196,7 @@ class UnBinary(object):
         if state == 'close tag':
             if not tag_name:
                 raise LitError('Tag ends before it begins.')
-            buf.write(encode(u''.join(('</', tag_name, '>'))))
+            buf.write(encode(''.join(('</', tag_name, '>'))))
             dynamic_tag = 0
             tag_name = None
             state = 'text'
@@ -242,9 +246,9 @@ class UnBinary(object):
                     else:
                         dynamic_tag += 1
                         errors += 1
-                        tag_name = '?'+unichr(tag)+'?'
+                        tag_name = '?'+chr(tag)+'?'
                         current_map = self.tag_to_attr_map[tag]
-                        print 'WARNING: tag %s unknown' % unichr(tag)
+                        print('WARNING: tag %s unknown' % chr(tag))
                     buf.write(encode(tag_name))
                 elif flags & FLAG_CLOSING:
                     if depth == 0:
@@ -279,7 +283,7 @@ class UnBinary(object):
                         attr = current_map[oc]
                     elif oc in self.attr_map:
                         attr = self.attr_map[oc]
-                    if not attr or not isinstance(attr, basestring):
+                    if not attr or not isinstance(attr, str):
                         raise LitError(
                             'Unknown attribute %d in tag %s' % (oc, tag_name))
                     if attr.startswith('%'):
@@ -373,7 +377,7 @@ class UnBinary(object):
                     if frag:
                         path = '#'.join((path, frag))
                     path = urlnormalize(path)
-                    buf.write(encode(u'"%s"' % path))
+                    buf.write(encode('"%s"' % path))
                     state = 'get attr'
 
 
@@ -565,7 +569,7 @@ class LitFile(object):
 
     def read_header_pieces(self):
         src = self.header[self.hdr_len:]
-        for i in xrange(self.num_pieces):
+        for i in range(self.num_pieces):
             piece = src[i * self.PIECE_SIZE:(i + 1) * self.PIECE_SIZE]
             if u32(piece[4:]) != 0 or u32(piece[12:]) != 0:
                 raise LitError('Piece %s has 64bit value' % repr(piece))
@@ -595,7 +599,7 @@ class LitFile(object):
         if (32 + (num_chunks * chunk_size)) != len(piece):
             raise LitError('IFCM header has incorrect length')
         self.entries = {}
-        for i in xrange(num_chunks):
+        for i in range(num_chunks):
             offset = 32 + (i * chunk_size)
             chunk = piece[offset:offset + chunk_size]
             tag, chunk = chunk[:4], chunk[4:]
@@ -610,7 +614,7 @@ class LitFile(object):
                 # Hopefully will work even without a correct entries count
                 entries = (2 ** 16) - 1
             chunk = chunk[40:]
-            for j in xrange(entries):
+            for j in range(entries):
                 if remaining <= 0:
                     break
                 namelen, chunk, remaining = encint(chunk, remaining)
@@ -640,7 +644,7 @@ class LitFile(object):
         num_sections = u16(raw[2:pos])
         self.section_names = [""] * num_sections
         self.section_data = [None] * num_sections
-        for section in xrange(num_sections):
+        for section in range(num_sections):
             size = u16(raw[pos:pos+2])
             pos += 2
             size = size*2 + 2
@@ -667,7 +671,7 @@ class LitFile(object):
                 num_files, raw = int32(raw), raw[4:]
                 if num_files == 0:
                     continue
-                for i in xrange(num_files):
+                for i in range(num_files):
                     if len(raw) < 5:
                         raise LitError('Truncated manifest')
                     offset, raw = u32(raw), raw[4:]
@@ -679,7 +683,7 @@ class LitFile(object):
                     mime_type, raw = consume_sized_utf8_string(raw, zpad=True)
                     self.manifest[internal] = ManifestItem(
                         original, internal, mime_type, offset, root, state)
-        mlist = self.manifest.values()
+        mlist = list(self.manifest.values())
         # Remove any common path elements
         if len(mlist) > 1:
             shared = mlist[0].path
@@ -738,7 +742,7 @@ class LitFile(object):
             hash.update(data)
         digest = hash.digest()
         key = [0] * 8
-        for i in xrange(0, len(digest)):
+        for i in range(0, len(digest)):
             key[i % 8] ^= ord(digest[i])
         return ''.join(chr(x) for x in key)
 
@@ -854,7 +858,7 @@ class LitFile(object):
         data = self.get_file(name)
         nentries, data = u32(data), data[4:]
         tags = {}
-        for i in xrange(1, nentries + 1):
+        for i in range(1, nentries + 1):
             if len(data) <= 1:
                 break
             size, data = ord(data[0]), data[1:]
@@ -867,7 +871,7 @@ class LitFile(object):
             return (tags, {})
         attrs = {}
         nentries, data = u32(data), data[4:]
-        for i in xrange(1, nentries + 1):
+        for i in range(1, nentries + 1):
             if len(data) <= 4:
                 break
             size, data = u32(data), data[4:]
@@ -887,7 +891,7 @@ class LitContainer(object):
         self.log = log
 
     def namelist(self):
-        return self._litfile.paths.keys()
+        return list(self._litfile.paths.keys())
 
     def exists(self, name):
         return urlunquote(name) in self._litfile.paths
@@ -920,7 +924,7 @@ class LitContainer(object):
         except LitError:
             if 'PENGUIN group' not in raw:
                 raise
-            print "WARNING: attempting PENGUIN malformed OPF fix"
+            print("WARNING: attempting PENGUIN malformed OPF fix")
             raw = raw.replace(
                 'PENGUIN group', '\x00\x01\x18\x00PENGUIN group', 1)
             unbin = UnBinary(raw, path, self._litfile.manifest, OPF_MAP)
@@ -946,4 +950,3 @@ class LitReader(OEBReader):
                 item.media_type = 'application/xhtml+xml'
                 item.data = item._parse_xhtml(etree.tostring(item.data))
         super(LitReader, self)._spine_from_opf(opf)
-

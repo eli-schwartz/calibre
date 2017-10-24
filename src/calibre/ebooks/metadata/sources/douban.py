@@ -1,21 +1,20 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import time
+from functools import partial
+from queue import Empty, Queue
+
+from calibre import as_unicode
+from calibre.ebooks.metadata import check_isbn
+from calibre.ebooks.metadata.book.base import Metadata
+from calibre.ebooks.metadata.sources.base import Source
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>; 2011, Li Fanxi <lifanxi@freemindworld.com>'
 __docformat__ = 'restructuredtext en'
 
-import time
-from functools import partial
-from Queue import Queue, Empty
 
 
-from calibre.ebooks.metadata import check_isbn
-from calibre.ebooks.metadata.sources.base import Source
-from calibre.ebooks.metadata.book.base import Metadata
-from calibre import as_unicode
 
 NAMESPACES = {
               'openSearch':'http://a9.com/-/spec/opensearchrss/1.0/',
@@ -175,7 +174,7 @@ class Douban(Source):
     # }}}
 
     def create_query(self, log, title=None, authors=None, identifiers={}):  # {{{
-        from urllib import urlencode
+        from urllib.parse import urlencode
         SEARCH_URL = 'https://api.douban.com/book/subjects?'
         ISBN_URL = 'https://api.douban.com/book/subject/isbn/'
         SUBJECT_URL = 'https://api.douban.com/book/subject/'
@@ -203,7 +202,7 @@ class Douban(Source):
                     build_term('author', author_tokens))
             t = 'search'
         q = q.strip()
-        if isinstance(q, unicode):
+        if isinstance(q, str):
             q = q.encode('utf-8')
         if not q:
             return None

@@ -1,36 +1,37 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import copy
+import logging
+from collections import defaultdict, namedtuple
+from functools import partial
+from io import BytesIO
+from struct import pack
+
+import cssutils
+from calibre import force_unicode, isbytestring
+from calibre.ebooks.compression.palmdoc import compress_doc
+from calibre.ebooks.mobi.utils import create_text_record, is_guide_ref_start, to_base
+from calibre.ebooks.mobi.writer8.index import (
+	ChunkIndex, GuideIndex, NCXIndex, NonLinearNCXIndex, SkelIndex
+)
+from calibre.ebooks.mobi.writer8.mobi import KF8Book
+from calibre.ebooks.mobi.writer8.skeleton import Chunker, aid_able_tags, to_href
+from calibre.ebooks.mobi.writer8.tbs import apply_trailing_byte_sequences
+from calibre.ebooks.mobi.writer8.toc import TOCAdder
+from calibre.ebooks.oeb.base import (
+	OEB_DOCS, OEB_STYLES, SVG_MIME, XHTML, XPath, extract, urlnormalize
+)
+from calibre.ebooks.oeb.normalize_css import condense_sheet
+from calibre.ebooks.oeb.parse_utils import barename
+from cssutils.css import CSSRule
+from lxml import etree
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import copy, logging
-from functools import partial
-from collections import defaultdict, namedtuple
-from io import BytesIO
-from struct import pack
 
-import cssutils
-from cssutils.css import CSSRule
-from lxml import etree
 
-from calibre import isbytestring, force_unicode
-from calibre.ebooks.mobi.utils import (create_text_record, to_base,
-        is_guide_ref_start)
-from calibre.ebooks.compression.palmdoc import compress_doc
-from calibre.ebooks.oeb.base import (OEB_DOCS, OEB_STYLES, SVG_MIME, XPath,
-        extract, XHTML, urlnormalize)
-from calibre.ebooks.oeb.normalize_css import condense_sheet
-from calibre.ebooks.oeb.parse_utils import barename
-from calibre.ebooks.mobi.writer8.skeleton import Chunker, aid_able_tags, to_href
-from calibre.ebooks.mobi.writer8.index import (NCXIndex, SkelIndex,
-        ChunkIndex, GuideIndex, NonLinearNCXIndex)
-from calibre.ebooks.mobi.writer8.mobi import KF8Book
-from calibre.ebooks.mobi.writer8.tbs import apply_trailing_byte_sequences
-from calibre.ebooks.mobi.writer8.toc import TOCAdder
 
 XML_DOCS = OEB_DOCS | {SVG_MIME}
 
@@ -132,7 +133,7 @@ class KF8Writer(object):
             if item.media_type in XML_DOCS:
                 root = self.data(item)
                 for tag in XPath('//h:img|//svg:image')(root):
-                    for attr, ref in tag.attrib.iteritems():
+                    for attr, ref in tag.attrib.items():
                         if attr.split('}')[-1].lower() in {'src', 'href'}:
                             tag.attrib[attr] = pointer(item, ref)
 
@@ -205,7 +206,7 @@ class KF8Writer(object):
                 extract(tag)
                 inlines[raw].append(repl)
 
-        for raw, elems in inlines.iteritems():
+        for raw, elems in inlines.items():
             idx = to_ref(len(self.flows))
             self.flows.append(raw)
             for link in elems:
@@ -235,7 +236,7 @@ class KF8Writer(object):
             root = self.data(item)
 
             for svg in XPath('//svg:svg')(root):
-                raw = etree.tostring(svg, encoding=unicode, with_tail=False)
+                raw = etree.tostring(svg, encoding=str, with_tail=False)
                 idx = len(self.flows)
                 self.flows.append(raw)
                 p = svg.getparent()
@@ -319,7 +320,7 @@ class KF8Writer(object):
 
     def chunk_it_up(self):
         placeholder_map = {}
-        for placeholder, x in self.link_map.iteritems():
+        for placeholder, x in self.link_map.items():
             href, frag = x
             aid = self.id_map.get(x, None)
             if aid is None:
@@ -333,7 +334,7 @@ class KF8Writer(object):
         self.flows[0] = chunker.text
 
     def create_text_records(self):
-        self.flows = [x.encode('utf-8') if isinstance(x, unicode) else x for x
+        self.flows = [x.encode('utf-8') if isinstance(x, str) else x for x
                 in self.flows]
         text = b''.join(self.flows)
         self.text_length = len(text)
@@ -475,7 +476,7 @@ class KF8Writer(object):
         self.guide_table = []
         self.guide_records = []
         GuideRef = namedtuple('GuideRef', 'title type pos_fid')
-        for ref in self.oeb.guide.values():
+        for ref in list(self.oeb.guide.values()):
             href, frag = ref.href.partition('#')[0::2]
             aid = self.id_map.get((href, frag), None)
             if aid is None:

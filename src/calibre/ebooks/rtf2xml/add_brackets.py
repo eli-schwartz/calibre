@@ -11,9 +11,10 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import sys, os
+import os
+import sys
 
-from calibre.ebooks.rtf2xml import copy, check_brackets
+from calibre.ebooks.rtf2xml import check_brackets, copy
 from calibre.ptempfile import better_mktemp
 
 
@@ -161,7 +162,7 @@ class AddBrackets:
             self.__open_bracket = False
 
         inline_string = ''.join(['%s<nu<%s\n' % (k, v)
-                for k, v in self.__inline.iteritems()
+                for k, v in self.__inline.items()
                     if v != 'false'])
         if inline_string:
             self.__write_obj.write('ob<nu<open-brack<0003\n'

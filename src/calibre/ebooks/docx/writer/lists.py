@@ -1,13 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import defaultdict
+from operator import attrgetter
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from collections import defaultdict
-from operator import attrgetter
 
 LIST_STYLES = frozenset(
     'disc circle square decimal decimal-leading-zero lower-roman upper-roman'
@@ -17,7 +15,7 @@ LIST_STYLES = frozenset(
 STYLE_MAP = {
     'disc': 'bullet',
     'circle': 'o',
-    'square': '\uf0a7',
+    'square': '\\uf0a7',
     'decimal': 'decimal',
     'decimal-leading-zero': 'decimalZero',
     'lower-roman': 'lowerRoman',
@@ -62,7 +60,7 @@ class NumberingDefinition(object):
         items_for_level = defaultdict(list)
         container_for_level = {}
         type_for_level = {}
-        for ilvl, items in self.level_map.iteritems():
+        for ilvl, items in self.level_map.items():
             for container, list_tag, block, list_type, tag_style in items:
                 items_for_level[ilvl].append(list_tag)
                 container_for_level[ilvl] = container
@@ -76,7 +74,7 @@ class NumberingDefinition(object):
         return hash(self.levels)
 
     def link_blocks(self):
-        for ilvl, items in self.level_map.iteritems():
+        for ilvl, items in self.level_map.items():
             for container, list_tag, block, list_type, tag_style in items:
                 block.numbering_id = (self.num_id + 1, ilvl)
 
@@ -104,7 +102,7 @@ class Level(object):
                 pass
         if list_type in {'disc', 'circle', 'square'}:
             self.num_fmt = 'bullet'
-            self.lvl_text = '\uf0b7' if list_type == 'disc' else STYLE_MAP[list_type]
+            self.lvl_text = '\\uf0b7' if list_type == 'disc' else STYLE_MAP[list_type]
         else:
             self.lvl_text = '%{}.'.format(self.ilvl + 1)
             self.num_fmt = STYLE_MAP.get(list_type, 'decimal')
@@ -120,7 +118,7 @@ class Level(object):
         makeelement(lvl, 'w:lvlJc', w_val='left')
         makeelement(makeelement(lvl, 'w:pPr'), 'w:ind', w_hanging='360', w_left=str(1152 + self.ilvl * 360))
         if self.num_fmt == 'bullet':
-            ff = {'\uf0b7':'Symbol', '\uf0a7':'Wingdings'}.get(self.lvl_text, 'Courier New')
+            ff = {'\\uf0b7':'Symbol', '\\uf0a7':'Wingdings'}.get(self.lvl_text, 'Courier New')
             makeelement(makeelement(lvl, 'w:rPr'), 'w:rFonts', w_ascii=ff, w_hAnsi=ff, w_hint="default")
 
 
@@ -148,16 +146,16 @@ class ListsManager(object):
                 ilvl = len(container_tags) - 1
                 l.level_map[ilvl].append((container_tags[0], list_tag, block, list_type, tag_style))
 
-        [nd.finalize() for nd in lists.itervalues()]
+        [nd.finalize() for nd in lists.values()]
         definitions = {}
-        for defn in lists.itervalues():
+        for defn in lists.values():
             try:
                 defn = definitions[defn]
             except KeyError:
                 definitions[defn] = defn
                 defn.num_id = len(definitions) - 1
             defn.link_blocks()
-        self.definitions = sorted(definitions.itervalues(), key=attrgetter('num_id'))
+        self.definitions = sorted(iter(definitions.values()), key=attrgetter('num_id'))
 
     def serialize(self, parent):
         for defn in self.definitions:

@@ -1,13 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
 from io import BytesIO
 
 from calibre.srv.changes import formats_added
+
 
 readonly = False
 version = 0  # change this if you change signature of implementation()

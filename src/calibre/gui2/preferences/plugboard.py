@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
 
 __license__   = 'GPL v3'
@@ -8,21 +7,24 @@ __docformat__ = 'restructuredtext en'
 import copy
 from collections import defaultdict
 
-from PyQt5.Qt import Qt, QComboBox, QListWidgetItem
-
-from calibre.customize.ui import is_disabled
+from calibre.customize.ui import (
+	device_plugins, disabled_device_plugins, is_disabled, metadata_writers
+)
 from calibre.gui2 import error_dialog, question_dialog, warning_dialog
 from calibre.gui2.device import device_name_for_plugboards
 from calibre.gui2.dialogs.template_line_editor import TemplateLineEditor
+from calibre.gui2.email import plugboard_email_formats, plugboard_email_value
 from calibre.gui2.preferences import ConfigWidgetBase, test_widget
 from calibre.gui2.preferences.plugboard_ui import Ui_Form
-from calibre.customize.ui import metadata_writers, device_plugins, disabled_device_plugins
-from calibre.library.save_to_disk import plugboard_any_format_value, \
-                    plugboard_any_device_value, plugboard_save_to_disk_value, \
-                    find_plugboard
-from calibre.srv.content import plugboard_content_server_value, plugboard_content_server_formats
-from calibre.gui2.email import plugboard_email_value, plugboard_email_formats
+from calibre.library.save_to_disk import (
+	find_plugboard, plugboard_any_device_value,
+	plugboard_any_format_value, plugboard_save_to_disk_value
+)
+from calibre.srv.content import (
+	plugboard_content_server_formats, plugboard_content_server_value
+)
 from calibre.utils.formatter import validation_formatter
+from PyQt5.Qt import QComboBox, QListWidgetItem, Qt
 
 
 class ConfigWidget(ConfigWidgetBase, Ui_Form):
@@ -152,14 +154,14 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
             self.clear_fields(new_boxes=False)
             return
         self.clear_fields(new_boxes=True)
-        self.current_device = unicode(txt)
+        self.current_device = str(txt)
         fpb = self.current_plugboards.get(self.current_format, None)
         if fpb is None:
-            print 'edit_device_changed: none format!'
+            print('edit_device_changed: none format!')
             return
         dpb = fpb.get(self.current_device, None)
         if dpb is None:
-            print 'edit_device_changed: none device!'
+            print('edit_device_changed: none device!')
             return
         self.set_fields()
         for i,op in enumerate(dpb):
@@ -175,10 +177,10 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
             self.clear_fields(new_boxes=False)
             return
         self.clear_fields(new_boxes=True)
-        txt = unicode(txt)
+        txt = str(txt)
         fpb = self.current_plugboards.get(txt, None)
         if fpb is None:
-            print 'edit_format_changed: none editable format!'
+            print('edit_format_changed: none editable format!')
             return
         self.current_format = txt
         self.check_if_writer_disabled(txt)
@@ -207,7 +209,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
             self.clear_fields(edit_boxes=False)
             return
         self.clear_fields(edit_boxes=True)
-        self.current_device = unicode(txt)
+        self.current_device = str(txt)
 
         if self.current_format in self.current_plugboards and \
                 self.current_device in self.current_plugboards[self.current_format]:
@@ -291,7 +293,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
         self.new_device.setCurrentIndex(0)
         if txt:
             self.clear_fields(edit_boxes=True)
-            self.current_format = unicode(txt)
+            self.current_format = str(txt)
             self.check_if_writer_disabled(self.current_format)
         else:
             self.clear_fields(edit_boxes=False)
@@ -299,7 +301,7 @@ class ConfigWidget(ConfigWidgetBase, Ui_Form):
     def ok_clicked(self):
         pb = []
         for i in range(0, len(self.source_widgets)):
-            s = unicode(self.source_widgets[i].text())
+            s = str(self.source_widgets[i].text())
             if s:
                 d = self.dest_widgets[i].currentIndex()
                 if d != 0:

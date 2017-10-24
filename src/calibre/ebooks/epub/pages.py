@@ -2,17 +2,17 @@
 Add page mapping information to an EPUB book.
 '''
 
-from __future__ import with_statement
+import re
+from itertools import count
+
+from calibre.ebooks.oeb.base import XHTML_NS, OEBBook
+from lxml.etree import XPath
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2008, Marshall T. Vandegrift <llasram@gmail.com>'
 __docformat__ = 'restructuredtext en'
 
-import re
-from itertools import count
-from calibre.ebooks.oeb.base import XHTML_NS
-from calibre.ebooks.oeb.base import OEBBook
-from lxml.etree import XPath
 
 NSMAP = {'h': XHTML_NS, 'html': XHTML_NS, 'xhtml': XHTML_NS}
 PAGE_RE = re.compile(r'page', re.IGNORECASE)
@@ -32,7 +32,7 @@ def filter_name(name):
 def build_name_for(expr):
     if not expr:
         counter = count(1)
-        return lambda elem: str(counter.next())
+        return lambda elem: str(next(counter))
     selector = XPath(expr, namespaces=NSMAP)
 
     def name_for(elem):
@@ -55,7 +55,7 @@ def add_page_map(opfpath, opts):
             name = name_for(elem)
             id = elem.get('id', None)
             if id is None:
-                id = elem.attrib['id'] = idgen.next()
+                id = elem.attrib['id'] = next(idgen)
             href = '#'.join((item.href, id))
             oeb.pages.add(name, href)
     writer = None  # DirWriter(version='2.0', page_map=True)

@@ -1,4 +1,3 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 
 '''
@@ -11,17 +10,19 @@ __license__   = 'GPL v3'
 __copyright__ = '2010, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import inspect, re, traceback
+import inspect
+import re
+import traceback
 from math import trunc
 
 from calibre import human_readable
 from calibre.constants import DEBUG
 from calibre.ebooks.metadata import title_sort
 from calibre.utils.config import tweaks
-from calibre.utils.titlecase import titlecase
-from calibre.utils.icu import capitalize, strcmp, sort_key
-from calibre.utils.date import parse_date, format_date, now, UNDEFINED_DATE
+from calibre.utils.date import UNDEFINED_DATE, format_date, now, parse_date
+from calibre.utils.icu import capitalize, sort_key, strcmp
 from calibre.utils.localization import calibre_langcode_to_name, canonicalize_lang
+from calibre.utils.titlecase import titlecase
 
 
 class FormatterFunctions(object):
@@ -62,7 +63,7 @@ class FormatterFunctions(object):
         self._register_functions()
 
     def _register_functions(self):
-        for compiled_funcs in self._functions_from_library.itervalues():
+        for compiled_funcs in self._functions_from_library.values():
             for cls in compiled_funcs:
                 f = self._functions.get(cls.name, None)
                 replace = False
@@ -92,7 +93,7 @@ class FormatterFunctions(object):
 
     def get_builtins_and_aliases(self):
         res = {}
-        for f in self._builtins.itervalues():
+        for f in self._builtins.values():
             res[f.name] = f
             for a in f.aliases:
                 res[a] = f
@@ -103,7 +104,7 @@ class FormatterFunctions(object):
 
     def reset_to_builtins(self):
         self._functions = {}
-        for n,c in self._builtins.items():
+        for n,c in list(self._builtins.items()):
             self._functions[n] = c
             for a in c.aliases:
                 self._functions[a] = c
@@ -130,12 +131,12 @@ class FormatterFunction(object):
 
     def eval_(self, formatter, kwargs, mi, locals, *args):
         ret = self.evaluate(formatter, kwargs, mi, locals, *args)
-        if isinstance(ret, (str, unicode)):
+        if isinstance(ret, str):
             return ret
         if isinstance(ret, list):
             return ','.join(ret)
         if isinstance(ret, (int, float, bool)):
-            return unicode(ret)
+            return str(ret)
 
 
 class BuiltinFormatterFunction(FormatterFunction):
@@ -245,7 +246,7 @@ class BuiltinAdd(BuiltinFormatterFunction):
     def evaluate(self, formatter, kwargs, mi, locals, x, y):
         x = float(x if x and x != 'None' else 0)
         y = float(y if y and y != 'None' else 0)
-        return unicode(x + y)
+        return str(x + y)
 
 
 class BuiltinSubtract(BuiltinFormatterFunction):
@@ -257,7 +258,7 @@ class BuiltinSubtract(BuiltinFormatterFunction):
     def evaluate(self, formatter, kwargs, mi, locals, x, y):
         x = float(x if x and x != 'None' else 0)
         y = float(y if y and y != 'None' else 0)
-        return unicode(x - y)
+        return str(x - y)
 
 
 class BuiltinMultiply(BuiltinFormatterFunction):
@@ -269,7 +270,7 @@ class BuiltinMultiply(BuiltinFormatterFunction):
     def evaluate(self, formatter, kwargs, mi, locals, x, y):
         x = float(x if x and x != 'None' else 0)
         y = float(y if y and y != 'None' else 0)
-        return unicode(x * y)
+        return str(x * y)
 
 
 class BuiltinDivide(BuiltinFormatterFunction):
@@ -281,7 +282,7 @@ class BuiltinDivide(BuiltinFormatterFunction):
     def evaluate(self, formatter, kwargs, mi, locals, x, y):
         x = float(x if x and x != 'None' else 0)
         y = float(y if y and y != 'None' else 0)
-        return unicode(x / y)
+        return str(x / y)
 
 
 class BuiltinTemplate(BuiltinFormatterFunction):
@@ -319,7 +320,7 @@ class BuiltinEval(BuiltinFormatterFunction):
             'template program mode.')
 
     def evaluate(self, formatter, kwargs, mi, locals, template):
-        from formatter import EvalFormatter
+        from .formatter import EvalFormatter
         template = template.replace('[[', '{').replace(']]', '}')
         return EvalFormatter().safe_format(template, locals, 'EVAL', None)
 
@@ -345,7 +346,7 @@ class BuiltinPrint(BuiltinFormatterFunction):
             'the output will go to a black hole.')
 
     def evaluate(self, formatter, kwargs, mi, locals, *args):
-        print args
+        print(args)
         return ''
 
 
@@ -373,7 +374,7 @@ class BuiltinRawField(BuiltinFormatterFunction):
             if fm is None:
                 return ', '.join(res)
             return fm['is_multiple']['list_to_ui'].join(res)
-        return unicode(res)
+        return str(res)
 
 
 class BuiltinRawList(BuiltinFormatterFunction):
@@ -642,7 +643,7 @@ class BuiltinReGroup(BuiltinFormatterFunction):
             "{series:'re_group($, \"(\S* )(.*)\", \"[[$:uppercase()]]\", \"[[$]]\")'}")
 
     def evaluate(self, formatter, kwargs, mi, locals, val, pattern, *args):
-        from formatter import EvalFormatter
+        from .formatter import EvalFormatter
 
         def repl(mo):
             res = ''
@@ -725,7 +726,7 @@ class BuiltinCount(BuiltinFormatterFunction):
             'uses an ampersand. Examples: {tags:count(,)}, {authors:count(&)}')
 
     def evaluate(self, formatter, kwargs, mi, locals, val, sep):
-        return unicode(len([v for v in val.split(sep) if v]))
+        return str(len([v for v in val.split(sep) if v]))
 
 
 class BuiltinListitem(BuiltinFormatterFunction):
@@ -814,7 +815,7 @@ class BuiltinFormatsModtimes(BuiltinFormatterFunction):
     def evaluate(self, formatter, kwargs, mi, locals, fmt):
         fmt_data = mi.get('format_metadata', {})
         try:
-            data = sorted(fmt_data.items(), key=lambda x:x[1]['mtime'], reverse=True)
+            data = sorted(list(fmt_data.items()), key=lambda x:x[1]['mtime'], reverse=True)
             return ','.join(k.upper()+':'+format_date(v['mtime'], fmt)
                         for k,v in data)
         except:
@@ -836,7 +837,7 @@ class BuiltinFormatsSizes(BuiltinFormatterFunction):
     def evaluate(self, formatter, kwargs, mi, locals):
         fmt_data = mi.get('format_metadata', {})
         try:
-            return ','.join(k.upper()+':'+str(v['size']) for k,v in fmt_data.iteritems())
+            return ','.join(k.upper()+':'+str(v['size']) for k,v in fmt_data.items())
         except:
             return ''
 
@@ -855,7 +856,7 @@ class BuiltinFormatsPaths(BuiltinFormatterFunction):
     def evaluate(self, formatter, kwargs, mi, locals):
         fmt_data = mi.get('format_metadata', {})
         try:
-            return ','.join(k.upper()+':'+str(v['path']) for k,v in fmt_data.iteritems())
+            return ','.join(k.upper()+':'+str(v['path']) for k,v in fmt_data.items())
         except:
             return ''
 
@@ -1346,7 +1347,7 @@ class BuiltinListReGroup(BuiltinFormatterFunction):
 
     def evaluate(self, formatter, kwargs, mi, locals, src_list, separator, include_re,
                  search_re, *args):
-        from formatter import EvalFormatter
+        from .formatter import EvalFormatter
 
         l = [l.strip() for l in src_list.split(separator) if l.strip()]
         res = []
@@ -1532,7 +1533,7 @@ class BuiltinUserCategories(BuiltinFormatterFunction):
 
     def evaluate(self, formatter, kwargs, mi, locals_):
         if hasattr(mi, '_proxy_metadata'):
-            cats = set(k for k, v in mi._proxy_metadata.user_categories.iteritems() if v)
+            cats = set(k for k, v in mi._proxy_metadata.user_categories.items() if v)
             cats = sorted(cats, key=sort_key)
             return ', '.join(cats)
         return _('This function can be used only in the GUI')
@@ -1546,7 +1547,7 @@ class BuiltinTransliterate(BuiltinFormatterFunction):
                       'formed by approximating the sound of the words in the '
                       'source string. For example, if the source is "{0}"'
                       ' the function returns "{1}".').format(
-                          u"Фёдор Миха́йлович Достоевский", 'Fiodor Mikhailovich Dostoievskii')
+                          "Фёдор Миха́йлович Достоевский", 'Fiodor Mikhailovich Dostoievskii')
 
     def evaluate(self, formatter, kwargs, mi, locals, source):
         from calibre.utils.filenames import ascii_text
@@ -1574,7 +1575,7 @@ class BuiltinAuthorLinks(BuiltinFormatterFunction):
             link_data = mi._proxy_metadata.author_link_map
             if not link_data:
                 return ''
-            names = sorted(link_data.keys(), key=sort_key)
+            names = sorted(list(link_data.keys()), key=sort_key)
             return pair_sep.join(n + val_sep + link_data[n] for n in names)
         return _('This function can be used only in the GUI')
 
@@ -1652,8 +1653,8 @@ class UserFunction(FormatterUserFunction):
 ''' + func
     locals_ = {}
     if DEBUG and tweaks.get('enable_template_debug_printing', False):
-        print prog
-    exec prog in locals_
+        print(prog)
+    exec(prog, locals_)
     cls = locals_['UserFunction'](name, doc, arg_count, eval_func)
     return cls
 
@@ -1683,7 +1684,7 @@ def load_user_template_functions(library_uuid, funcs, precompiled_user_functions
         compiled_funcs = precompiled_user_functions
     else:
         compiled_funcs = compile_user_template_functions(funcs)
-    formatter_functions().register_functions(library_uuid, compiled_funcs.values())
+    formatter_functions().register_functions(library_uuid, list(compiled_funcs.values()))
 
 
 def unload_user_template_functions(library_uuid):

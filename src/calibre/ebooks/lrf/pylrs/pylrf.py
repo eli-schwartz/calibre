@@ -1,15 +1,15 @@
-#!/usr/bin/env python2
 """
     pylrf.py -- very low level interface to create lrf files.  See pylrs for
     higher level interface that can use this module to render books to lrf.
 """
-import struct
-import zlib
-import StringIO
 import codecs
 import os
+import io
+import struct
+import zlib
 
-from pylrfopt import tagListOptimizer
+from .pylrfopt import tagListOptimizer
+
 
 PYLRF_VERSION = "1.0"
 
@@ -473,7 +473,7 @@ class LrfTagStream(LrfStreamBase):
 
     def getStreamTags(self, encoding,
             optimizeTags=False, optimizeCompression=False):
-        stream = StringIO.StringIO()
+        stream = io.StringIO()
         if optimizeTags:
             tagListOptimizer(self.tags)
 
@@ -526,7 +526,7 @@ class LrfObject(object):
         # belongs somewhere, so here it is.
         #
         composites = {}
-        for name, value in tagDict.iteritems():
+        for name, value in tagDict.items():
             if name == 'rubyAlignAndAdjust':
                 continue
             if name in {
@@ -587,7 +587,7 @@ class LrfToc(LrfObject):
         self.tags.extend(stream.getStreamTags())
 
     def _makeTocStream(self, toc, se):
-        stream = StringIO.StringIO()
+        stream = io.StringIO()
         nEntries = len(toc)
 
         writeDWord(stream, nEntries)
@@ -770,4 +770,3 @@ class LrfWriter(object):
     def writeObjectTable(self, lrf):
         for tableEntry in self.objectTable:
             tableEntry.write(lrf)
-

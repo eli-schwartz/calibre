@@ -3,11 +3,11 @@ __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
 from functools import partial
 
-from PyQt5.Qt import (
-    QDialog, QListWidgetItem, QModelIndex, QIcon, QLabel, QVBoxLayout, QSize,
-    QDialogButtonBox, QListWidget, QHBoxLayout, QPushButton, QMenu)
-
 from calibre.gui2 import file_icon_provider
+from PyQt5.Qt import (
+	QDialog, QDialogButtonBox, QHBoxLayout, QIcon, QLabel, QListWidget,
+	QListWidgetItem, QMenu, QModelIndex, QPushButton, QSize, QVBoxLayout
+)
 
 
 class ChooseFormatDialog(QDialog):
@@ -100,5 +100,5 @@ if __name__ == '__main__':
     app = Application([])
     d = ChooseFormatDialog(None, 'Testing choose format', ['epub', 'mobi', 'docx'], show_open_with=True)
     d.exec_()
-    print (d._format)
+    print((d._format))
     del app

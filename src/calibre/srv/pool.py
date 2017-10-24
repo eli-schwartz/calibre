@@ -1,15 +1,13 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import sys
+from queue import Full, Queue
+from threading import Thread
+from time import monotonic
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import sys
-from Queue import Queue, Full
-from threading import Thread
-from time import monotonic
 
 
 class Worker(Thread):
@@ -51,7 +49,7 @@ class ThreadPool(object):
 
     def __init__(self, log, notify_server, count=10, queue_size=1000):
         self.request_queue, self.result_queue = Queue(queue_size), Queue(queue_size)
-        self.workers = [Worker(log, notify_server, i, self.request_queue, self.result_queue) for i in xrange(count)]
+        self.workers = [Worker(log, notify_server, i, self.request_queue, self.result_queue) for i in range(count)]
 
     def start(self):
         for w in self.workers:

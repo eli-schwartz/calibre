@@ -45,9 +45,10 @@ __revision__ = "$Revision: 1.5 $"
 __date__ = "$Date: 2006/06/23 12:32:25 $"
 __license__ = 'Python license'
 
+import queue
 # standard library modules
 import threading
-import Queue
+
 
 # exceptions
 
@@ -173,8 +174,8 @@ class ThreadPool:
         more work requests in it (see putRequest method).
         """
 
-        self.requestsQueue = Queue.Queue(q_size)
-        self.resultsQueue = Queue.Queue()
+        self.requestsQueue = queue.Queue(q_size)
+        self.resultsQueue = queue.Queue()
         self.workers = []
         self.workRequests = {}
         self.createWorkers(num_workers)
@@ -222,7 +223,7 @@ class ThreadPool:
                   (request.exception and request.exc_callback):
                     request.callback(request, result)
                 del self.workRequests[request.requestID]
-            except Queue.Empty:
+            except queue.Empty:
                 break
 
     def wait(self, sleep=0):
@@ -287,12 +288,12 @@ if __name__ == '__main__':
 
     # this will be called each time a result is available
     def print_result(request, result):
-        print "**Result: %s from request #%s" % (result, request.requestID)
+        print("**Result: %s from request #%s" % (result, request.requestID))
 
     # this will be called when an exception occurs within a thread
     def handle_exception(request, exc_info):
-        print "Exception occured in request #%s: %s" % \
-          (request.requestID, exc_info[1])
+        print("Exception occured in request #%s: %s" % \
+          (request.requestID, exc_info[1]))
 
     # assemble the arguments for each job to a list...
     data = [random.randint(1,10) for i in range(20)]
@@ -311,7 +312,7 @@ if __name__ == '__main__':
     # then we put the work requests in the queue...
     for req in requests:
         main.putRequest(req)
-        print "Work request #%s added." % req.requestID
+        print("Work request #%s added." % req.requestID)
     # or shorter:
     # [main.putRequest(req) for req in requests]
 
@@ -325,15 +326,15 @@ if __name__ == '__main__':
     while 1:
         try:
             main.poll()
-            print "Main thread working..."
+            print("Main thread working...")
             time.sleep(0.5)
             if i == 10:
-                print "Adding 3 more worker threads..."
+                print("Adding 3 more worker threads...")
                 main.createWorkers(3)
             i += 1
         except KeyboardInterrupt:
-            print "Interrupted!"
+            print("Interrupted!")
             break
         except NoResultsPending:
-            print "All results collected."
+            print("All results collected.")
             break

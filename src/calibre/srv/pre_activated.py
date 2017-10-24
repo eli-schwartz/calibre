@@ -1,15 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import errno
+import socket
+
+from calibre.constants import islinux
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
 # Support server pre-activation, such as with systemd's socket activation
 
-import socket, errno
-from calibre.constants import islinux
 
 
 def pre_activated_socket():
@@ -61,4 +61,4 @@ if __name__ == '__main__':
     # /usr/lib/systemd/systemd-activate -l 8081 calibre-debug pre_activated.py
     # telnet localhost 8081
     s = pre_activated_socket()
-    print (s, s.getsockname())
+    print((s, s.getsockname()))

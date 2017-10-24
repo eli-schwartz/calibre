@@ -1,9 +1,10 @@
-from __future__ import with_statement
+from lxml import etree
+
+
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 
 
-from lxml import etree
 
 
 class InlineClass(etree.XSLTExtension):
@@ -36,5 +37,3 @@ class InlineClass(etree.XSLTExtension):
             classes.append('col%d'%self.colors.index(fc))
 
         output_parent.text = ' '.join(classes)
-
-

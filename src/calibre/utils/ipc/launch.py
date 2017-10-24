@@ -1,17 +1,22 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import binascii
+import pickle
+import os
+import subprocess
+import sys
+import time
+from functools import partial
+
+from calibre.constants import filesystem_encoding, isfrozen, isosx, iswindows
+from calibre.ptempfile import PersistentTemporaryFile, base_dir
+from calibre.utils.config import prefs
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import subprocess, os, sys, time, binascii, cPickle
-from functools import partial
 
-from calibre.constants import iswindows, isosx, isfrozen, filesystem_encoding
-from calibre.utils.config import prefs
-from calibre.ptempfile import PersistentTemporaryFile, base_dir
 
 if iswindows:
     import win32process
@@ -92,19 +97,19 @@ class Worker(object):
         for key in os.environ:
             try:
                 val = os.environ[key]
-                if isinstance(val, unicode):
+                if isinstance(val, str):
                     # On windows subprocess cannot handle unicode env vars
                     try:
                         val = val.encode(filesystem_encoding)
                     except ValueError:
                         val = val.encode('utf-8')
-                if isinstance(key, unicode):
+                if isinstance(key, str):
                     key = key.encode('ascii')
                 env[key] = val
             except:
                 pass
         env[b'CALIBRE_WORKER'] = b'1'
-        td = binascii.hexlify(cPickle.dumps(base_dir()))
+        td = binascii.hexlify(pickle.dumps(base_dir()))
         env[b'CALIBRE_WORKER_TEMP_DIR'] = bytes(td)
         env.update(self._env)
         return env
@@ -154,11 +159,11 @@ class Worker(object):
         self.gui = gui
         self.job_name = job_name
         # Windows cannot handle unicode env vars
-        for k, v in env.iteritems():
+        for k, v in env.items():
             try:
-                if isinstance(k, unicode):
+                if isinstance(k, str):
                     k = k.encode('ascii')
-                if isinstance(v, unicode):
+                if isinstance(v, str):
                     try:
                         v = v.encode(filesystem_encoding)
                     except:
@@ -175,17 +180,17 @@ class Worker(object):
         exe = self.gui_executable if self.gui else self.executable
         env = self.env
         try:
-            env[b'ORIGWD'] = binascii.hexlify(cPickle.dumps(
-                cwd or os.path.abspath(os.getcwdu())))
+            env[b'ORIGWD'] = binascii.hexlify(pickle.dumps(
+                cwd or os.path.abspath(os.getcwd())))
         except EnvironmentError:
             # cwd no longer exists
-            env[b'ORIGWD'] = binascii.hexlify(cPickle.dumps(
-                cwd or os.path.expanduser(u'~')))
+            env[b'ORIGWD'] = binascii.hexlify(pickle.dumps(
+                cwd or os.path.expanduser('~')))
 
         _cwd = cwd
         if priority is None:
             priority = prefs['worker_process_priority']
-        cmd = [exe] if isinstance(exe, basestring) else exe
+        cmd = [exe] if isinstance(exe, str) else exe
         args = {
                 'env' : env,
                 'cwd' : _cwd,
@@ -231,6 +236,3 @@ class Worker(object):
 
         self.log_path = ret
         return ret
-
-
-

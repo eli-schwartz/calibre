@@ -1,17 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.gui2 import config
+from PyQt5.Qt import (
+	QBrush, QColor, QEasingCurve, QPainter, QPainterPath, QPalette,
+	QPoint, QPointF, QPropertyAnimation, QRect, Qt, QWidget
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from PyQt5.Qt import (QPainter, Qt, QWidget, QPropertyAnimation, QRect, QPoint,
-                      QColor, QEasingCurve, QBrush, QPainterPath, QPointF,
-                      QPalette)
 
-from calibre.gui2 import config
 
 
 class Pointer(QWidget):
@@ -79,7 +78,7 @@ class Pointer(QWidget):
         self.animation.setEndValue(self.rect_at(1.0))
         self.animation.setDirection(self.animation.Backward)
         num_keys = 100
-        for i in xrange(1, num_keys):
+        for i in range(1, num_keys):
             i /= num_keys
             self.animation.setKeyValueAt(i, self.rect_at(i))
         self.animation.start()
@@ -91,4 +90,3 @@ class Pointer(QWidget):
         p.setPen(Qt.NoPen)
         p.drawPath(self.arrow_path)
         p.end()
-

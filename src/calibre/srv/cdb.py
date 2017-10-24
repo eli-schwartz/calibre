@@ -1,17 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2017, Kovid Goyal <kovid at kovidgoyal.net>
-
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 from functools import partial
 
 from calibre import as_unicode
 from calibre.db.cli import module_for_cmd
-from calibre.srv.errors import HTTPBadRequest, HTTPNotFound, HTTPForbidden
+from calibre.srv.errors import HTTPBadRequest, HTTPForbidden, HTTPNotFound
 from calibre.srv.routes import endpoint, msgpack_or_json
 from calibre.srv.utils import get_library_data
 from calibre.utils.serialize import MSGPACK_MIME, json_loads, msgpack_loads
+
 
 receive_data_methods = {'GET', 'POST'}
 

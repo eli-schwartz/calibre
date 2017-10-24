@@ -1,27 +1,30 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import uuid
+from functools import partial
+from threading import Thread
+
+from calibre import as_unicode
+from calibre.constants import isosx, iswindows
+from calibre.gui2 import (
+	Application, choose_files, choose_images, choose_osx_app,
+	elided_text, error_dialog, sanitize_env_vars
+)
+from calibre.gui2.progress_indicator import ProgressIndicator
+from calibre.gui2.widgets2 import Dialog
+from calibre.utils.config import JSONConfig
+from calibre.utils.icu import numeric_sort_key as sort_key
+from PyQt5.Qt import (
+	QAction, QBuffer, QByteArray, QIcon, QKeySequence, QLabel, QListWidget,
+	QListWidgetItem, QPixmap, QSize, QStackedLayout, Qt, QVBoxLayout, QWidget, pyqtSignal
+)
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import os, uuid
-from threading import Thread
-from functools import partial
 
-from PyQt5.Qt import (
-    QStackedLayout, QVBoxLayout, QWidget, QLabel, Qt,
-    QListWidget, QSize, pyqtSignal, QListWidgetItem, QIcon, QByteArray,
-    QBuffer, QPixmap, QAction, QKeySequence)
 
-from calibre import as_unicode
-from calibre.constants import iswindows, isosx
-from calibre.gui2 import error_dialog, choose_files, choose_images, elided_text, sanitize_env_vars, Application, choose_osx_app
-from calibre.gui2.widgets2 import Dialog
-from calibre.gui2.progress_indicator import ProgressIndicator
-from calibre.utils.config import JSONConfig
-from calibre.utils.icu import numeric_sort_key as sort_key
 
 ENTRY_ROLE = Qt.UserRole
 
@@ -37,7 +40,7 @@ def pixmap_to_data(pixmap):
 def run_program(entry, path, parent):
     import subprocess
     cmdline = entry_to_cmdline(entry, path)
-    print('Running Open With commandline:', repr(cmdline))
+    print(('Running Open With commandline:', repr(cmdline)))
     try:
         with sanitize_env_vars():
             process = subprocess.Popen(cmdline)
@@ -124,7 +127,7 @@ if iswindows:
 
     def run_program(entry, path, parent):  # noqa
         cmdline = entry_to_cmdline(entry, path)
-        print('Running Open With commandline:', repr(entry['cmdline']), ' |==> ', repr(cmdline))
+        print(('Running Open With commandline:', repr(entry['cmdline']), ' |==> ', repr(cmdline)))
         try:
             with sanitize_env_vars():
                 process_handle, thread_handle, process_id, thread_id = CreateProcess(
@@ -189,7 +192,7 @@ else:
 
     def entry_to_item(entry, parent):
         icon_path = entry.get('Icon') or I('blank.png')
-        if not isinstance(icon_path, basestring):
+        if not isinstance(icon_path, str):
             icon_path = I('blank.png')
         ans = QListWidgetItem(QIcon(icon_path), entry.get('Name') or _('Unknown'), parent)
         ans.setData(ENTRY_ROLE, entry)
@@ -403,7 +406,7 @@ class EditPrograms(Dialog):  # {{{
         register_keyboard_shortcuts(finalize=True)
 
     def update_stored_config(self):
-        entries = [self.plist.item(i).data(ENTRY_ROLE) for i in xrange(self.plist.count())]
+        entries = [self.plist.item(i).data(ENTRY_ROLE) for i in range(self.plist.count())]
         oprefs['entries'][self.file_type] = entries
         oprefs['entries'] = oprefs['entries']
 
@@ -423,12 +426,12 @@ def register_keyboard_shortcuts(gui=None, finalize=False):
         gui = get_gui()
     if gui is None:
         return
-    for unique_name, action in registered_shortcuts.iteritems():
+    for unique_name, action in registered_shortcuts.items():
         gui.keyboard.unregister_shortcut(unique_name)
         gui.removeAction(action)
     registered_shortcuts.clear()
 
-    for filetype, applications in oprefs['entries'].iteritems():
+    for filetype, applications in oprefs['entries'].items():
         for application in applications:
             text = entry_to_icon_text(application, only_text=True)
             t = _('cover image') if filetype.upper() == 'COVER_IMAGE' else filetype.upper()

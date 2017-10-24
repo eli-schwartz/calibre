@@ -1,11 +1,13 @@
 __license__   = 'GPL v3'
 __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
-import math, sys, re
+import math
+import re
+import sys
 
 from calibre.ebooks.lrf.fonts import get_font
-from calibre.ebooks.lrf.pylrs.pylrs import TextBlock, Text, CR, Span, \
-                                             CharButton, Plot, Paragraph, \
-                                             LrsTextTag
+from calibre.ebooks.lrf.pylrs.pylrs import (
+	CR, CharButton, LrsTextTag, Paragraph, Plot, Span, Text, TextBlock
+)
 
 
 def ceil(num):
@@ -17,7 +19,7 @@ def print_xml(elem):
     elem = elem.toElement('utf8')
     ew = ElementWriter(elem, sourceEncoding='utf8')
     ew.write(sys.stdout)
-    print
+    print()
 
 
 def cattrs(base, extra):
@@ -37,7 +39,7 @@ def tokens(tb):
             yield 2, None
         elif isinstance(x, Text):
             yield x.text, cattrs(attrs, {})
-        elif isinstance(x, basestring):
+        elif isinstance(x, str):
             yield x, cattrs(attrs, {})
         elif isinstance(x, (CharButton, LrsTextTag)):
             if x.contents:
@@ -74,12 +76,12 @@ class Cell(object):
         self.css  = css
         self.text_blocks = []
         self.pwidth = -1.
-        if tag.has_key('width') and '%' in tag['width']:  # noqa
+        if 'width' in tag and '%' in tag['width']:  # noqa
             try:
                 self.pwidth = float(tag['width'].replace('%', ''))
             except ValueError:
                 pass
-        if css.has_key('width') and '%' in css['width']:  # noqa
+        if 'width' in css and '%' in css['width']:  # noqa
             try:
                 self.pwidth = float(css['width'].replace('%', ''))
             except ValueError:
@@ -88,8 +90,8 @@ class Cell(object):
             self.pwidth = -1
         self.rowspan = self.colspan = 1
         try:
-            self.colspan = int(tag['colspan']) if tag.has_key('colspan') else 1  # noqa
-            self.rowspan = int(tag['rowspan']) if tag.has_key('rowspan') else 1  # noqa
+            self.colspan = int(tag['colspan']) if 'colspan' in tag else 1  # noqa
+            self.rowspan = int(tag['rowspan']) if 'rowspan' in tag else 1  # noqa
         except:
             pass
 
@@ -152,7 +154,7 @@ class Cell(object):
                 mwidth = width
         return parindent + mwidth + 2
 
-    def text_block_size(self, tb, maxwidth=sys.maxint, debug=False):
+    def text_block_size(self, tb, maxwidth=sys.maxsize, debug=False):
         ts = tb.textStyle.attrs
         default_font = get_font(ts['fontfacename'], self.pts_to_pixels(ts['fontsize']))
         parindent = self.pts_to_pixels(ts['parindent'])
@@ -198,7 +200,7 @@ class Cell(object):
         return right+3+max(parindent, 10), bottom
 
     def text_block_preferred_width(self, tb, debug=False):
-        return self.text_block_size(tb, sys.maxint, debug=debug)[0]
+        return self.text_block_size(tb, sys.maxsize, debug=debug)[0]
 
     def preferred_width(self, debug=False):
         return ceil(max([self.text_block_preferred_width(i, debug=debug) for i in self.text_blocks]))
@@ -218,7 +220,7 @@ class Row(object):
             ccss = conv.tag_css(cell, css)[0]
             self.cells.append(Cell(conv, cell, ccss))
         for a in row.findAll(id=True) + row.findAll(name=True):
-            name = a['name'] if a.has_key('name') else a['id'] if a.has_key('id') else None  # noqa
+            name = a['name'] if 'name' in a else a['id'] if 'id' in a else None  # noqa
             if name is not None:
                 self.targets.append(name.replace('#', ''))
 
@@ -313,7 +315,7 @@ class Table(object):
         Return widths of columns + self.colpad
         '''
         rows, cols = self.number_or_rows(), self.number_of_columns()
-        widths = range(cols)
+        widths = list(range(cols))
         for c in range(cols):
             cellwidths = [0 for i in range(rows)]
             for r in range(rows):
@@ -323,8 +325,8 @@ class Table(object):
                     continue
             widths[c] = max(cellwidths)
 
-        min_widths = [self.minimum_width(i)+10 for i in xrange(cols)]
-        for i in xrange(len(widths)):
+        min_widths = [self.minimum_width(i)+10 for i in range(cols)]
+        for i in range(len(widths)):
             wp = self.width_percent(i)
             if wp >= 0.:
                 widths[i] = max(min_widths[i], ceil((wp/100.) * (maxwidth - (cols-1)*self.colpad)))
@@ -347,7 +349,7 @@ class Table(object):
             nc = self.rows[r].cell_iterator()
             try:
                 while True:
-                    cell = nc.next()
+                    cell = next(nc)
                     cellmatrix[r][rowpos[r]] = cell
                     rowpos[r] += cell.colspan
                     for k in range(1, cell.rowspan):
@@ -381,7 +383,3 @@ class Table(object):
 
                     yield tb, xpos[c], sypos, delta, None
                     sypos += tb.blockStyle.attrs['blockheight']
-
-
-
-

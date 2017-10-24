@@ -1,26 +1,28 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import with_statement
+import re
+import sys
+from functools import partial
+
+from calibre.ebooks.conversion.config import load_defaults
+from calibre.gui2 import error_dialog, gprefs, open_url, question_dialog
+from calibre.utils.config import JSONConfig
+from calibre.utils.icu import sort_key
+from calibre.utils.localization import localize_user_manual_link
+from catalog_epub_mobi_ui import Ui_Form
+from PyQt5.Qt import (
+	QAbstractItemView, QCheckBox, QComboBox, QDoubleSpinBox, QIcon,
+	QInputDialog, QLineEdit, QRadioButton, QSize, QSizePolicy, Qt, QTableWidget,
+	QTableWidgetItem, QTextEdit, QToolButton, QUrl, QVBoxLayout, QWidget
+)
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2009, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import re, sys
 
-from functools import partial
 
-from calibre.ebooks.conversion.config import load_defaults
-from calibre.gui2 import gprefs, open_url, question_dialog, error_dialog
-from calibre.utils.config import JSONConfig
-from calibre.utils.icu import sort_key
-from calibre.utils.localization import localize_user_manual_link
 
-from catalog_epub_mobi_ui import Ui_Form
-from PyQt5.Qt import (Qt, QAbstractItemView, QCheckBox, QComboBox,
-        QDoubleSpinBox, QIcon, QInputDialog, QLineEdit, QRadioButton,
-        QSize, QSizePolicy, QTableWidget, QTableWidgetItem, QTextEdit, QToolButton,
-        QUrl, QVBoxLayout, QWidget)
 
 
 class PluginWidget(QWidget,Ui_Form):
@@ -67,55 +69,55 @@ class PluginWidget(QWidget,Ui_Form):
             elif type(self.__dict__[item]) is QTextEdit:
                 TextEditControls.append(self.__dict__[item].objectName())
 
-        option_fields = zip(CheckBoxControls,
+        option_fields = list(zip(CheckBoxControls,
                             [True for i in CheckBoxControls],
-                            ['check_box' for i in CheckBoxControls])
-        option_fields += zip(ComboBoxControls,
+                            ['check_box' for i in CheckBoxControls]))
+        option_fields += list(zip(ComboBoxControls,
                             [None for i in ComboBoxControls],
-                            ['combo_box' for i in ComboBoxControls])
-        option_fields += zip(RadioButtonControls,
+                            ['combo_box' for i in ComboBoxControls]))
+        option_fields += list(zip(RadioButtonControls,
                             [None for i in RadioButtonControls],
-                            ['radio_button' for i in RadioButtonControls])
+                            ['radio_button' for i in RadioButtonControls]))
 
         # LineEditControls
-        option_fields += zip(['exclude_genre'],['\[.+\]|^\+$'],['line_edit'])
+        option_fields += list(zip(['exclude_genre'],['\[.+\]|^\+$'],['line_edit']))
 
         # TextEditControls
         # option_fields += zip(['exclude_genre_results'],['excluded genres will appear here'],['text_edit'])
 
         # SpinBoxControls
-        option_fields += zip(['thumb_width'],[1.00],['spin_box'])
+        option_fields += list(zip(['thumb_width'],[1.00],['spin_box']))
 
         # Exclusion rules
-        option_fields += zip(['exclusion_rules_tw'],
+        option_fields += list(zip(['exclusion_rules_tw'],
                              [{'ordinal':0,
                                'enabled':True,
                                'name':_('Catalogs'),
                                'field':_('Tags'),
                                'pattern':'Catalog'},],
-                             ['table_widget'])
+                             ['table_widget']))
 
         # Prefix rules
-        option_fields += zip(['prefix_rules_tw','prefix_rules_tw'],
+        option_fields += list(zip(['prefix_rules_tw','prefix_rules_tw'],
                              [{'ordinal':0,
                                'enabled':True,
                                'name':_('Read book'),
                                'field':_('Tags'),
                                'pattern':'+',
-                               'prefix':u'\u2713'},
+                               'prefix':'\\u2713'},
                               {'ordinal':1,
                                'enabled':True,
                                'name':_('Wishlist item'),
                                'field':_('Tags'),
                                'pattern':'Wishlist',
-                               'prefix':u'\u00d7'},],
-                             ['table_widget','table_widget'])
+                               'prefix':'\\u00d7'},],
+                             ['table_widget','table_widget']))
 
         self.OPTION_FIELDS = option_fields
 
     def block_all_signals(self, bool):
         if self.DEBUG:
-            print("block_all_signals: %s" % bool)
+            print(("block_all_signals: %s" % bool))
         self.blocking_all_signals = bool
         for opt in self.OPTION_FIELDS:
             c_name, c_def, c_type = opt
@@ -197,7 +199,7 @@ class PluginWidget(QWidget,Ui_Form):
 
         results = _('No genres will be excluded')
 
-        regex = unicode(getattr(self, 'exclude_genre').text()).strip()
+        regex = str(getattr(self, 'exclude_genre').text()).strip()
         if not regex:
             self.exclude_genre_results.clear()
             self.exclude_genre_results.setText(results)
@@ -226,7 +228,7 @@ class PluginWidget(QWidget,Ui_Form):
                     results = _truncated_results(excluded_tags)
         finally:
             if False and self.DEBUG:
-                print("exclude_genre_changed(): %s" % results)
+                print(("exclude_genre_changed(): %s" % results))
             self.exclude_genre_results.clear()
             self.exclude_genre_results.setText(results)
 
@@ -239,7 +241,7 @@ class PluginWidget(QWidget,Ui_Form):
     def fetch_eligible_custom_fields(self):
         self.all_custom_fields = self.db.custom_field_keys()
         custom_fields = {}
-        custom_fields[_('Tags')] = {'field':'tag', 'datatype':u'text'}
+        custom_fields[_('Tags')] = {'field':'tag', 'datatype':'text'}
         for custom_field in self.all_custom_fields:
             field_md = self.db.metadata_for_field(custom_field)
             if field_md['datatype'] in ['bool','composite','datetime','enumeration','text']:
@@ -272,7 +274,7 @@ class PluginWidget(QWidget,Ui_Form):
         new_source = self.genre_source_field.currentText()
         self.genre_source_field_name = new_source
         if new_source != _('Tags'):
-            genre_source_spec = self.genre_source_fields[unicode(new_source)]
+            genre_source_spec = self.genre_source_fields[str(new_source)]
             self.genre_source_field_name = genre_source_spec['field']
         self.exclude_genre_changed()
 
@@ -288,7 +290,7 @@ class PluginWidget(QWidget,Ui_Form):
                     if child.objectName() == 'format':
                         current_format = child.currentText().strip()
                     elif child.objectName() == 'title':
-                        current_title = unicode(child.text()).strip()
+                        current_title = str(child.text()).strip()
         self.parentWidget().blockSignals(False)
         return current_format, current_title
 
@@ -299,7 +301,7 @@ class PluginWidget(QWidget,Ui_Form):
         new_source = self.header_note_source_field.currentText()
         self.header_note_source_field_name = new_source
         if new_source > '':
-            header_note_source_spec = self.header_note_source_fields[unicode(new_source)]
+            header_note_source_spec = self.header_note_source_fields[str(new_source)]
             self.header_note_source_field_name = header_note_source_spec['field']
 
     def initialize(self, name, db):
@@ -340,7 +342,7 @@ class PluginWidget(QWidget,Ui_Form):
             c_name, c_def, c_type = opt
             opt_value = gprefs.get(self.name + '_' + c_name, c_def)
             if c_type in ['check_box']:
-                getattr(self, c_name).setChecked(eval(unicode(opt_value)))
+                getattr(self, c_name).setChecked(eval(str(opt_value)))
                 getattr(self, c_name).clicked.connect(partial(self.settings_changed, c_name))
             elif c_type in ['combo_box']:
                 if opt_value is None:
@@ -387,21 +389,21 @@ class PluginWidget(QWidget,Ui_Form):
 
         # Init self.merge_source_field_name
         self.merge_source_field_name = ''
-        cs = unicode(self.merge_source_field.currentText())
+        cs = str(self.merge_source_field.currentText())
         if cs > '':
             merge_source_spec = self.merge_source_fields[cs]
             self.merge_source_field_name = merge_source_spec['field']
 
         # Init self.header_note_source_field_name
         self.header_note_source_field_name = ''
-        cs = unicode(self.header_note_source_field.currentText())
+        cs = str(self.header_note_source_field.currentText())
         if cs > '':
             header_note_source_spec = self.header_note_source_fields[cs]
             self.header_note_source_field_name = header_note_source_spec['field']
 
         # Init self.genre_source_field_name
         self.genre_source_field_name = _('Tags')
-        cs = unicode(self.genre_source_field.currentText())
+        cs = str(self.genre_source_field.currentText())
         if cs != _('Tags'):
             genre_source_spec = self.genre_source_fields[cs]
             self.genre_source_field_name = genre_source_spec['field']
@@ -435,7 +437,7 @@ class PluginWidget(QWidget,Ui_Form):
         new_source = self.merge_source_field.currentText()
         self.merge_source_field_name = new_source
         if new_source > '':
-            merge_source_spec = self.merge_source_fields[unicode(new_source)]
+            merge_source_spec = self.merge_source_fields[str(new_source)]
             self.merge_source_field_name = merge_source_spec['field']
             if not self.merge_before.isChecked() and not self.merge_after.isChecked():
                 self.merge_after.setChecked(True)
@@ -470,11 +472,11 @@ class PluginWidget(QWidget,Ui_Form):
             if c_type in ['check_box', 'radio_button']:
                 opt_value = getattr(self, c_name).isChecked()
             elif c_type in ['combo_box']:
-                opt_value = unicode(getattr(self,c_name).currentText()).strip()
+                opt_value = str(getattr(self,c_name).currentText()).strip()
             elif c_type in ['line_edit']:
-                opt_value = unicode(getattr(self, c_name).text()).strip()
+                opt_value = str(getattr(self, c_name).text()).strip()
             elif c_type in ['spin_box']:
-                opt_value = unicode(getattr(self, c_name).value())
+                opt_value = str(getattr(self, c_name).value())
             elif c_type in ['table_widget']:
                 if c_name == 'prefix_rules_tw':
                     opt_value = self.prefix_rules_table.get_data()
@@ -517,9 +519,9 @@ class PluginWidget(QWidget,Ui_Form):
             opts_dict['output_profile'] = ['default']
 
         if False and self.DEBUG:
-            print "opts_dict"
-            for opt in sorted(opts_dict.keys(), key=sort_key):
-                print " %s: %s" % (opt, repr(opts_dict[opt]))
+            print("opts_dict")
+            for opt in sorted(list(opts_dict.keys()), key=sort_key):
+                print(" %s: %s" % (opt, repr(opts_dict[opt])))
         return opts_dict
 
     def populate_combo_boxes(self):
@@ -621,9 +623,9 @@ class PluginWidget(QWidget,Ui_Form):
             else:
                 continue
             if c_type in ['check_box']:
-                getattr(self, c_name).setChecked(eval(unicode(opt_value)))
+                getattr(self, c_name).setChecked(eval(str(opt_value)))
                 if c_name == 'generate_genres':
-                    self.genre_source_field.setEnabled(eval(unicode(opt_value)))
+                    self.genre_source_field.setEnabled(eval(str(opt_value)))
             elif c_type in ['combo_box']:
                 if opt_value is None:
                     index = 0
@@ -684,14 +686,14 @@ class PluginWidget(QWidget,Ui_Form):
             return
 
         item_id = self.preset_field.currentIndex()
-        item_name = unicode(self.preset_field.currentText())
+        item_name = str(self.preset_field.currentText())
 
         self.preset_field.blockSignals(True)
         self.preset_field.removeItem(item_id)
         self.preset_field.blockSignals(False)
         self.preset_field.setCurrentIndex(0)
 
-        if item_name in self.presets.keys():
+        if item_name in list(self.presets.keys()):
             del(self.presets[item_name])
             self.presets.commit()
 
@@ -712,8 +714,8 @@ class PluginWidget(QWidget,Ui_Form):
                 error_dialog(self, _("Save catalog preset"),
                         _("You must provide a name."), show=True)
         new = True
-        name = unicode(name)
-        if name in self.presets.keys():
+        name = str(name)
+        if name in list(self.presets.keys()):
             if not question_dialog(self, _("Save catalog preset"),
                     _("That saved preset already exists and will be overwritten. "
                         "Are you sure?")):
@@ -736,11 +738,11 @@ class PluginWidget(QWidget,Ui_Form):
             elif c_type in ['combo_box']:
                 if c_name == 'preset_field':
                     continue
-                opt_value = unicode(getattr(self,c_name).currentText()).strip()
+                opt_value = str(getattr(self,c_name).currentText()).strip()
             elif c_type in ['line_edit']:
-                opt_value = unicode(getattr(self, c_name).text()).strip()
+                opt_value = str(getattr(self, c_name).text()).strip()
             elif c_type in ['spin_box']:
-                opt_value = unicode(getattr(self, c_name).value())
+                opt_value = str(getattr(self, c_name).value())
             elif c_type in ['table_widget']:
                 if c_name == 'prefix_rules_tw':
                     opt_value = self.prefix_rules_table.get_data()
@@ -769,8 +771,8 @@ class PluginWidget(QWidget,Ui_Form):
         preset['merge_comments_rule'] = "%s:%s:%s" % \
             (self.merge_source_field_name, checked, include_hr)
 
-        preset['header_note_source_field'] = unicode(self.header_note_source_field.currentText())
-        preset['genre_source_field'] = unicode(self.genre_source_field.currentText())
+        preset['header_note_source_field'] = str(self.header_note_source_field.currentText())
+        preset['genre_source_field'] = str(self.genre_source_field.currentText())
 
         # Append the current output profile
         try:
@@ -809,7 +811,7 @@ class PluginWidget(QWidget,Ui_Form):
         When anything changes, clear Preset combobox
         '''
         if self.DEBUG:
-            print("settings_changed: %s" % source)
+            print(("settings_changed: %s" % source))
         self.preset_field.setCurrentIndex(0)
 
     def show_help(self):
@@ -950,7 +952,7 @@ class GenericRulesTable(QTableWidget):
         self.setFocus()
         row = self.last_row_selected + 1
         if self.DEBUG:
-            print("%s:add_row(): at row: %d" % (self.objectName(), row))
+            print(("%s:add_row(): at row: %d" % (self.objectName(), row)))
         self.insertRow(row)
         self.populate_table_row(row, self.create_blank_row_data())
         self.select_and_scroll_to_row(row)
@@ -963,19 +965,19 @@ class GenericRulesTable(QTableWidget):
             old_layout = self.layout
 
             for child in old_layout.children():
-                for i in reversed(range(child.count())):
+                for i in reversed(list(range(child.count()))):
                     if child.itemAt(i).widget() is not None:
                         child.itemAt(i).widget().setParent(None)
                 import sip
                 sip.delete(child)
 
-            for i in reversed(range(old_layout.count())):
+            for i in reversed(list(range(old_layout.count()))):
                 if old_layout.itemAt(i).widget() is not None:
                     old_layout.itemAt(i).widget().setParent(None)
 
     def delete_row(self):
         if self.DEBUG:
-            print("%s:delete_row()" % self.objectName())
+            print(("%s:delete_row()" % self.objectName()))
 
         self.setFocus()
         rows = self.last_rows_selected
@@ -985,7 +987,7 @@ class GenericRulesTable(QTableWidget):
         first = rows[0].row() + 1
         last = rows[-1].row() + 1
 
-        first_rule_name = unicode(self.cellWidget(first-1,self.COLUMNS['NAME']['ordinal']).text()).strip()
+        first_rule_name = str(self.cellWidget(first-1,self.COLUMNS['NAME']['ordinal']).text()).strip()
         message = _("Are you sure you want to delete '%s'?") % (first_rule_name)
         if len(rows) > 1:
             message = _('Are you sure you want to delete rules #%(first)d-%(last)d?') % dict(first=first, last=last)
@@ -1004,12 +1006,12 @@ class GenericRulesTable(QTableWidget):
             self.select_and_scroll_to_row(row)
             self.settings_changed("enabled_state_changed")
             if self.DEBUG:
-                print("%s:enabled_state_changed(): row %d col %d" %
-                      (self.objectName(), row, col))
+                print(("%s:enabled_state_changed(): row %d col %d" %
+                      (self.objectName(), row, col)))
 
     def focusInEvent(self,e):
         if self.DEBUG:
-            print("%s:focusInEvent()" % self.objectName())
+            print(("%s:focusInEvent()" % self.objectName()))
 
     def focusOutEvent(self,e):
         # Override of QTableWidget method - clear selection when table loses focus
@@ -1017,7 +1019,7 @@ class GenericRulesTable(QTableWidget):
         self.last_rows_selected = self.selectionModel().selectedRows()
         self.clearSelection()
         if self.DEBUG:
-            print("%s:focusOutEvent(): self.last_row_selected: %d" % (self.objectName(),self.last_row_selected))
+            print(("%s:focusOutEvent(): self.last_row_selected: %d" % (self.objectName(),self.last_row_selected)))
 
     def move_row_down(self):
         self.setFocus()
@@ -1033,7 +1035,7 @@ class GenericRulesTable(QTableWidget):
             dest_row = selrow.row() + 1
             src_row = selrow.row()
             if self.DEBUG:
-                print("%s:move_row_down() %d -> %d" % (self.objectName(),src_row, dest_row))
+                print(("%s:move_row_down() %d -> %d" % (self.objectName(),src_row, dest_row)))
 
             # Save the contents of the destination row
             saved_data = self.convert_row_to_data(dest_row)
@@ -1063,7 +1065,7 @@ class GenericRulesTable(QTableWidget):
 
         for selrow in rows:
             if self.DEBUG:
-                print("%s:move_row_up() %d -> %d" % (self.objectName(),selrow.row(), selrow.row()-1))
+                print(("%s:move_row_up() %d -> %d" % (self.objectName(),selrow.row(), selrow.row()-1)))
 
             # Save the row above
             saved_data = self.convert_row_to_data(selrow.row() - 1)
@@ -1100,7 +1102,7 @@ class GenericRulesTable(QTableWidget):
 
     def rule_name_edited(self):
         if self.DEBUG:
-            print("%s:rule_name_edited()" % self.objectName())
+            print(("%s:rule_name_edited()" % self.objectName()))
 
         current_row = self.currentRow()
         self.cellWidget(current_row,1).home(False)
@@ -1125,8 +1127,8 @@ class GenericRulesTable(QTableWidget):
                 break
 
         if self.DEBUG:
-            print("%s:_source_index_changed(): calling source_index_changed with row: %d " %
-                  (self.objectName(), row))
+            print(("%s:_source_index_changed(): calling source_index_changed with row: %d " %
+                  (self.objectName(), row)))
 
         self.source_index_changed(combo, row)
 
@@ -1140,15 +1142,15 @@ class GenericRulesTable(QTableWidget):
         elif source_field == _('Tags'):
             values = sorted(self.db.all_tags(), key=sort_key)
         else:
-            if self.eligible_custom_fields[unicode(source_field)]['datatype'] in ['enumeration', 'text']:
+            if self.eligible_custom_fields[str(source_field)]['datatype'] in ['enumeration', 'text']:
                 values = self.db.all_custom(self.db.field_metadata.key_to_label(
-                                            self.eligible_custom_fields[unicode(source_field)]['field']))
+                                            self.eligible_custom_fields[str(source_field)]['field']))
                 values = sorted(values, key=sort_key)
-            elif self.eligible_custom_fields[unicode(source_field)]['datatype'] in ['bool']:
+            elif self.eligible_custom_fields[str(source_field)]['datatype'] in ['bool']:
                 values = [_('True'),_('False'),_('unspecified')]
-            elif self.eligible_custom_fields[unicode(source_field)]['datatype'] in ['composite']:
+            elif self.eligible_custom_fields[str(source_field)]['datatype'] in ['composite']:
                 values = [_('any value'),_('unspecified')]
-            elif self.eligible_custom_fields[unicode(source_field)]['datatype'] in ['datetime']:
+            elif self.eligible_custom_fields[str(source_field)]['datatype'] in ['datetime']:
                 values = [_('any date'),_('unspecified')]
 
         values_combo = ComboBox(self, values, pattern)
@@ -1166,8 +1168,8 @@ class GenericRulesTable(QTableWidget):
                 break
 
         if self.DEBUG:
-            print("%s:values_index_changed(): row %d " %
-                  (self.objectName(), row))
+            print(("%s:values_index_changed(): row %d " %
+                  (self.objectName(), row)))
 
 
 class ExclusionRules(GenericRulesTable):
@@ -1185,7 +1187,7 @@ class ExclusionRules(GenericRulesTable):
 
     def _init_table_widget(self):
         header_labels = [self.COLUMNS[index]['name']
-            for index in sorted(self.COLUMNS.keys(), key=lambda c: self.COLUMNS[c]['ordinal'])]
+            for index in sorted(list(self.COLUMNS.keys()), key=lambda c: self.COLUMNS[c]['ordinal'])]
         self.setColumnCount(len(header_labels))
         self.setHorizontalHeaderLabels(header_labels)
         self.setSortingEnabled(False)
@@ -1202,9 +1204,9 @@ class ExclusionRules(GenericRulesTable):
         data = self.create_blank_row_data()
         data['ordinal'] = row
         data['enabled'] = self.item(row,self.COLUMNS['ENABLED']['ordinal']).checkState() == Qt.Checked
-        data['name'] = unicode(self.cellWidget(row,self.COLUMNS['NAME']['ordinal']).text()).strip()
-        data['field'] = unicode(self.cellWidget(row,self.COLUMNS['FIELD']['ordinal']).currentText()).strip()
-        data['pattern'] = unicode(self.cellWidget(row,self.COLUMNS['PATTERN']['ordinal']).currentText()).strip()
+        data['name'] = str(self.cellWidget(row,self.COLUMNS['NAME']['ordinal']).text()).strip()
+        data['field'] = str(self.cellWidget(row,self.COLUMNS['FIELD']['ordinal']).currentText()).strip()
+        data['pattern'] = str(self.cellWidget(row,self.COLUMNS['PATTERN']['ordinal']).currentText()).strip()
         return data
 
     def create_blank_row_data(self):
@@ -1237,7 +1239,7 @@ class ExclusionRules(GenericRulesTable):
             self.setCellWidget(row, col, rule_name)
 
         def set_source_field_in_row(row, col, field=''):
-            source_combo = ComboBox(self, sorted(self.eligible_custom_fields.keys(), key=sort_key), field)
+            source_combo = ComboBox(self, sorted(list(self.eligible_custom_fields.keys()), key=sort_key), field)
             source_combo.currentIndexChanged.connect(partial(self._source_index_changed, source_combo))
             self.setCellWidget(row, col, source_combo)
             return source_combo
@@ -1278,7 +1280,7 @@ class PrefixRules(GenericRulesTable):
 
     def _init_table_widget(self):
         header_labels = [self.COLUMNS[index]['name']
-            for index in sorted(self.COLUMNS.keys(), key=lambda c: self.COLUMNS[c]['ordinal'])]
+            for index in sorted(list(self.COLUMNS.keys()), key=lambda c: self.COLUMNS[c]['ordinal'])]
         self.setColumnCount(len(header_labels))
         self.setHorizontalHeaderLabels(header_labels)
         self.setSortingEnabled(False)
@@ -1296,10 +1298,10 @@ class PrefixRules(GenericRulesTable):
         data = self.create_blank_row_data()
         data['ordinal'] = row
         data['enabled'] = self.item(row,self.COLUMNS['ENABLED']['ordinal']).checkState() == Qt.Checked
-        data['name'] = unicode(self.cellWidget(row,self.COLUMNS['NAME']['ordinal']).text()).strip()
-        data['prefix'] = unicode(self.cellWidget(row,self.COLUMNS['PREFIX']['ordinal']).currentText()).strip()
-        data['field'] = unicode(self.cellWidget(row,self.COLUMNS['FIELD']['ordinal']).currentText()).strip()
-        data['pattern'] = unicode(self.cellWidget(row,self.COLUMNS['PATTERN']['ordinal']).currentText()).strip()
+        data['name'] = str(self.cellWidget(row,self.COLUMNS['NAME']['ordinal']).text()).strip()
+        data['prefix'] = str(self.cellWidget(row,self.COLUMNS['PREFIX']['ordinal']).currentText()).strip()
+        data['field'] = str(self.cellWidget(row,self.COLUMNS['FIELD']['ordinal']).currentText()).strip()
+        data['pattern'] = str(self.cellWidget(row,self.COLUMNS['PATTERN']['ordinal']).currentText()).strip()
         return data
 
     def create_blank_row_data(self):
@@ -1321,127 +1323,127 @@ class PrefixRules(GenericRulesTable):
 
         # Create a list of prefixes for user selection
         raw_prefix_list = [
-            ('Ampersand',u'&'),
-            ('Angle left double',u'\u00ab'),
-            ('Angle left',u'\u2039'),
-            ('Angle right double',u'\u00bb'),
-            ('Angle right',u'\u203a'),
-            ('Arrow carriage return',u'\u21b5'),
-            ('Arrow double',u'\u2194'),
-            ('Arrow down',u'\u2193'),
-            ('Arrow left',u'\u2190'),
-            ('Arrow right',u'\u2192'),
-            ('Arrow up',u'\u2191'),
-            ('Asterisk',u'*'),
-            ('At sign',u'@'),
-            ('Bullet smallest',u'\u22c5'),
-            ('Bullet small',u'\u00b7'),
-            ('Bullet',u'\u2022'),
-            ('Cards clubs',u'\u2663'),
-            ('Cards diamonds',u'\u2666'),
-            ('Cards hearts',u'\u2665'),
-            ('Cards spades',u'\u2660'),
-            ('Caret',u'^'),
-            ('Checkmark',u'\u2713'),
-            ('Copyright circle c',u'\u00a9'),
-            ('Copyright circle r',u'\u00ae'),
-            ('Copyright trademark',u'\u2122'),
-            ('Currency cent',u'\u00a2'),
-            ('Currency dollar',u'$'),
-            ('Currency euro',u'\u20ac'),
-            ('Currency pound',u'\u00a3'),
-            ('Currency yen',u'\u00a5'),
-            ('Dagger double',u'\u2021'),
-            ('Dagger',u'\u2020'),
-            ('Degree',u'\u00b0'),
-            ('Dots3',u'\u2234'),
-            ('Hash',u'#'),
-            ('Infinity',u'\u221e'),
-            ('Lozenge',u'\u25ca'),
-            ('Math divide',u'\u00f7'),
-            ('Math empty',u'\u2205'),
-            ('Math equals',u'='),
-            ('Math minus',u'\u2212'),
-            ('Math plus circled',u'\u2295'),
-            ('Math times circled',u'\u2297'),
-            ('Math times',u'\u00d7'),
-            ('Paragraph',u'\u00b6'),
-            ('Percent',u'%'),
-            ('Plus-or-minus',u'\u00b1'),
-            ('Plus',u'+'),
-            ('Punctuation colon',u':'),
-            ('Punctuation colon-semi',u';'),
-            ('Punctuation exclamation',u'!'),
-            ('Punctuation question',u'?'),
-            ('Punctuation period',u'.'),
-            ('Punctuation slash back',u'\\'),
-            ('Punctuation slash forward',u'/'),
-            ('Section',u'\u00a7'),
-            ('Tilde',u'~'),
-            ('Vertical bar',u'|'),
-            ('Vertical bar broken',u'\u00a6'),
-            ('_0',u'0'),
-            ('_1',u'1'),
-            ('_2',u'2'),
-            ('_3',u'3'),
-            ('_4',u'4'),
-            ('_5',u'5'),
-            ('_6',u'6'),
-            ('_7',u'7'),
-            ('_8',u'8'),
-            ('_9',u'9'),
-            ('_A',u'A'),
-            ('_B',u'B'),
-            ('_C',u'C'),
-            ('_D',u'D'),
-            ('_E',u'E'),
-            ('_F',u'F'),
-            ('_G',u'G'),
-            ('_H',u'H'),
-            ('_I',u'I'),
-            ('_J',u'J'),
-            ('_K',u'K'),
-            ('_L',u'L'),
-            ('_M',u'M'),
-            ('_N',u'N'),
-            ('_O',u'O'),
-            ('_P',u'P'),
-            ('_Q',u'Q'),
-            ('_R',u'R'),
-            ('_S',u'S'),
-            ('_T',u'T'),
-            ('_U',u'U'),
-            ('_V',u'V'),
-            ('_W',u'W'),
-            ('_X',u'X'),
-            ('_Y',u'Y'),
-            ('_Z',u'Z'),
-            ('_a',u'a'),
-            ('_b',u'b'),
-            ('_c',u'c'),
-            ('_d',u'd'),
-            ('_e',u'e'),
-            ('_f',u'f'),
-            ('_g',u'g'),
-            ('_h',u'h'),
-            ('_i',u'i'),
-            ('_j',u'j'),
-            ('_k',u'k'),
-            ('_l',u'l'),
-            ('_m',u'm'),
-            ('_n',u'n'),
-            ('_o',u'o'),
-            ('_p',u'p'),
-            ('_q',u'q'),
-            ('_r',u'r'),
-            ('_s',u's'),
-            ('_t',u't'),
-            ('_u',u'u'),
-            ('_v',u'v'),
-            ('_w',u'w'),
-            ('_x',u'x'),
-            ('_y',u'y'),
-            ('_z',u'z'),
+            ('Ampersand','&'),
+            ('Angle left double','\\u00ab'),
+            ('Angle left','\\u2039'),
+            ('Angle right double','\\u00bb'),
+            ('Angle right','\\u203a'),
+            ('Arrow carriage return','\\u21b5'),
+            ('Arrow double','\\u2194'),
+            ('Arrow down','\\u2193'),
+            ('Arrow left','\\u2190'),
+            ('Arrow right','\\u2192'),
+            ('Arrow up','\\u2191'),
+            ('Asterisk','*'),
+            ('At sign','@'),
+            ('Bullet smallest','\\u22c5'),
+            ('Bullet small','\\u00b7'),
+            ('Bullet','\\u2022'),
+            ('Cards clubs','\\u2663'),
+            ('Cards diamonds','\\u2666'),
+            ('Cards hearts','\\u2665'),
+            ('Cards spades','\\u2660'),
+            ('Caret','^'),
+            ('Checkmark','\\u2713'),
+            ('Copyright circle c','\\u00a9'),
+            ('Copyright circle r','\\u00ae'),
+            ('Copyright trademark','\\u2122'),
+            ('Currency cent','\\u00a2'),
+            ('Currency dollar','$'),
+            ('Currency euro','\\u20ac'),
+            ('Currency pound','\\u00a3'),
+            ('Currency yen','\\u00a5'),
+            ('Dagger double','\\u2021'),
+            ('Dagger','\\u2020'),
+            ('Degree','\\u00b0'),
+            ('Dots3','\\u2234'),
+            ('Hash','#'),
+            ('Infinity','\\u221e'),
+            ('Lozenge','\\u25ca'),
+            ('Math divide','\\u00f7'),
+            ('Math empty','\\u2205'),
+            ('Math equals','='),
+            ('Math minus','\\u2212'),
+            ('Math plus circled','\\u2295'),
+            ('Math times circled','\\u2297'),
+            ('Math times','\\u00d7'),
+            ('Paragraph','\\u00b6'),
+            ('Percent','%'),
+            ('Plus-or-minus','\\u00b1'),
+            ('Plus','+'),
+            ('Punctuation colon',':'),
+            ('Punctuation colon-semi',';'),
+            ('Punctuation exclamation','!'),
+            ('Punctuation question','?'),
+            ('Punctuation period','.'),
+            ('Punctuation slash back','\\'),
+            ('Punctuation slash forward','/'),
+            ('Section','\\u00a7'),
+            ('Tilde','~'),
+            ('Vertical bar','|'),
+            ('Vertical bar broken','\\u00a6'),
+            ('_0','0'),
+            ('_1','1'),
+            ('_2','2'),
+            ('_3','3'),
+            ('_4','4'),
+            ('_5','5'),
+            ('_6','6'),
+            ('_7','7'),
+            ('_8','8'),
+            ('_9','9'),
+            ('_A','A'),
+            ('_B','B'),
+            ('_C','C'),
+            ('_D','D'),
+            ('_E','E'),
+            ('_F','F'),
+            ('_G','G'),
+            ('_H','H'),
+            ('_I','I'),
+            ('_J','J'),
+            ('_K','K'),
+            ('_L','L'),
+            ('_M','M'),
+            ('_N','N'),
+            ('_O','O'),
+            ('_P','P'),
+            ('_Q','Q'),
+            ('_R','R'),
+            ('_S','S'),
+            ('_T','T'),
+            ('_U','U'),
+            ('_V','V'),
+            ('_W','W'),
+            ('_X','X'),
+            ('_Y','Y'),
+            ('_Z','Z'),
+            ('_a','a'),
+            ('_b','b'),
+            ('_c','c'),
+            ('_d','d'),
+            ('_e','e'),
+            ('_f','f'),
+            ('_g','g'),
+            ('_h','h'),
+            ('_i','i'),
+            ('_j','j'),
+            ('_k','k'),
+            ('_l','l'),
+            ('_m','m'),
+            ('_n','n'),
+            ('_o','o'),
+            ('_p','p'),
+            ('_q','q'),
+            ('_r','r'),
+            ('_s','s'),
+            ('_t','t'),
+            ('_u','u'),
+            ('_v','v'),
+            ('_w','w'),
+            ('_x','x'),
+            ('_y','y'),
+            ('_z','z'),
             ]
         raw_prefix_list = sorted(raw_prefix_list, key=prefix_sorter)
         self.prefix_list = [x[1] for x in raw_prefix_list]
@@ -1473,7 +1475,7 @@ class PrefixRules(GenericRulesTable):
             self.setCellWidget(row, col, rule_name)
 
         def set_source_field_in_row(row, col, field=''):
-            source_combo = ComboBox(self, sorted(self.eligible_custom_fields.keys(), key=sort_key), field)
+            source_combo = ComboBox(self, sorted(list(self.eligible_custom_fields.keys()), key=sort_key), field)
             source_combo.currentIndexChanged.connect(partial(self._source_index_changed, source_combo))
             self.setCellWidget(row, col, source_combo)
             return source_combo

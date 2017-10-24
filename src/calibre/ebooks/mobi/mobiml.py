@@ -1,20 +1,20 @@
 '''
 Transform XHTML/OPS-ish content into Mobipocket HTML 3.2.
 '''
-from __future__ import with_statement
+import copy
+import re
+
+from calibre.ebooks.mobi.utils import convert_color_for_font_tag
+from calibre.ebooks.oeb.base import XHTML, XHTML_NS, barename, namespace, urlnormalize
+from calibre.ebooks.oeb.stylizer import Stylizer
+from calibre.ebooks.oeb.transforms.flatcss import KeyMapper
+from calibre.utils.imghdr import identify
+from lxml import etree
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2008, Marshall T. Vandegrift <llasram@gmail.cam>'
 
-import copy
-import re
-from lxml import etree
-from calibre.ebooks.oeb.base import namespace, barename
-from calibre.ebooks.oeb.base import XHTML, XHTML_NS, urlnormalize
-from calibre.ebooks.oeb.stylizer import Stylizer
-from calibre.ebooks.oeb.transforms.flatcss import KeyMapper
-from calibre.ebooks.mobi.utils import convert_color_for_font_tag
-from calibre.utils.imghdr import identify
 
 MBP_NS = 'http://mobipocket.com/ns/mbp'
 
@@ -42,7 +42,7 @@ COLLAPSE = re.compile(r'[ \t\r\n\v]+')
 
 
 def asfloat(value):
-    if not isinstance(value, (int, long, float)):
+    if not isinstance(value, (int, float)):
         return 0.0
     return float(value)
 
@@ -50,7 +50,7 @@ def asfloat(value):
 def isspace(text):
     if not text:
         return True
-    if u'\xa0' in text:
+    if '\xa0' in text:
         return False
     return text.isspace()
 
@@ -120,8 +120,8 @@ class MobiMLizer(object):
         self.log = self.oeb.logger
         self.opts = context
         self.profile = profile = context.dest
-        self.fnums = fnums = dict((v, k) for k, v in profile.fnums.items())
-        self.fmap = KeyMapper(profile.fbase, profile.fbase, fnums.keys())
+        self.fnums = fnums = dict((v, k) for k, v in list(profile.fnums.items()))
+        self.fmap = KeyMapper(profile.fbase, profile.fbase, list(fnums.keys()))
         self.mobimlize_spine()
 
     def mobimlize_spine(self):
@@ -141,7 +141,7 @@ class MobiMLizer(object):
         return self.fnums[self.fmap[ptsize]]
 
     def mobimlize_measure(self, ptsize):
-        if isinstance(ptsize, basestring):
+        if isinstance(ptsize, str):
             return ptsize
         embase = self.profile.fbase
         if round(ptsize) < embase:
@@ -149,12 +149,12 @@ class MobiMLizer(object):
         return "%dem" % int(round(ptsize / embase))
 
     def preize_text(self, text, pre_wrap=False):
-        text = unicode(text)
+        text = str(text)
         if pre_wrap:
             # Replace n consecutive spaces with n-1 NBSP + space
-            text = re.sub(r' {2,}', lambda m:(u'\xa0'*(len(m.group())-1) + u' '), text)
+            text = re.sub(r' {2,}', lambda m:('\xa0'*(len(m.group())-1) + ' '), text)
         else:
-            text = text.replace(u' ', u'\xa0')
+            text = text.replace(' ', '\xa0')
 
         text = text.replace('\r\n', '\n')
         text = text.replace('\r', '\n')
@@ -184,7 +184,7 @@ class MobiMLizer(object):
             parent = bstate.nested[-1] if bstate.nested else bstate.body
             indent = istate.indent
             left = istate.left
-            if isinstance(indent, basestring):
+            if isinstance(indent, str):
                 indent = 0
             if indent < 0 and abs(indent) < left:
                 left += indent
@@ -226,7 +226,7 @@ class MobiMLizer(object):
                 while vspace > 0:
                     wrapper.addprevious(etree.Element(XHTML('br')))
                     vspace -= 1
-            if istate.halign != 'auto' and isinstance(istate.halign, (str, unicode)):
+            if istate.halign != 'auto' and isinstance(istate.halign, str):
                 para.attrib['align'] = istate.halign
         istate.rendered = True
         pstate = bstate.istate
@@ -236,7 +236,7 @@ class MobiMLizer(object):
             try:
                 etree.SubElement(para, XHTML(tag), attrib=istate.attrib)
             except:
-                print 'Invalid subelement:', para, tag, istate.attrib
+                print('Invalid subelement:', para, tag, istate.attrib)
                 raise
         elif tag in TABLE_TAGS:
             para.attrib['valign'] = 'top'
@@ -303,7 +303,7 @@ class MobiMLizer(object):
         inline = bstate.inline
         content = self.preize_text(text, pre_wrap=istate.pre_wrap) if istate.preserve or istate.pre_wrap else [text]
         for item in content:
-            if isinstance(item, basestring):
+            if isinstance(item, str):
                 if len(inline) == 0:
                     inline.text = (inline.text or '') + item
                 else:
@@ -314,7 +314,7 @@ class MobiMLizer(object):
 
     def mobimlize_elem(self, elem, stylizer, bstate, istates,
             ignore_valign=False):
-        if not isinstance(elem.tag, basestring) \
+        if not isinstance(elem.tag, str) \
            or namespace(elem.tag) != XHTML_NS:
             return
         style = stylizer.style(elem)
@@ -384,17 +384,17 @@ class MobiMLizer(object):
             lspace = margin + padding
             if lspace > 0:
                 spaces = int(round((lspace * 3) / style['font-size']))
-                elem.text = (u'\xa0' * spaces) + (elem.text or '')
+                elem.text = ('\xa0' * spaces) + (elem.text or '')
             margin = asfloat(style['margin-right'])
             padding = asfloat(style['padding-right'])
             rspace = margin + padding
             if rspace > 0:
                 spaces = int(round((rspace * 3) / style['font-size']))
                 if len(elem) == 0:
-                    elem.text = (elem.text or '') + (u'\xa0' * spaces)
+                    elem.text = (elem.text or '') + ('\xa0' * spaces)
                 else:
                     last = elem[-1]
-                    last.text = (last.text or '') + (u'\xa0' * spaces)
+                    last.text = (last.text or '') + ('\xa0' * spaces)
         if bstate.content and style['page-break-before'] in PAGE_BREAKS:
             bstate.pbreak = True
         istate.fsize = self.mobimlize_font(style['font-size'])
@@ -509,11 +509,11 @@ class MobiMLizer(object):
             t = elem.text
             if not t:
                 t = ''
-            elem.text = u'\u201c' + t
+            elem.text = '\\u201c' + t
             t = elem.tail
             if not t:
                 t = ''
-            elem.tail = u'\u201d' + t
+            elem.tail = '\\u201d' + t
         text = None
         if elem.text:
             if istate.preserve or istate.pre_wrap:
@@ -596,7 +596,7 @@ class MobiMLizer(object):
             bstate.pbreak = True
         if isblock:
             para = bstate.para
-            if para is not None and para.text == u'\xa0' and len(para) < 1:
+            if para is not None and para.text == '\xa0' and len(para) < 1:
                 if style.height > 2:
                     para.getparent().replace(para, etree.Element(XHTML('br')))
                 else:

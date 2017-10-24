@@ -32,11 +32,11 @@ class PDFInput(InputFormatPlugin):
         from calibre.utils.cleantext import clean_ascii_chars
         from calibre.ebooks.pdf.reflow import PDFDocument
 
-        pdftohtml(os.getcwdu(), stream.name, self.opts.no_images, as_xml=True)
-        with open(u'index.xml', 'rb') as f:
+        pdftohtml(os.getcwd(), stream.name, self.opts.no_images, as_xml=True)
+        with open('index.xml', 'rb') as f:
             xml = clean_ascii_chars(f.read())
         PDFDocument(xml, self.opts, self.log)
-        return os.path.join(os.getcwdu(), u'metadata.opf')
+        return os.path.join(os.getcwd(), 'metadata.opf')
 
     def convert(self, stream, options, file_ext, log,
                 accelerators):
@@ -48,32 +48,32 @@ class PDFInput(InputFormatPlugin):
         self.opts, self.log = options, log
         if options.new_pdf_engine:
             return self.convert_new(stream, accelerators)
-        pdftohtml(os.getcwdu(), stream.name, options.no_images)
+        pdftohtml(os.getcwd(), stream.name, options.no_images)
 
         from calibre.ebooks.metadata.meta import get_metadata
         log.debug('Retrieving document metadata...')
         mi = get_metadata(stream, 'pdf')
-        opf = OPFCreator(os.getcwdu(), mi)
+        opf = OPFCreator(os.getcwd(), mi)
 
-        manifest = [(u'index.html', None)]
+        manifest = [('index.html', None)]
 
-        images = os.listdir(os.getcwdu())
+        images = os.listdir(os.getcwd())
         images.remove('index.html')
         for i in images:
             manifest.append((i, None))
         log.debug('Generating manifest...')
         opf.create_manifest(manifest)
 
-        opf.create_spine([u'index.html'])
+        opf.create_spine(['index.html'])
         log.debug('Rendering manifest...')
-        with open(u'metadata.opf', 'wb') as opffile:
+        with open('metadata.opf', 'wb') as opffile:
             opf.render(opffile)
-        if os.path.exists(u'toc.ncx'):
+        if os.path.exists('toc.ncx'):
             ncxid = opf.manifest.id_for_path('toc.ncx')
             if ncxid:
-                with open(u'metadata.opf', 'r+b') as f:
+                with open('metadata.opf', 'r+b') as f:
                     raw = f.read().replace(b'<spine', b'<spine toc="%s"' % bytes(ncxid))
                     f.seek(0)
                     f.write(raw)
 
-        return os.path.join(os.getcwdu(), u'metadata.opf')
+        return os.path.join(os.getcwd(), 'metadata.opf')

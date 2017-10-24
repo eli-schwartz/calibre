@@ -3,13 +3,15 @@ __copyright__ = '2008, Kovid Goyal <kovid at kovidgoyal.net>'
 '''
 Backend that implements storage of ebooks in an sqlite database.
 '''
+import pickle
+import datetime
+import re
 import sqlite3 as sqlite
-import datetime, re, cPickle, sre_constants
+import sre_constants
 from zlib import compress, decompress
 
-from calibre.ebooks.metadata import MetaInformation
-from calibre.ebooks.metadata import string_to_authors
 from calibre import isbytestring
+from calibre.ebooks.metadata import MetaInformation, string_to_authors
 
 
 class Concatenate(object):
@@ -44,7 +46,7 @@ class Connection(sqlite.Connection):
 
 
 def _connect(path):
-    if isinstance(path, unicode):
+    if isinstance(path, str):
         path = path.encode('utf-8')
     conn =  sqlite.connect(path, factory=Connection, detect_types=sqlite.PARSE_DECLTYPES|sqlite.PARSE_COLNAMES)
     conn.row_factory = lambda cursor, row : list(row)
@@ -145,7 +147,7 @@ class LibraryDatabase(object):
             if cover:
                 conn.execute('INSERT INTO covers(book, uncompressed_size, data) VALUES (?, ?, ?)',
                              (id, cover['uncompressed_size'], cover['data']))
-            for format in formats.keys():
+            for format in list(formats.keys()):
                 conn.execute('INSERT INTO data(book, format, uncompressed_size, data) VALUES (?, ?, ?, ?)',
                              (id, format, formats[format]['uncompressed_size'],
                               formats[format]['data']))
@@ -809,7 +811,7 @@ ALTER TABLE books ADD COLUMN isbn TEXT DEFAULT "" COLLATE NOCASE;
             if func is None:
                 break
             if self.user_version == i:
-                print 'Upgrading database from version: %d'%i
+                print('Upgrading database from version: %d'%i)
                 func(self.conn)
 
     def close(self):
@@ -863,7 +865,7 @@ ALTER TABLE books ADD COLUMN isbn TEXT DEFAULT "" COLLATE NOCASE;
         self.conn.commit()
 
     def refresh_ids(self, ids):
-        indices = map(self.index, ids)
+        indices = list(map(self.index, ids))
         for id, idx in zip(ids, indices):
             row = self.conn.get('SELECT * from meta WHERE id=?', (id,), all=False)
             self.data[idx] = row
@@ -1067,8 +1069,8 @@ ALTER TABLE books ADD COLUMN isbn TEXT DEFAULT "" COLLATE NOCASE;
                 self.conn.get('SELECT id, name FROM authors')]
 
     def all_author_names(self):
-        return filter(None, [i[0].strip().replace('|', ',') for i in self.conn.get(
-            'SELECT name FROM authors')])
+        return [_f for _f in [i[0].strip().replace('|', ',') for i in self.conn.get(
+            'SELECT name FROM authors')] if _f]
 
     def all_publishers(self):
         return [(i[0], i[1]) for i in
@@ -1088,7 +1090,7 @@ ALTER TABLE books ADD COLUMN isbn TEXT DEFAULT "" COLLATE NOCASE;
     def conversion_options(self, id, format):
         data = self.conn.get('SELECT data FROM conversion_options WHERE book=? AND format=?', (id, format.upper()), all=False)
         if data:
-            return cPickle.loads(str(data))
+            return pickle.loads(str(data))
         return None
 
     def has_conversion_options(self, ids, format='PIPE'):
@@ -1164,7 +1166,7 @@ ALTER TABLE books ADD COLUMN isbn TEXT DEFAULT "" COLLATE NOCASE;
             self.set_tags(id, val.split(','), append=False)
 
     def set_conversion_options(self, id, format, options):
-        data = sqlite.Binary(cPickle.dumps(options, -1))
+        data = sqlite.Binary(pickle.dumps(options, -1))
         oid = self.conn.get('SELECT id FROM conversion_options WHERE book=? AND format=?', (id, format.upper()), all=False)
         if oid:
             self.conn.execute('UPDATE conversion_options SET data=? WHERE id=?', (data, oid))
@@ -1334,10 +1336,10 @@ ALTER TABLE books ADD COLUMN isbn TEXT DEFAULT "" COLLATE NOCASE;
         formats, metadata, uris = iter(formats), iter(metadata), iter(uris)
         duplicates = []
         for path in paths:
-            mi = metadata.next()
-            format = formats.next()
+            mi = next(metadata)
+            format = next(formats)
             try:
-                uri = uris.next()
+                uri = next(uris)
             except StopIteration:
                 uri = None
             if not add_duplicates and self.has_book(mi):
@@ -1469,7 +1471,7 @@ class SearchToken(object):
     def __init__(self, text_token):
         self.index = -1
         text_token = text_token.strip()
-        for field in self.FIELD_MAP.keys():
+        for field in list(self.FIELD_MAP.keys()):
             if text_token.lower().startswith(field+':'):
                 text_token = text_token[len(field)+1:]
                 self.index = self.FIELD_MAP[field]
@@ -1488,7 +1490,7 @@ class SearchToken(object):
             if not text:
                 text = ''
         else:
-            text = ' '.join([item[i] if item[i] else '' for i in self.FIELD_MAP.values()])
+            text = ' '.join([item[i] if item[i] else '' for i in list(self.FIELD_MAP.values())])
         return bool(self.pattern.search(text)) ^ self.negate
 
 

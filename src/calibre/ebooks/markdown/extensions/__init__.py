@@ -3,9 +3,9 @@ Extensions
 -----------------------------------------------------------------------------
 """
 
-from __future__ import unicode_literals
-from ..util import parseBoolValue
 import warnings
+
+from ..util import parseBoolValue
 
 
 class Extension(object):
@@ -36,7 +36,7 @@ class Extension(object):
                           'Python-Markdown version 2.6 for more info.',
                           DeprecationWarning)
         # check for configs kwarg for backward compat.
-        if 'configs' in kwargs.keys():
+        if 'configs' in list(kwargs.keys()):
             if kwargs['configs'] is not None:
                 self.setConfigs(kwargs.pop('configs', {}))
             warnings.warn('Extension classes accepting a dict on the single '
@@ -59,11 +59,11 @@ class Extension(object):
 
     def getConfigs(self):
         """ Return all configs settings as a dict. """
-        return dict([(key, self.getConfig(key)) for key in self.config.keys()])
+        return dict([(key, self.getConfig(key)) for key in list(self.config.keys())])
 
     def getConfigInfo(self):
         """ Return all config descriptions as a list of tuples. """
-        return [(key, self.config[key][1]) for key in self.config.keys()]
+        return [(key, self.config[key][1]) for key in list(self.config.keys())]
 
     def setConfig(self, key, value):
         """ Set a config setting for `key` with the given `value`. """
@@ -77,7 +77,7 @@ class Extension(object):
         """ Set multiple config settings given a dict or list of tuples. """
         if hasattr(items, 'items'):
             # it's a dict
-            items = items.items()
+            items = list(items.items())
         for key, value in items:
             self.setConfig(key, value)
 

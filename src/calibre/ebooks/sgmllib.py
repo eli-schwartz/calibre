@@ -9,8 +9,10 @@
 # not supported at all.
 
 
-import markupbase
 import re
+
+import _markupbase
+
 
 __all__ = ["SGMLParser", "SGMLParseError"]
 
@@ -52,7 +54,7 @@ class SGMLParseError(RuntimeError):
 # chunks).  Entity references are passed by calling
 # self.handle_entityref() with the entity reference as argument.
 
-class SGMLParser(markupbase.ParserBase):
+class SGMLParser(_markupbase.ParserBase):
     # Definition of entities -- derived classes may override
     entity_or_charref = re.compile('&(?:'
       '([a-zA-Z][-.a-zA-Z0-9]*)|#([0-9]+)'
@@ -71,7 +73,7 @@ class SGMLParser(markupbase.ParserBase):
         self.lasttag = '???'
         self.nomoretags = 0
         self.literal = 0
-        markupbase.ParserBase.reset(self)
+        _markupbase.ParserBase.reset(self)
 
     def setnomoretags(self):
         """Enter literal mode (CDATA) till EOF.
@@ -394,8 +396,8 @@ class SGMLParser(markupbase.ParserBase):
     # Example -- report an unbalanced </...> tag.
     def report_unbalanced(self, tag):
         if self.verbose:
-            print '*** Unbalanced </' + tag + '>'
-            print '*** Stack:', self.stack
+            print('*** Unbalanced </' + tag + '>')
+            print('*** Stack:', self.stack)
 
     def convert_charref(self, name):
         """Convert character reference, may be overridden."""
@@ -408,7 +410,7 @@ class SGMLParser(markupbase.ParserBase):
         return self.convert_codepoint(n)
 
     def convert_codepoint(self, codepoint):
-        return unichr(codepoint)
+        return chr(codepoint)
 
     def handle_charref(self, name):
         """Handle character reference, no need to override."""
@@ -487,40 +489,40 @@ class TestSGMLParser(SGMLParser):
         data = self.testdata
         if data:
             self.testdata = ""
-            print 'data:', repr(data)
+            print('data:', repr(data))
 
     def handle_comment(self, data):
         self.flush()
         r = repr(data)
         if len(r) > 68:
             r = r[:32] + '...' + r[-32:]
-        print 'comment:', r
+        print('comment:', r)
 
     def unknown_starttag(self, tag, attrs):
         self.flush()
         if not attrs:
-            print 'start tag: <' + tag + '>'
+            print('start tag: <' + tag + '>')
         else:
-            print 'start tag: <' + tag,
+            print('start tag: <' + tag, end=' ')
             for name, value in attrs:
-                print name + '=' + '"' + value + '"',
-            print '>'
+                print(name + '=' + '"' + value + '"', end=' ')
+            print('>')
 
     def unknown_endtag(self, tag):
         self.flush()
-        print 'end tag: </' + tag + '>'
+        print('end tag: </' + tag + '>')
 
     def unknown_entityref(self, ref):
         self.flush()
-        print '*** unknown entity ref: &' + ref + ';'
+        print('*** unknown entity ref: &' + ref + ';')
 
     def unknown_charref(self, ref):
         self.flush()
-        print '*** unknown char ref: &#' + ref + ';'
+        print('*** unknown char ref: &#' + ref + ';')
 
     def unknown_decl(self, data):
         self.flush()
-        print '*** unknown decl: [' + data + ']'
+        print('*** unknown decl: [' + data + ']')
 
     def close(self):
         SGMLParser.close(self)
@@ -549,8 +551,8 @@ def test(args=None):
     else:
         try:
             f = open(file, 'r')
-        except IOError, msg:
-            print file, ":", msg
+        except IOError as msg:
+            print(file, ":", msg)
             sys.exit(1)
 
     data = f.read()

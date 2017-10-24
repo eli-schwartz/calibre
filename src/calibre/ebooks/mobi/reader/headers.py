@@ -1,21 +1,23 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (absolute_import, print_function)
+import os
+import re
+import struct
+
+from calibre import replace_entities
+from calibre.ebooks.metadata import MetaInformation, check_isbn
+from calibre.ebooks.mobi import MobiError
+from calibre.ebooks.mobi.langcodes import main_language, mobi2iana, sub_language
+from calibre.utils.cleantext import clean_ascii_chars, clean_xml_chars
+from calibre.utils.config_base import tweaks
+from calibre.utils.date import parse_date
+from calibre.utils.localization import canonicalize_lang
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import struct, re, os
 
-from calibre import replace_entities
-from calibre.utils.date import parse_date
-from calibre.ebooks.mobi import MobiError
-from calibre.ebooks.metadata import MetaInformation, check_isbn
-from calibre.ebooks.mobi.langcodes import main_language, sub_language, mobi2iana
-from calibre.utils.cleantext import clean_ascii_chars, clean_xml_chars
-from calibre.utils.localization import canonicalize_lang
-from calibre.utils.config_base import tweaks
 
 NULL_INDEX = 0xffffffff
 
@@ -239,7 +241,7 @@ class BookHeader(object):
 
             self.exth_flag, = struct.unpack('>L', raw[0x80:0x84])
             self.exth = None
-            if not isinstance(self.title, unicode):
+            if not isinstance(self.title, str):
                 self.title = self.title.decode(self.codec, 'replace')
             if self.exth_flag & 0x40:
                 try:
@@ -293,14 +295,14 @@ class MetadataHeader(BookHeader):
     def kf8_type(self):
         if (self.mobi_version == 8 and getattr(self, 'skelidx', NULL_INDEX) !=
                 NULL_INDEX):
-            return u'standalone'
+            return 'standalone'
 
         kf8_header_index = getattr(self.exth, 'kf8_header', None)
         if kf8_header_index is None:
             return None
         try:
             if self.section_data(kf8_header_index-1) == b'BOUNDARY':
-                return u'joint'
+                return 'joint'
         except:
             pass
         return None

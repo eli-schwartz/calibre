@@ -1,12 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 # License: GPLv3 Copyright: 2016, Kovid Goyal <kovid at kovidgoyal.net>
 
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
 import unittest
 
 from setup import Command
+
 
 TEST_MODULES = frozenset('srv db polish opf css docx cfi matcher icu smartypants build misc dbcli'.split())
 

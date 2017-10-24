@@ -1,16 +1,17 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-
-__license__ = 'GPL v3'
-__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
-
-import ssl, socket, re
+import re
+import socket
+import ssl
 from contextlib import closing
 
 from calibre import get_proxies
 from calibre.constants import ispy3
+
+
+__license__ = 'GPL v3'
+__copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
+
+
 has_ssl_verify = hasattr(ssl, 'create_default_context') and hasattr(ssl, '_create_unverified_context')
 
 
@@ -28,11 +29,11 @@ if ispy3:
     from urllib.parse import urlparse
     import http.client as httplib
 else:
-    import httplib
-    from urlparse import urlsplit as urlparse
+    import http.client
+    from urllib.parse import urlsplit as urlparse
 
 if has_ssl_verify:
-    class HTTPSConnection(httplib.HTTPSConnection):
+    class HTTPSConnection(http.client.HTTPSConnection):
 
         def __init__(self, ssl_version, *args, **kwargs):
             cafile = kwargs.pop('cert_file', None)
@@ -40,7 +41,7 @@ if has_ssl_verify:
                 kwargs['context'] = ssl._create_unverified_context()
             else:
                 kwargs['context'] = ssl.create_default_context(cafile=cafile)
-            httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+            http.client.HTTPSConnection.__init__(self, *args, **kwargs)
 else:
     # Check certificate hostname {{{
     # Implementation taken from python 3
@@ -137,10 +138,10 @@ else:
                 "subjectAltName fields were found")
     # }}}
 
-    class HTTPSConnection(httplib.HTTPSConnection):
+    class HTTPSConnection(http.client.HTTPSConnection):
 
         def __init__(self, ssl_version, *args, **kwargs):
-            httplib.HTTPSConnection.__init__(self, *args, **kwargs)
+            http.client.HTTPSConnection.__init__(self, *args, **kwargs)
             self.calibre_ssl_version = ssl_version
 
         def connect(self):
@@ -205,7 +206,7 @@ def get_https_resource_securely(
             path += '?' + p.query
         c.request('GET', path, headers=headers or {})
         response = c.getresponse()
-        if response.status in (httplib.MOVED_PERMANENTLY, httplib.FOUND, httplib.SEE_OTHER):
+        if response.status in (http.client.MOVED_PERMANENTLY, http.client.FOUND, http.client.SEE_OTHER):
             if max_redirects <= 0:
                 raise ValueError('Too many redirects, giving up')
             newurl = response.getheader('Location', None)
@@ -213,7 +214,7 @@ def get_https_resource_securely(
                 raise ValueError('%s returned a redirect response with no Location header' % url)
             return get_https_resource_securely(
                 newurl, cacerts=cacerts, timeout=timeout, max_redirects=max_redirects-1, ssl_version=ssl_version, get_response=get_response)
-        if response.status != httplib.OK:
+        if response.status != http.client.OK:
             raise HTTPError(url, response.status)
         if get_response:
             return response
@@ -221,4 +222,4 @@ def get_https_resource_securely(
 
 
 if __name__ == '__main__':
-    print (get_https_resource_securely('https://code.calibre-ebook.com/latest'))
+    print((get_https_resource_securely('https://code.calibre-ebook.com/latest')))

@@ -1,14 +1,12 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.gui2.tweak_book.editor.syntax.pygments_highlighter import create_highlighter
+from pygments.lexers import PythonLexer
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from pygments.lexers import PythonLexer
 
-from calibre.gui2.tweak_book.editor.syntax.pygments_highlighter import create_highlighter
 
 Highlighter = create_highlighter('PythonHighlighter', PythonLexer)
 

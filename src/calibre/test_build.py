@@ -1,8 +1,11 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
-from future_builtins import map
+import ctypes
+import os
+import sys
+import unittest
+
+from calibre.constants import islinux, isosx, iswindows, plugins
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2011, Kovid Goyal <kovid@kovidgoyal.net>'
@@ -12,8 +15,6 @@ __docformat__ = 'restructuredtext en'
 Test a binary calibre build to ensure that all needed binary images/libraries have loaded.
 '''
 
-import os, ctypes, sys, unittest
-from calibre.constants import plugins, iswindows, islinux, isosx
 is_ci = os.environ.get('CI', '').lower() == 'true'
 
 
@@ -100,7 +101,7 @@ class BuildTest(unittest.TestCase):
         from calibre.constants import plugins
         winutil = plugins['winutil'][0]
         for x in winutil.argv():
-            self.assertTrue(isinstance(x, unicode), 'argv() not returning unicode string')
+            self.assertTrue(isinstance(x, str), 'argv() not returning unicode string')
 
     def test_sqlite(self):
         import sqlite3
@@ -124,7 +125,7 @@ class BuildTest(unittest.TestCase):
         # it should just work because the hard-coded paths of the Qt
         # installation should work. If they do not, then it is a distro
         # problem.
-        fmts = set(map(unicode, QImageReader.supportedImageFormats()))
+        fmts = set(map(str, QImageReader.supportedImageFormats()))
         testf = {'jpg', 'png', 'svg', 'ico', 'gif'}
         self.assertEqual(testf.intersection(fmts), testf, "Qt doesn't seem to be able to load some of its image plugins. Available plugins: %s" % fmts)
         data = P('images/blank.png', allow_user_override=False, data=True)
@@ -231,7 +232,7 @@ class BuildTest(unittest.TestCase):
         if isosx:
             cafile = ssl.get_default_verify_paths().cafile
             if not cafile or not cafile.endswith('/mozilla-ca-certs.pem') or not os.access(cafile, os.R_OK):
-                self.assert_('Mozilla CA certs not loaded')
+                self.assertTrue('Mozilla CA certs not loaded')
 
 
 def find_tests():

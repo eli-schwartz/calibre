@@ -10,11 +10,12 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import os, re
+import os
+import re
 
 from calibre.ebooks.rtf2xml import copy
-from calibre.utils.mreplace import MReplace
 from calibre.ptempfile import better_mktemp
+from calibre.utils.mreplace import MReplace
 
 
 class Tokenize:
@@ -43,7 +44,7 @@ class Tokenize:
         self.__uc_bin = False
 
     def __remove_uc_chars(self, startchar, token):
-        for i in xrange(startchar, len(token)):
+        for i in range(startchar, len(token)):
             if self.__uc_char:
                 self.__uc_char -= 1
             else:
@@ -64,7 +65,7 @@ class Tokenize:
             self.__reini_utf8_counters()
             return token
         # add a uc control
-        elif token[:3] == '\uc':
+        elif token[:3] == '\\uc':
             self.__uc_value[-1] = int(token[3:])
             self.__reini_utf8_counters()
             return token
@@ -93,7 +94,7 @@ class Tokenize:
             uni_len = len(match_obj.group(0))
             if uni_char < 0:
                 uni_char += 65536
-            uni_char = unichr(uni_char).encode('ascii', 'xmlcharrefreplace')
+            uni_char = chr(uni_char).encode('ascii', 'xmlcharrefreplace')
             self.__uc_char = self.__uc_value[-1]
             # there is only an unicode char
             if len(token)<= uni_len:
@@ -123,7 +124,7 @@ class Tokenize:
         # split
         tokens = re.split(self.__splitexp, input_file)
         # remove empty tokens and \n
-        return filter(lambda x: len(x) > 0 and x != '\n', tokens)
+        return [x for x in tokens if len(x) > 0 and x != '\n']
 
     def __compile_expressions(self):
         SIMPLE_RPL = {
@@ -181,9 +182,9 @@ class Tokenize:
         # remove '' and \n in the process
         tokens = self.__sub_reg_split(input_file)
         # correct unicode
-        tokens = map(self.__unicode_process, tokens)
+        tokens = list(map(self.__unicode_process, tokens))
         # remove empty items created by removing \uc
-        tokens = filter(lambda x: len(x) > 0, tokens)
+        tokens = [x for x in tokens if len(x) > 0]
 
         # write
         with open(self.__write_to, 'wb') as write_obj:

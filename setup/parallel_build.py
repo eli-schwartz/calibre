@@ -1,17 +1,16 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import subprocess
+from contextlib import closing
+from functools import partial
+from multiprocessing.dummy import Pool
+
+from setup import iswindows
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2014, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import subprocess
-from multiprocessing.dummy import Pool
-from functools import partial
-from contextlib import closing
 
-from setup import iswindows
 
 if iswindows:
     from ctypes import windll, Structure, POINTER, c_size_t
@@ -50,7 +49,7 @@ def run_worker(job, decorate=True):
     try:
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except Exception as err:
-        return False, human_text, unicode(err)
+        return False, human_text, str(err)
     stdout, stderr = p.communicate()
     if decorate:
         stdout = bytes(human_text) + b'\n' + (stdout or b'')

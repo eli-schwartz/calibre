@@ -1,20 +1,21 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import os
+import sys
+import unicodedata
+
+from calibre import as_unicode, prints, walk
+from calibre.constants import __appname__, iswindows
+from calibre.libunzip import extract as zipextract
+from calibre.ptempfile import TemporaryDirectory
+from calibre.utils.ipc.simple_worker import WorkerError
+from calibre.utils.zipfile import ZIP_DEFLATED, ZIP_STORED, ZipFile
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid@kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-import sys, os, unicodedata
 
-from calibre import prints, as_unicode, walk
-from calibre.constants import iswindows, __appname__
-from calibre.ptempfile import TemporaryDirectory
-from calibre.libunzip import extract as zipextract
-from calibre.utils.zipfile import ZipFile, ZIP_DEFLATED, ZIP_STORED
-from calibre.utils.ipc.simple_worker import WorkerError
 
 
 class Error(ValueError):

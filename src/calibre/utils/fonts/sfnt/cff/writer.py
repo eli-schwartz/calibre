@@ -1,16 +1,15 @@
-#!/usr/bin/env python2
 # vim:fileencoding=UTF-8:ts=4:sw=4:sta:et:sts=4:fdm=marker:ai
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from collections import OrderedDict
+from struct import pack
+
+from calibre.utils.fonts.sfnt.cff.constants import cff_standard_strings
+
 
 __license__   = 'GPL v3'
 __copyright__ = '2012, Kovid Goyal <kovid at kovidgoyal.net>'
 __docformat__ = 'restructuredtext en'
 
-from struct import pack
-from collections import OrderedDict
 
-from calibre.utils.fonts.sfnt.cff.constants import cff_standard_strings
 
 
 class Index(list):
@@ -131,7 +130,7 @@ class Subset(object):
         charsets.extend(cff.charset[1:])  # .notdef is not included
 
         endchar_operator = bytes(bytearray([14]))
-        for i in xrange(self.cff.num_glyphs):
+        for i in range(self.cff.num_glyphs):
             cname = self.cff.charset.safe_lookup(i)
             ok = cname in keep_charnames
             cs = self.cff.char_strings[i] if ok else endchar_operator
@@ -189,5 +188,3 @@ class Subset(object):
             self.raw += private_dict.raw
             if private_dict.subrs is not None:
                 self.raw += private_dict.subrs.raw
-
-

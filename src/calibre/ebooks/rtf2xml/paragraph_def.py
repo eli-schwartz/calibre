@@ -10,8 +10,10 @@
 #                                                                       #
 #                                                                       #
 #########################################################################
-import sys, os
-from calibre.ebooks.rtf2xml import copy, border_parse
+import os
+import sys
+
+from calibre.ebooks.rtf2xml import border_parse, copy
 from calibre.ptempfile import better_mktemp
 
 
@@ -373,7 +375,7 @@ if another paragraph_def is found, the state changes to collect_tokens.
         else:
             if self.__run_level > 3:
                 msg = 'no entry for %s\n' % self.__token_info
-                raise self.__bug_handler, msg
+                raise self.__bug_handler(msg)
 
     def __tab_leader_func(self, line):
         """
@@ -384,7 +386,7 @@ if another paragraph_def is found, the state changes to collect_tokens.
         else:
             if self.__run_level > 3:
                 msg = 'no entry for %s\n' % self.__token_info
-                raise self.__bug_handler, msg
+                raise self.__bug_handler(msg)
 
     def __tab_bar_func(self, line):
         """
@@ -588,7 +590,7 @@ if another paragraph_def is found, the state changes to collect_tokens.
         self.__write_obj.write(self.__end_marker)
         self.__write_obj.write(self.__text_string)
         self.__text_string = ''
-        keys = self.__att_val_dict.keys()
+        keys = list(self.__att_val_dict.keys())
         if 'font-style' in keys:
             self.__write_obj.write('mi<mk<font-end__\n')
         if 'caps' in keys:
@@ -608,7 +610,7 @@ if another paragraph_def is found, the state changes to collect_tokens.
         # when determining uniqueness for a style, ingorne these values, since
         # they don't tell us if the style is unique
         ignore_values = ['style-num', 'nest-level', 'in-table']
-        keys = self.__att_val_dict.keys()
+        keys = list(self.__att_val_dict.keys())
         keys.sort()
         for key in keys:
             if key in ignore_values:
@@ -637,7 +639,7 @@ if another paragraph_def is found, the state changes to collect_tokens.
             the_value = self.__att_val_dict['tabs']
             # the_value = the_value[:-1]
             style_string += ('<%s>%s' % ('tabs', the_value))
-        keys = self.__att_val_dict.keys()
+        keys = list(self.__att_val_dict.keys())
         keys.sort()
         for key in keys:
             if key != 'name' and key !='style-num' and key != 'in-table'\
@@ -690,7 +692,7 @@ if another paragraph_def is found, the state changes to collect_tokens.
             the_value = self.__att_val_dict['tabs']
             # the_value = the_value[:-1]
             self.__write_obj.write('<%s>%s' % ('tabs', the_value))
-        keys = self.__att_val_dict.keys()
+        keys = list(self.__att_val_dict.keys())
         keys.sort()
         for key in keys:
             if key != 'name' and key !='style-num' and key != 'in-table'\

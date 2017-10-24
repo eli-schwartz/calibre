@@ -1,22 +1,25 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+import http.client
+import os
+import socket
+import ssl
+import time
+from collections import namedtuple
+from glob import glob
+from threading import Event
+from time import monotonic
+from unittest import skipIf
+
+from calibre.ptempfile import TemporaryDirectory
+from calibre.srv.pre_activated import has_preactivated_support
+from calibre.srv.tests.base import BaseTest, TestServer
+from calibre.utils.certgen import create_server_cert
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 
-import httplib, ssl, os, socket, time
-from collections import namedtuple
-from unittest import skipIf
-from glob import glob
-from threading import Event
 
-from calibre.srv.pre_activated import has_preactivated_support
-from calibre.srv.tests.base import BaseTest, TestServer
-from calibre.ptempfile import TemporaryDirectory
-from calibre.utils.certgen import create_server_cert
-from time import monotonic
 is_ci = os.environ.get('CI', '').lower() == 'true'
 
 
@@ -91,7 +94,7 @@ class LoopTest(BaseTest):
             conn.request('GET', '/')
             with self.assertRaises(socket.timeout):
                 res = conn.getresponse()
-                if str(res.status) == str(httplib.REQUEST_TIMEOUT):
+                if str(res.status) == str(http.client.REQUEST_TIMEOUT):
                     raise socket.timeout('Timeout')
                 raise Exception('Got unexpected response: code: %s %s headers: %r data: %r' % (
                     res.status, res.reason, res.getheaders(), res.read()))
@@ -156,7 +159,7 @@ class LoopTest(BaseTest):
         self.ae(buf.read(1000), bytes(buf.ba))
         self.ae(b'', buf.read(10))
         self.ae(write(b'a'*10), 10)
-        numbers = bytes(bytearray(xrange(10)))
+        numbers = bytes(bytearray(range(10)))
         set(numbers, 1, 3, READ)
         self.ae(buf.read(1), b'\x01')
         self.ae(buf.read(10), b'\x02')
@@ -187,14 +190,14 @@ class LoopTest(BaseTest):
         'Test serving over SSL'
         address = '127.0.0.1'
         with TemporaryDirectory('srv-test-ssl') as tdir:
-            cert_file, key_file, ca_file = map(lambda x:os.path.join(tdir, x), 'cka')
+            cert_file, key_file, ca_file = [os.path.join(tdir, x) for x in 'cka']
             create_server_cert(address, ca_file, cert_file, key_file, key_size=1024)
             ctx = ssl.create_default_context(cafile=ca_file)
             with TestServer(lambda data:(data.path[0] + data.read()), ssl_certfile=cert_file, ssl_keyfile=key_file, listen_on=address, port=0) as server:
-                conn = httplib.HTTPSConnection(address, server.address[1], strict=True, context=ctx)
+                conn = http.client.HTTPSConnection(address, server.address[1], strict=True, context=ctx)
                 conn.request('GET', '/test', 'body')
                 r = conn.getresponse()
-                self.ae(r.status, httplib.OK)
+                self.ae(r.status, http.client.OK)
                 self.ae(r.read(), b'testbody')
                 cert = conn.sock.getpeercert()
                 subject = dict(x[0] for x in cert['subject'])
@@ -214,7 +217,7 @@ class LoopTest(BaseTest):
             conn = server.connect()
             conn.request('GET', '/test', 'body')
             r = conn.getresponse()
-            self.ae(r.status, httplib.OK)
+            self.ae(r.status, http.client.OK)
             self.ae(r.read(), b'testbody')
             self.ae(server.loop.bound_address[1], port)
 

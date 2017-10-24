@@ -1,12 +1,10 @@
-#!/usr/bin/env python2
 # vim:fileencoding=utf-8
-from __future__ import (unicode_literals, division, absolute_import,
-                        print_function)
+from calibre.customize.conversion import OptionRecommendation, OutputFormatPlugin
+
 
 __license__ = 'GPL v3'
 __copyright__ = '2013, Kovid Goyal <kovid at kovidgoyal.net>'
 
-from calibre.customize.conversion import OutputFormatPlugin, OptionRecommendation
 
 PAGE_SIZES = ['a0', 'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'b0', 'b1',
               'b2', 'b3', 'b4', 'b5', 'b6', 'legal', 'letter']
