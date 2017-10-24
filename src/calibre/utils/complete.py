@@ -113,8 +113,6 @@ class EbookConvert(object):
         self.words = words
         self.prefix = prefix
         self.previous = words[-2 if prefix else -1]
-        self.cache = cPickle.load(open(os.path.join(sys.resources_location,
-            'ebook-convert-complete.pickle'), 'rb'))
         self.complete(wc)
 
     def complete(self, wc):

@@ -10,6 +10,7 @@ from functools import partial
 
 from lxml import etree
 from html5lib.constants import cdataElements, rcdataElements
+from time import monotonic
 
 from calibre.ebooks.oeb.polish.tests.base import BaseTest
 from calibre.ebooks.oeb.polish.parsing import parse_html5 as parse
@@ -205,7 +206,6 @@ class ParsingTests(BaseTest):
 def timing():
     import sys
     from calibre.ebooks.chardet import xml_to_unicode
-    from calibre.utils.monotonic import monotonic
     from html5lib import parse as vanilla
     filename = sys.argv[-1]
     with lopen(filename, 'rb') as f:

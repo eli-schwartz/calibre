@@ -787,10 +787,6 @@ class Application(QApplication):
         self.file_event_hook = None
         if override_program_name:
             args = [override_program_name] + args[1:]
-        if headless:
-            if not args:
-                args = sys.argv[:1]
-            args.extend(['-platformpluginpath', sys.extensions_location, '-platform', 'headless'])
         self.headless = headless
         qargs = [i.encode('utf-8') if isinstance(i, unicode) else i for i in args]
         self.pi = plugins['progress_indicator'][0]
@@ -1113,11 +1109,7 @@ def ensure_app(headless=True):
         if _store_app is None and QApplication.instance() is None:
             args = sys.argv[:1]
             has_headless = isosx or islinux or isbsd
-            if headless and has_headless:
-                args += ['-platformpluginpath', sys.extensions_location, '-platform', 'headless']
             _store_app = QApplication(args)
-            if headless and has_headless:
-                _store_app.headless = True
             import traceback
             # This is needed because as of PyQt 5.4 if sys.execpthook ==
             # sys.__excepthook__ PyQt will abort the application on an

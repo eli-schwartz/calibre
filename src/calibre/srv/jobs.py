@@ -12,7 +12,7 @@ from threading import RLock, Thread, Event
 from Queue import Queue, Empty
 
 from calibre import detect_ncpus, force_unicode
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 from calibre.utils.ipc.simple_worker import fork_job, WorkerError
 
 StartEvent = namedtuple('StartEvent', 'job_id name module function args kwargs callback data')

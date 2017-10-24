@@ -31,11 +31,6 @@ if iswindows:
     usb_info_cache = {}
 
 
-def eject_exe():
-    base = sys.extensions_location if hasattr(sys, 'new_app_layout') else os.path.dirname(sys.executable)
-    return os.path.join(base, 'calibre-eject.exe')
-
-
 class USBDevice:
 
     def __init__(self, dev):
@@ -846,23 +841,6 @@ class Device(DeviceConfig, DevicePlugin):
 
     def post_open_callback(self):
         pass
-
-    def eject_windows(self):
-        from threading import Thread
-        drives = []
-        for x in ('_main_prefix', '_card_a_prefix', '_card_b_prefix'):
-            x = getattr(self, x, None)
-            if x is not None:
-                drives.append(x[0].upper())
-
-        def do_it(drives):
-            import win32process
-            subprocess.Popen([eject_exe()] + drives, creationflags=win32process.CREATE_NO_WINDOW).wait()
-
-        t = Thread(target=do_it, args=[drives])
-        t.daemon = True
-        t.start()
-        self.__save_win_eject_thread = t
 
     def eject_osx(self):
         for x in ('_main_prefix', '_card_a_prefix', '_card_b_prefix'):

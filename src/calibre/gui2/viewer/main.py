@@ -33,10 +33,7 @@ from calibre.utils.ipc import RC, viewer_socket_address
 from calibre.utils.localization import canonicalize_lang, get_lang, lang_as_iso639_1
 from calibre.utils.zipfile import BadZipfile
 
-try:
-    from calibre.utils.monotonic import monotonic
-except RuntimeError:
-    from time import time as monotonic
+from time import monotonic
 
 vprefs = JSONConfig('viewer')
 vprefs.defaults['singleinstance'] = False

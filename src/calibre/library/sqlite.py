@@ -212,17 +212,6 @@ def icu_collator(s1, s2):
 
 
 def load_c_extensions(conn, debug=DEBUG):
-    try:
-        conn.enable_load_extension(True)
-        ext_path = os.path.join(sys.extensions_location, 'sqlite_custom.'+
-                ('pyd' if iswindows else 'so'))
-        conn.load_extension(ext_path)
-        conn.enable_load_extension(False)
-        return True
-    except Exception as e:
-        if debug:
-            print 'Failed to load high performance sqlite C extension'
-            print e
     return False
 
 

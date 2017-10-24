@@ -12,7 +12,7 @@ from PyQt5.Qt import (
 )
 
 from calibre.constants import iswindows
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 
 touch_supported = False
 if iswindows and sys.getwindowsversion()[:2] >= (6, 2):  # At least windows 7

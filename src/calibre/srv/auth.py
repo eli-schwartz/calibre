@@ -15,7 +15,7 @@ from threading import Lock
 from calibre.srv.errors import HTTPAuthRequired, HTTPSimpleResponse, HTTPForbidden
 from calibre.srv.http_request import parse_uri
 from calibre.srv.utils import parse_http_dict, encode_path
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 
 MAX_AGE_SECONDS = 3600
 nonce_counter, nonce_counter_lock = 0, Lock()

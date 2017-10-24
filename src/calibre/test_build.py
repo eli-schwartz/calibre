@@ -71,28 +71,6 @@ class BuildTest(unittest.TestCase):
         from html5_parser import parse
         parse('<p>xxx')
 
-    def test_plugins(self):
-        exclusions = set()
-        if is_ci:
-            if isosx:
-                # The compiler version on OS X is different between the
-                # machine on which the dependencies are built and the
-                # machine on which the calibre modules are built, which causes
-                # C++ name mangling incompatibilities preventing some modules
-                # from loading
-                exclusions.update(set('podofo'.split()))
-        if islinux and (not os.path.exists('/dev/bus/usb') and not os.path.exists('/proc/bus/usb')):
-            # libusb fails to initialize in containers without USB subsystems
-            exclusions.update(set('libusb libmtp'.split()))
-        for name in plugins:
-            if name in exclusions:
-                if name in ('libusb', 'libmtp'):
-                    # Just check that the DLL can be loaded
-                    ctypes.CDLL(os.path.join(sys.extensions_location, name + ('.dylib' if isosx else '.so')))
-                continue
-            mod, err = plugins[name]
-            self.assertFalse(err or not mod, 'Failed to load plugin: ' + name + ' with error:\n' + err)
-
     def test_lxml(self):
         from calibre.utils.cleantext import test_clean_xml_chars
         test_clean_xml_chars()

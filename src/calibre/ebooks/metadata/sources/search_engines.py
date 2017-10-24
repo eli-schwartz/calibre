@@ -11,11 +11,11 @@ from collections import defaultdict, namedtuple
 from future_builtins import map
 from urllib import quote_plus, urlencode
 from urlparse import parse_qs
+from time import monotonic
 
 from lxml import etree
 
 from calibre import browser as _browser, prints, random_user_agent
-from calibre.utils.monotonic import monotonic
 from calibre.utils.random_ua import accept_header_for_ua
 
 current_version = (1, 0, 0)

@@ -11,7 +11,7 @@ from uuid import uuid4
 from PyQt5.Qt import pyqtSignal, QEventLoop, Qt
 
 is64bit = sys.maxsize > (1 << 32)
-base = sys.extensions_location if hasattr(sys, 'new_app_layout') else os.path.dirname(sys.executable)
+base = os.path.dirname(sys.executable)
 HELPER = os.path.join(base, 'calibre-file-dialog.exe')
 current_app_uid = None
 

@@ -21,7 +21,7 @@ popen = subprocess.Popen
 if isosx and hasattr(sys, 'frameworks_dir'):
     PDFTOHTML = os.path.join(getattr(sys, 'frameworks_dir'), PDFTOHTML)
 if iswindows and hasattr(sys, 'frozen'):
-    base = sys.extensions_location if hasattr(sys, 'new_app_layout') else os.path.dirname(sys.executable)
+    base = os.path.dirname(sys.executable)
     PDFTOHTML = os.path.join(base, 'pdftohtml.exe')
     popen = partial(subprocess.Popen, creationflags=0x08)  # CREATE_NO_WINDOW=0x08 so that no ugly console is popped up
 if (islinux or isbsd) and getattr(sys, 'frozen', False):

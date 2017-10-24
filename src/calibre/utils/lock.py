@@ -15,7 +15,7 @@ from functools import partial
 from calibre.constants import (
     __appname__, fcntl, filesystem_encoding, islinux, isosx, iswindows, plugins
 )
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 
 speedup = plugins['speedup'][0]
 if iswindows:

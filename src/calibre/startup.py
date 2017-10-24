@@ -16,7 +16,7 @@ __builtin__.__dict__['_'] = lambda s: s
 # immediately translated to the environment language
 __builtin__.__dict__['__'] = lambda s: s
 
-from calibre.constants import iswindows, preferred_encoding, plugins, isosx, islinux, isfrozen, DEBUG
+from .constants import iswindows, preferred_encoding, plugins, isosx, islinux, isfrozen, DEBUG
 
 _run_once = False
 winutil = winutilerror = None
@@ -48,7 +48,7 @@ if not _run_once:
 
     #
     # Ensure that all temp files/dirs are created under a calibre tmp dir
-    from calibre.ptempfile import base_dir
+    from .ptempfile import base_dir
     try:
         base_dir()
     except EnvironmentError:
@@ -82,12 +82,12 @@ if not _run_once:
 
     #
     # Setup resources
-    import calibre.utils.resources as resources
+    from .utils import resources
     resources
 
     #
     # Setup translations
-    from calibre.utils.localization import set_translators
+    from .utils.localization import set_translators
 
     set_translators()
 
@@ -148,7 +148,7 @@ if not _run_once:
 
     __builtin__.__dict__['lopen'] = local_open
 
-    from calibre.utils.icu import title_case, lower as icu_lower, upper as icu_upper
+    from .utils.icu import title_case, lower as icu_lower, upper as icu_upper
     __builtin__.__dict__['icu_lower'] = icu_lower
     __builtin__.__dict__['icu_upper'] = icu_upper
     __builtin__.__dict__['icu_title'] = title_case
@@ -183,54 +183,3 @@ if not _run_once:
                     except Exception:
                         pass  # Don't care about failure to set name
                 threading.Thread.start = new_start
-
-
-def test_lopen():
-    from calibre.ptempfile import TemporaryDirectory
-    from calibre import CurrentDir
-    n = u'f\xe4llen'
-    print('testing lopen()')
-
-    if iswindows:
-        import msvcrt, win32api
-
-        def assert_not_inheritable(f):
-            if win32api.GetHandleInformation(msvcrt.get_osfhandle(f.fileno())) & 0b1:
-                raise SystemExit('File handle is inheritable!')
-    else:
-        def assert_not_inheritable(f):
-            if not fcntl.fcntl(f, fcntl.F_GETFD) & fcntl.FD_CLOEXEC:
-                raise SystemExit('File handle is inheritable!')
-
-    def copen(*args):
-        ans = lopen(*args)
-        assert_not_inheritable(ans)
-        return ans
-
-    with TemporaryDirectory() as tdir, CurrentDir(tdir):
-        with copen(n, 'w') as f:
-            f.write('one')
-
-        print 'O_CREAT tested'
-        with copen(n, 'w+b') as f:
-            f.write('two')
-        with copen(n, 'r') as f:
-            if f.read() == 'two':
-                print 'O_TRUNC tested'
-            else:
-                raise Exception('O_TRUNC failed')
-        with copen(n, 'ab') as f:
-            f.write('three')
-        with copen(n, 'r+') as f:
-            if f.read() == 'twothree':
-                print 'O_APPEND tested'
-            else:
-                raise Exception('O_APPEND failed')
-        with copen(n, 'r+') as f:
-            f.seek(3)
-            f.write('xxxxx')
-            f.seek(0)
-            if f.read() == 'twoxxxxx':
-                print 'O_RANDOM tested'
-            else:
-                raise Exception('O_RANDOM failed')

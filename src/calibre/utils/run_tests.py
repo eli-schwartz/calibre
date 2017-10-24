@@ -5,7 +5,7 @@
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
 import unittest, functools, os, importlib, zipfile
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 
 
 def no_endl(f):

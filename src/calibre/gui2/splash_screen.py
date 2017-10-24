@@ -10,7 +10,7 @@ from PyQt5.Qt import (
 )
 
 from calibre.constants import __appname__, numeric_version
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 
 
 class SplashScreen(QSplashScreen):

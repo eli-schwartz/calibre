@@ -23,7 +23,7 @@ from calibre.srv.utils import (
     create_sock_pair)
 from calibre.utils.socket_inheritance import set_socket_inherit
 from calibre.utils.logging import ThreadSafeLog
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 from calibre.utils.mdns import get_external_ip
 
 READ, WRITE, RDWR, WAIT = 'READ', 'WRITE', 'RDWR', 'WAIT'

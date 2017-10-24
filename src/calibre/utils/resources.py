@@ -9,13 +9,13 @@ __docformat__ = 'restructuredtext en'
 
 import __builtin__, sys, os
 
-from calibre import config_dir
+from .. import config_dir
 
 
 class PathResolver(object):
 
     def __init__(self):
-        self.locations = [sys.resources_location]
+        self.locations = []
         self.cache = {}
 
         def suitable(path):
@@ -26,7 +26,7 @@ class PathResolver(object):
                 pass
             return False
 
-        self.default_path = sys.resources_location
+        self.default_path = ""
 
         dev_path = os.environ.get('CALIBRE_DEVELOP_FROM', None)
         self.using_develop_from = False
@@ -89,7 +89,7 @@ def js_name_to_path(name, ext='.coffee'):
 
 
 def _compile_coffeescript(name):
-    from calibre.utils.serve_coffee import compile_coffeescript
+    from .serve_coffee import compile_coffeescript
     src = js_name_to_path(name)
     with open(src, 'rb') as f:
         cs, errors = compile_coffeescript(f.read(), src)

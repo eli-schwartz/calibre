@@ -17,7 +17,7 @@ from calibre.srv.opts import Options
 from calibre.srv.standalone import create_option_parser
 from calibre.srv.utils import create_sock_pair
 from calibre.srv.web_socket import DummyHandler
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 
 MAX_RETRIES = 10
 

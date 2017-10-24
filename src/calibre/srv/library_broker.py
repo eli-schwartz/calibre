@@ -12,7 +12,7 @@ from calibre import filesystem_encoding
 from calibre.db.cache import Cache
 from calibre.db.legacy import LibraryDatabase, create_backend, set_global_state
 from calibre.utils.filenames import samefile as _samefile
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 
 
 def canonicalize_path(p):

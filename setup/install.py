@@ -24,11 +24,6 @@ import sys, os
 path = os.environ.get('CALIBRE_PYTHON_PATH', {path!r})
 if path not in sys.path:
     sys.path.insert(0, path)
-
-sys.resources_location = os.environ.get('CALIBRE_RESOURCES_PATH', {resources!r})
-sys.extensions_location = os.environ.get('CALIBRE_EXTENSIONS_PATH', {extensions!r})
-sys.executables_location = os.environ.get('CALIBRE_EXECUTABLES_PATH', {executables!r})
-
 '''
 
 TEMPLATE = HEADER+'''

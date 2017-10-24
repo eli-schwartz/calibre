@@ -271,8 +271,6 @@ def main(args=sys.argv):
     elif opts.add_simple_plugin is not None:
         add_simple_plugin(opts.add_simple_plugin)
     elif opts.paths:
-        prints('CALIBRE_RESOURCES_PATH='+sys.resources_location)
-        prints('CALIBRE_EXTENSIONS_PATH='+sys.extensions_location)
         prints('CALIBRE_PYTHON_PATH='+os.pathsep.join(sys.path))
     elif opts.reinitialize_db is not None:
         reinit_db(opts.reinitialize_db)

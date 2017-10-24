@@ -24,7 +24,7 @@ from calibre.srv.utils import (
     MultiDict, http_date, HTTP1, HTTP11, socket_errors_socket_closed,
     sort_q_values, get_translator_for_lang, Cookie, fast_now_strftime)
 from calibre.utils.speedups import ReadOnlyFileBuffer
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 
 Range = namedtuple('Range', 'start stop size')
 MULTIPART_SEPARATOR = uuid.uuid4().hex.decode('ascii')

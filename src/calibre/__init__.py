@@ -15,12 +15,12 @@ try:
 except EnvironmentError:
     os.chdir(os.path.expanduser('~'))
 
-from calibre.constants import (iswindows, isosx, islinux, isfrozen,
+from .constants import (iswindows, isosx, islinux, isfrozen,
         isbsd, preferred_encoding, __appname__, __version__, __author__,
         win32event, win32api, winerror, fcntl,
         filesystem_encoding, plugins, config_dir)
-from calibre.startup import winutil, winutilerror
-from calibre.utils.icu import safe_chr
+from .startup import winutil, winutilerror
+from .utils.icu import safe_chr
 
 if False:
     # Prevent pyflakes from complaining
@@ -193,7 +193,7 @@ def prints(*args, **kwargs):
     for i, arg in enumerate(args):
         if isinstance(arg, unicode):
             if iswindows:
-                from calibre.utils.terminal import Detect
+                from .utils.terminal import Detect
                 cs = Detect(file)
                 if cs.is_console:
                     cs.write_unicode_text(arg)
@@ -293,19 +293,19 @@ def extract(path, dir):
     with open(path, 'rb') as f:
         id_ = f.read(3)
     if id_ == b'Rar':
-        from calibre.utils.unrar import extract as rarextract
+        from .utils.unrar import extract as rarextract
         extractor = rarextract
     elif id_.startswith(b'PK'):
-        from calibre.libunzip import extract as zipextract
+        from .libunzip import extract as zipextract
         extractor = zipextract
     if extractor is None:
         # Fallback to file extension
         ext = os.path.splitext(path)[1][1:].lower()
         if ext in ['zip', 'cbz', 'epub', 'oebzip']:
-            from calibre.libunzip import extract as zipextract
+            from .libunzip import extract as zipextract
             extractor = zipextract
         elif ext in ['cbr', 'rar']:
-            from calibre.utils.unrar import extract as rarextract
+            from .utils.unrar import extract as rarextract
             extractor = rarextract
     if extractor is None:
         raise Exception('Unknown archive type')
@@ -397,7 +397,7 @@ USER_AGENT_MOBILE = 'Mozilla/5.0 (Windows; U; Windows CE 5.1; rv:1.8.1a3) Gecko/
 
 
 def random_user_agent(choose=None, allow_ie=True):
-    from calibre.utils.random_ua import common_user_agents
+    from .utils.random_ua import common_user_agents
     ua_list = common_user_agents()
     ua_list = filter(lambda x: 'Mobile/' not in x, ua_list)
     if not allow_ie:
@@ -414,7 +414,7 @@ def browser(honor_time=True, max_time=2, mobile_browser=False, user_agent=None, 
     :param max_time: Maximum time in seconds to wait during a refresh request
     :param verify_ssl_certificates: If false SSL certificates errors are ignored
     '''
-    from calibre.utils.browser import Browser
+    from .utils.browser import Browser
     opener = Browser(verify_ssl=verify_ssl_certificates)
     opener.set_handle_refresh(handle_refresh, max_time=max_time, honor_time=honor_time)
     opener.set_handle_robots(False)
@@ -472,7 +472,7 @@ class CurrentDir(object):
         except OSError:
             if not self.workaround_temp_folder_permissions:
                 raise
-            from calibre.ptempfile import reset_temp_folder_permissions
+            from .ptempfile import reset_temp_folder_permissions
             reset_temp_folder_permissions()
             os.chdir(self.path)
         return self.cwd
@@ -600,7 +600,7 @@ def entity_to_unicode(match, exceptions=[], encoding='cp1252',
             return check(chr(num).decode(encoding))
         except UnicodeDecodeError:
             return check(my_unichr(num))
-    from calibre.ebooks.html_entities import html5_entities
+    from .ebooks.html_entities import html5_entities
     try:
         return check(html5_entities[ent])
     except KeyError:
@@ -713,7 +713,7 @@ def remove_bracketed_text(src,
 
 
 def ipython(user_ns=None):
-    from calibre.utils.ipython import ipython
+    from .utils.ipython import ipython
     ipython(user_ns=user_ns)
 
 

@@ -8,7 +8,7 @@ being closed.
 import tempfile, os, atexit
 from future_builtins import map
 
-from calibre.constants import (__version__, __appname__, filesystem_encoding,
+from .constants import (__version__, __appname__, filesystem_encoding,
         get_unicode_windows_env_var, iswindows, get_windows_temp_path, isosx)
 
 
@@ -67,7 +67,7 @@ def reset_temp_folder_permissions():
     global _base_dir
     if iswindows and _base_dir:
         import subprocess
-        from calibre import prints
+        from . import prints
         parent = os.path.dirname(_base_dir)
         retcode = subprocess.Popen(['icacls.exe', parent, '/reset', '/Q', '/T']).wait()
         prints('Trying to reset permissions of temp folder', parent, 'return code:', retcode)

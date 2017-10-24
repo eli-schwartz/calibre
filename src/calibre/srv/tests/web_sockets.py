@@ -14,7 +14,7 @@ from calibre.srv.tests.base import BaseTest, TestServer
 from calibre.srv.web_socket import (
     GUID_STR, BINARY, TEXT, MessageWriter, create_frame, CLOSE, NORMAL_CLOSE,
     PING, PONG, PROTOCOL_ERROR, CONTINUATION, INCONSISTENT_DATA, CONTROL_CODES)
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 from calibre.utils.socket_inheritance import set_socket_inherit
 
 HANDSHAKE_STR = '''\

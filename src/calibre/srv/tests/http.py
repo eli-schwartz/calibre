@@ -13,7 +13,7 @@ from tempfile import NamedTemporaryFile
 from calibre import guess_type
 from calibre.srv.tests.base import BaseTest, TestServer
 from calibre.srv.utils import eintr_retry_call
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 
 is_ci = os.environ.get('CI', '').lower() == 'true'
 

@@ -1,10 +1,5 @@
 [
     {
-        "name": "monotonic",
-        "sources": "calibre/utils/monotonic.c",
-        "linux_libraries": "rt"
-    },
-    {
         "name": "speedup",
         "sources": "calibre/utils/speedup.c",
         "libraries": "m",

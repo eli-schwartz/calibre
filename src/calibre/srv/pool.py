@@ -9,8 +9,7 @@ __copyright__ = '2015, Kovid Goyal <kovid at kovidgoyal.net>'
 import sys
 from Queue import Queue, Full
 from threading import Thread
-
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 
 
 class Worker(Thread):

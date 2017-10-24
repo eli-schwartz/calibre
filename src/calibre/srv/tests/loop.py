@@ -16,7 +16,7 @@ from calibre.srv.pre_activated import has_preactivated_support
 from calibre.srv.tests.base import BaseTest, TestServer
 from calibre.ptempfile import TemporaryDirectory
 from calibre.utils.certgen import create_server_cert
-from calibre.utils.monotonic import monotonic
+from time import monotonic
 is_ci = os.environ.get('CI', '').lower() == 'true'
 
 
@@ -217,18 +217,6 @@ class LoopTest(BaseTest):
             self.ae(r.status, httplib.OK)
             self.ae(r.read(), b'testbody')
             self.ae(server.loop.bound_address[1], port)
-
-    def test_monotonic(self):
-        'Test the monotonic() clock'
-        a = monotonic()
-        b = monotonic()
-        self.assertGreaterEqual(b, a)
-        a = monotonic()
-        time.sleep(0.1)
-        b = monotonic()
-        self.assertGreaterEqual(b, a)
-        self.assertGreaterEqual(b - a, 0.09)
-        self.assertLessEqual(b - a, 0.2)
 
     def test_jobs_manager(self):
         'Test the jobs manager'

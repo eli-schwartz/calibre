@@ -154,7 +154,6 @@ class Plugins(collections.Mapping):
                 'chm_extra',
                 'icu',
                 'speedup',
-                'monotonic',
                 'zlib2',
                 'html',
                 'freetype',
@@ -179,18 +178,12 @@ class Plugins(collections.Mapping):
     def load_plugin(self, name):
         if name in self._plugins:
             return
-        sys.path.insert(0, sys.extensions_location)
-        try:
-            del sys.modules[name]
-        except KeyError:
-            pass
         try:
             p, err = importlib.import_module(name), ''
         except Exception as err:
             p = None
             err = str(err)
         self._plugins[name] = (p, err)
-        sys.path.remove(sys.extensions_location)
 
     def __iter__(self):
         return iter(self.plugins)
