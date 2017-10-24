@@ -10,7 +10,6 @@ import string
 from future_builtins import map
 
 from calibre.utils.config import JSONConfig
-from calibre.spell.dictionary import Dictionaries, parse_lang_code
 
 CONTAINER_DND_MIMETYPE = 'application/x-calibre-container-name-list'
 tprefs = JSONConfig('tweak_book_gui')
@@ -112,7 +111,6 @@ editor_toolbar_actions = {
     'format':NonReplaceDict(), 'html':NonReplaceDict(), 'xml':NonReplaceDict(), 'css':NonReplaceDict()}
 
 TOP = object()
-dictionaries = Dictionaries()
 
 
 def editor_name(editor):
@@ -122,15 +120,7 @@ def editor_name(editor):
 
 
 def set_book_locale(lang):
-    dictionaries.initialize()
-    try:
-        dictionaries.default_locale = parse_lang_code(lang)
-        if dictionaries.default_locale.langcode == 'und':
-            raise ValueError('')
-    except ValueError:
-        dictionaries.default_locale = dictionaries.ui_locale
-    from calibre.gui2.tweak_book.editor.syntax.html import refresh_spell_check_status
-    refresh_spell_check_status()
+    pass
 
 
 def verify_link(url, name=None):

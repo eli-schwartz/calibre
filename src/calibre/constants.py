@@ -160,7 +160,6 @@ class Plugins(collections.Mapping):
                 'freetype',
                 'imageops',
                 'qt_hack',
-                'hunspell',
                 '_patiencediff_c',
                 'bzzdec',
                 'matcher',
