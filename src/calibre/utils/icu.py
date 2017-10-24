@@ -4,7 +4,6 @@ import codecs
 import sys
 
 from calibre.constants import plugins
-from calibre.utils.config_base import tweaks
 
 
 __license__   = 'GPL v3'
@@ -58,10 +57,7 @@ def collator():
     if _collator is None:
         if _locale is None:
             from calibre.utils.localization import get_lang
-            if tweaks['locale_for_sorting']:
-                _locale = tweaks['locale_for_sorting']
-            else:
-                _locale = get_lang()
+            _locale = get_lang()
         try:
             _collator = _icu.Collator(_locale)
         except Exception as e:
@@ -86,12 +82,12 @@ def primary_collator():
 
 
 def sort_collator():
-    'Ignores case differences and recognizes numbers in strings (if the tweak is set)'
+    'Ignores case differences and recognizes numbers in strings'
     global _sort_collator
     if _sort_collator is None:
         _sort_collator = collator().clone()
         _sort_collator.strength = _icu.UCOL_SECONDARY
-        _sort_collator.numeric = tweaks['numeric_collation']
+        _sort_collator.numeric = False
     return _sort_collator
 
 

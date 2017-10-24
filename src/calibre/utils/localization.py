@@ -5,6 +5,7 @@ import os
 import re
 from io import StringIO
 from gettext import GNUTranslations, NullTranslations
+from calibre.utils.resources import get_path as P
 
 
 __license__   = 'GPL v3'
@@ -237,7 +238,7 @@ def set_translators():
         set_translators.lang = t.info().get('language')
     except Exception:
         pass
-    t.install(str=True, names=('ngettext',))
+    t.install(names=('ngettext',))
     # Now that we have installed a translator, we have to retranslate the help
     # for the global prefs object as it was instantiated in get_lang(), before
     # the translator was installed.
