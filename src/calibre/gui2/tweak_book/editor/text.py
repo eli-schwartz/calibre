@@ -26,8 +26,7 @@ from calibre.gui2.tweak_book import (
 )
 from calibre.gui2.tweak_book.completion.popup import CompletionPopup
 from calibre.gui2.tweak_book.editor import (
-    LINK_PROPERTY, SPELL_LOCALE_PROPERTY, SPELL_PROPERTY, SYNTAX_PROPERTY,
-    store_locale
+    LINK_PROPERTY, SYNTAX_PROPERTY, store_locale
 )
 from calibre.gui2.tweak_book.editor.smarts import NullSmarts
 from calibre.gui2.tweak_book.editor.snippets import SnippetManager
@@ -36,7 +35,6 @@ from calibre.gui2.tweak_book.editor.themes import (
     get_theme, theme_color, theme_format
 )
 from calibre.gui2.tweak_book.widgets import PARAGRAPH_SEPARATOR, PlainTextEdit
-from calibre.spell.break_iterator import index_of
 from calibre.utils.icu import (
     capitalize, lower, safe_chr, string_length, swapcase, upper
 )
@@ -523,57 +521,6 @@ class TextEdit(PlainTextEdit):
         self.centerCursor()
         return True
 
-    def find_spell_word(self, original_words, lang, from_cursor=True, center_on_cursor=True):
-        c = self.textCursor()
-        c.setPosition(c.position())
-        if not from_cursor:
-            c.movePosition(c.Start)
-        c.movePosition(c.End, c.KeepAnchor)
-
-        def find_first_word(haystack):
-            match_pos, match_word = -1, None
-            for w in original_words:
-                idx = index_of(w, haystack, lang=lang)
-                if idx > -1 and (match_pos == -1 or match_pos > idx):
-                    match_pos, match_word = idx, w
-            return match_pos, match_word
-
-        while True:
-            text = unicode(c.selectedText()).rstrip('\0')
-            idx, word = find_first_word(text)
-            if idx == -1:
-                return False
-            c.setPosition(c.anchor() + idx)
-            c.setPosition(c.position() + string_length(word), c.KeepAnchor)
-            if self.smarts.verify_for_spellcheck(c, self.highlighter):
-                self.highlighter.join()  # Ensure highlighting is finished
-                locale = self.spellcheck_locale_for_cursor(c)
-                if not lang or not locale or (locale and lang == locale.langcode):
-                    self.setTextCursor(c)
-                    if center_on_cursor:
-                        self.centerCursor()
-                    return True
-            c.setPosition(c.position())
-            c.movePosition(c.End, c.KeepAnchor)
-
-        return False
-
-    def find_next_spell_error(self, from_cursor=True):
-        c = self.textCursor()
-        if not from_cursor:
-            c.movePosition(c.Start)
-        block = c.block()
-        while block.isValid():
-            for r in block.layout().additionalFormats():
-                if r.format.property(SPELL_PROPERTY):
-                    if not from_cursor or block.position() + r.start + r.length > c.position():
-                        c.setPosition(block.position() + r.start)
-                        c.setPosition(c.position() + r.length, c.KeepAnchor)
-                        self.setTextCursor(c)
-                        return True
-            block = block.next()
-        return False
-
     def replace(self, pat, template, saved_match='gui'):
         c = self.textCursor()
         raw = unicode(c.selectedText()).replace(PARAGRAPH_SEPARATOR, '\n').rstrip('\0')
@@ -711,25 +658,6 @@ class TextEdit(PlainTextEdit):
         c.setPosition(block.position() + r.start)
         c.setPosition(c.position() + r.length, c.KeepAnchor)
         return unicode(c.selectedText())
-
-    def spellcheck_locale_for_cursor(self, c):
-        with store_locale:
-            formats = self.highlighter.parse_single_block(c.block())[0]
-        pos = c.positionInBlock()
-        for r in formats:
-            if r.start <= pos <= r.start + r.length and r.format.property(SPELL_PROPERTY):
-                return r.format.property(SPELL_LOCALE_PROPERTY)
-
-    def recheck_word(self, word, locale):
-        c = self.textCursor()
-        c.movePosition(c.Start)
-        block = c.block()
-        while block.isValid():
-            for r in block.layout().additionalFormats():
-                if r.format.property(SPELL_PROPERTY) and self.text_for_range(block, r) == word:
-                    self.highlighter.reformat_block(block)
-                    break
-            block = block.next()
 
     # Tooltips {{{
     def syntax_range_for_cursor(self, cursor):

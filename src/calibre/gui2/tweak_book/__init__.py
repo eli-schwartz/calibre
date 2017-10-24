@@ -45,15 +45,13 @@ d['pretty_print_on_open'] = False
 d['disable_completion_popup_for_search'] = False
 d['saved_searches'] = []
 d['insert_tag_mru'] = ['p', 'div', 'li', 'h1', 'h2', 'h3', 'h4', 'em', 'strong', 'td', 'tr']
-d['spell_check_case_sensitive_sort'] = False
-d['inline_spell_check'] = True
 d['custom_themes'] = {}
 d['remove_unused_classes'] = False
 d['merge_identical_selectors'] = False
 d['global_book_toolbar'] = [
 'new-file', 'open-book',  'save-book', None, 'global-undo', 'global-redo', 'create-checkpoint', None, 'donate', 'user-manual']
 d['global_tools_toolbar'] = [
-    'check-book', 'spell-check-book', 'edit-toc', 'insert-character',
+    'check-book', 'edit-toc', 'insert-character',
     'manage-fonts', 'smarten-punctuation', 'remove-unused-css', 'show-reports'
 ]
 d['global_plugins_toolbar'] = []
@@ -65,7 +63,6 @@ d['editor_format_toolbar'] = [('format-text-' + x) if x else x for x in (
 'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript',
     None, 'color', 'background-color', None, 'justify-left', 'justify-center',
     'justify-right', 'justify-fill')]
-d['spell_check_case_sensitive_search'] = False
 d['add_cover_preserve_aspect_ratio'] = False
 d['templates'] = {}
 d['auto_close_tags'] = True

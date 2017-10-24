@@ -20,9 +20,6 @@ class NullSmarts(object):
     def get_smart_selection(self, editor, update=True):
         return editor.selected_text
 
-    def verify_for_spellcheck(self, cursor, highlighter):
-        return False
-
     def cursor_position_with_sourceline(self, cursor, for_position_sync=True):
         return None, None
 

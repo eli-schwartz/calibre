@@ -13,7 +13,6 @@ from itertools import chain
 from calibre import prepare_string_for_xml, force_unicode
 from calibre.ebooks.oeb.base import XPath, xml2text
 from calibre.ebooks.oeb.polish.container import OEB_DOCS, OEB_STYLES, OEB_FONTS
-from calibre.ebooks.oeb.polish.spell import get_all_words
 from calibre.utils.icu import numeric_sort_key, ord_string, safe_chr
 from calibre.utils.imghdr import identify
 from css_selectors import Select, SelectorError
@@ -194,10 +193,6 @@ def links_data(container, *args):
 
 Word = namedtuple('Word', 'id word locale usage')
 
-
-def words_data(container, book_locale, *args):
-    count, words = get_all_words(container, book_locale, get_word_count=True)
-    return (count, tuple(Word(i, word, locale, v) for i, ((word, locale), v) in enumerate(words.iteritems())))
 
 Char = namedtuple('Char', 'id char codepoint usage count')
 

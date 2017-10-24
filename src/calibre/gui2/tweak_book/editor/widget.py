@@ -17,10 +17,10 @@ from calibre import prints
 from calibre.constants import DEBUG
 from calibre.ebooks.chardet import replace_encoding_declarations
 from calibre.gui2.tweak_book import (
-    actions, current_container, tprefs, dictionaries, editor_toolbar_actions,
+    actions, current_container, tprefs, editor_toolbar_actions,
     editor_name, editors, update_mark_text_action)
 from calibre.gui2 import error_dialog, open_url
-from calibre.gui2.tweak_book.editor import SPELL_PROPERTY, LINK_PROPERTY, TAG_NAME_PROPERTY, CSS_PROPERTY
+from calibre.gui2.tweak_book.editor import LINK_PROPERTY, TAG_NAME_PROPERTY, CSS_PROPERTY
 from calibre.gui2.tweak_book.editor.help import help_url
 from calibre.gui2.tweak_book.editor.text import TextEdit
 from calibre.utils.icu import utf16_length
@@ -128,7 +128,6 @@ class Editor(QMainWindow):
     copy_available_state_changed = pyqtSignal(object)
     data_changed = pyqtSignal(object)
     cursor_position_changed = pyqtSignal()
-    word_ignored = pyqtSignal(object, object)
     link_clicked = pyqtSignal(object)
     smart_highlighting_updated = pyqtSignal()
 
@@ -296,9 +295,6 @@ class Editor(QMainWindow):
     def find_text(self, *args, **kwargs):
         return self.editor.find_text(*args, **kwargs)
 
-    def find_spell_word(self, *args, **kwargs):
-        return self.editor.find_spell_word(*args, **kwargs)
-
     def replace(self, *args, **kwargs):
         return self.editor.replace(*args, **kwargs)
 
@@ -407,7 +403,7 @@ class Editor(QMainWindow):
         self.restore_state()
 
     def break_cycles(self):
-        for x in ('modification_state_changed', 'word_ignored', 'link_clicked', 'smart_highlighting_updated'):
+        for x in ('modification_state_changed', 'link_clicked', 'smart_highlighting_updated'):
             try:
                 getattr(self, x).disconnect()
             except TypeError:
@@ -505,49 +501,6 @@ class Editor(QMainWindow):
         origc = QTextCursor(c)
         current_cursor = self.editor.textCursor()
         r = origr = self.editor.syntax_range_for_cursor(c)
-        if (r is None or not r.format.property(SPELL_PROPERTY)) and c.positionInBlock() > 0 and not current_cursor.hasSelection():
-            c.setPosition(c.position() - 1)
-            r = self.editor.syntax_range_for_cursor(c)
-
-        if r is not None and r.format.property(SPELL_PROPERTY):
-            word = self.editor.text_for_range(c.block(), r)
-            locale = self.editor.spellcheck_locale_for_cursor(c)
-            orig_pos = c.position()
-            c.setPosition(orig_pos - utf16_length(word))
-            found = False
-            self.editor.setTextCursor(c)
-            if self.editor.find_spell_word([word], locale.langcode, center_on_cursor=False):
-                found = True
-                fc = self.editor.textCursor()
-                if fc.position() < c.position():
-                    self.editor.find_spell_word([word], locale.langcode, center_on_cursor=False)
-            spell_cursor = self.editor.textCursor()
-            if current_cursor.hasSelection():
-                # Restore the current cursor so that any selection is preserved
-                # for the change case actions
-                self.editor.setTextCursor(current_cursor)
-            if found:
-                suggestions = dictionaries.suggestions(word, locale)[:7]
-                if suggestions:
-                    for suggestion in suggestions:
-                        ac = m.addAction(suggestion, partial(self.editor.simple_replace, suggestion, cursor=spell_cursor))
-                        f = ac.font()
-                        f.setBold(True), ac.setFont(f)
-                    m.addSeparator()
-                m.addAction(actions['spell-next'])
-                m.addAction(_('Ignore this word'), partial(self._nuke_word, None, word, locale))
-                dics = dictionaries.active_user_dictionaries
-                if len(dics) > 0:
-                    if len(dics) == 1:
-                        m.addAction(_('Add this word to the dictionary: {0}').format(dics[0].name), partial(
-                            self._nuke_word, dics[0].name, word, locale))
-                    else:
-                        ac = m.addAction(_('Add this word to the dictionary'))
-                        dmenu = QMenu(m)
-                        ac.setMenu(dmenu)
-                        for dic in dics:
-                            dmenu.addAction(dic.name, partial(self._nuke_word, dic.name, word, locale))
-                m.addSeparator()
 
         if origr is not None and origr.format.property(LINK_PROPERTY):
             href = self.editor.text_for_range(origc.block(), origr)
@@ -592,21 +545,10 @@ class Editor(QMainWindow):
     def get_tag_contents(self, *args, **kwargs):
         return self.editor.get_tag_contents(*args, **kwargs)
 
-    def _nuke_word(self, dic, word, locale):
-        if dic is None:
-            dictionaries.ignore_word(word, locale)
-        else:
-            dictionaries.add_to_user_dictionary(dic, word, locale)
-        self.word_ignored.emit(word, locale)
-
 
 def launch_editor(path_to_edit, path_is_raw=False, syntax='html', callback=None):
-    from calibre.gui2.tweak_book import dictionaries
     from calibre.gui2.tweak_book.main import option_parser
     from calibre.gui2.tweak_book.ui import Main
-    from calibre.gui2.tweak_book.editor.syntax.html import refresh_spell_check_status
-    dictionaries.initialize()
-    refresh_spell_check_status()
     opts = option_parser().parse_args([])
     app = QApplication([])
     # Create the actions that are placed into the editors toolbars

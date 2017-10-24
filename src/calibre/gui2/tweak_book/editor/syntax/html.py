@@ -12,12 +12,9 @@ from collections import namedtuple
 
 from PyQt5.Qt import QFont, QTextBlockUserData, QTextCharFormat
 
-from calibre.ebooks.oeb.polish.spell import html_spell_tags, xml_spell_tags
-from calibre.spell.dictionary import parse_lang_code
-from calibre.spell.break_iterator import split_into_words_and_positions
 from calibre.gui2.tweak_book import dictionaries, tprefs, verify_link
 from calibre.gui2.tweak_book.editor import (
-    syntax_text_char_format, SPELL_PROPERTY, SPELL_LOCALE_PROPERTY,
+    syntax_text_char_format,
     store_locale, LINK_PROPERTY, TAG_NAME_PROPERTY, CLASS_ATTRIBUTE_PROPERTY)
 from calibre.gui2.tweak_book.editor.syntax.base import SyntaxHighlighter, run_loop
 from calibre.gui2.tweak_book.editor.syntax.css import (
@@ -54,30 +51,8 @@ Attr = namedtuple('Attr', 'offset type data')
 
 LINK_ATTRS = frozenset(('href', 'src', 'poster', 'xlink:href'))
 
-do_spell_check = False
 
-
-def refresh_spell_check_status():
-    global do_spell_check
-    do_spell_check = tprefs['inline_spell_check'] and hasattr(dictionaries, 'active_user_dictionaries')
-
-
-from calibre.constants import plugins
-
-_speedup = plugins['html'][0]
-if _speedup is not None:
-    Tag = _speedup.Tag
-    bold_tags, italic_tags = _speedup.bold_tags, _speedup.italic_tags
-    State = _speedup.State
-
-    def spell_property(sfmt, locale):
-        s = QTextCharFormat(sfmt)
-        s.setProperty(SPELL_LOCALE_PROPERTY, locale)
-        return s
-    _speedup.init(spell_property, dictionaries.recognized, split_into_words_and_positions)
-    del spell_property
-    check_spelling = _speedup.check_spelling
-else:
+if True:
     bold_tags = {'b', 'strong'} | {'h%d' % d for d in range(1, 7)}
     italic_tags = {'i', 'em'}
 
@@ -145,31 +120,6 @@ else:
                 '->'.join(x.name for x in self.tags), self.is_bold, self.is_italic, self.current_lang)
         __str__ = __repr__
 
-    def check_spelling(text, tlen, fmt, locale, sfmt, store_locale):
-        split_ans = []
-        ppos = 0
-        r, a = dictionaries.recognized, split_ans.append
-        for start, length in split_into_words_and_positions(text, lang=locale.langcode):
-            if start > ppos:
-                a((start - ppos, fmt))
-            ppos = start + length
-            recognized = r(text[start:ppos], locale)
-            if recognized:
-                a((length, fmt))
-            else:
-                if store_locale:
-                    s = QTextCharFormat(sfmt)
-                    s.setProperty(SPELL_LOCALE_PROPERTY, locale)
-                    a((length, s))
-                else:
-                    a((length, sfmt))
-        if ppos < tlen:
-            a((tlen - ppos, fmt))
-        return split_ans
-
-
-del _speedup
-
 
 def finish_opening_tag(state, cdata_tags):
     state.parse = NORMAL
@@ -233,16 +183,9 @@ class HTMLUserData(QTextBlockUserData):
         self.state = State() if state is None else state
         self.doc_name = doc_name
 
-    @classmethod
-    def tag_ok_for_spell(cls, name):
-        return name not in html_spell_tags
-
 
 class XMLUserData(HTMLUserData):
-
-    @classmethod
-    def tag_ok_for_spell(cls, name):
-        return name in xml_spell_tags
+    pass
 
 
 def add_tag_data(user_data, tag):
@@ -291,7 +234,7 @@ def cdata(state, text, i, formats, user_data):
     return [(num, fmt), (2, formats['end_tag']), (len(m.group()) - 2, formats['tag_name'])]
 
 
-def process_text(state, text, nbsp_format, spell_format, user_data):
+def process_text(state, text, nbsp_format, user_data):
     ans = []
     fmt = None
     if state.is_bold or state.is_italic:
@@ -308,25 +251,6 @@ def process_text(state, text, nbsp_format, spell_format, user_data):
         ans = [(len(text), fmt)]
     elif last < len(text):
         ans.append((len(text) - last, fmt))
-
-    if do_spell_check and state.tags and user_data.tag_ok_for_spell(state.tags[-1].name):
-        split_ans = []
-        locale = state.current_lang or dictionaries.default_locale
-        sfmt = QTextCharFormat(spell_format)
-        if fmt is not None:
-            sfmt.merge(fmt)
-
-        tpos = 0
-        for tlen, fmt in ans:
-            if fmt is nbsp_format:
-                split_ans.append((tlen, fmt))
-            else:
-                split_ans.extend(check_spelling(text[tpos:tpos+tlen], tlen, fmt, locale, sfmt, store_locale.enabled))
-
-            tpos += tlen
-        ans = split_ans
-
-    return ans
 
 
 def normal(state, text, i, formats, user_data):
@@ -384,7 +308,7 @@ def normal(state, text, i, formats, user_data):
         return [(1, formats['>'])]
 
     t = normal_pat.search(text, i).group()
-    return process_text(state, t, formats['nbsp'], formats['spell'], user_data)
+    return process_text(state, t, formats['nbsp'], user_data)
 
 
 def opening_tag(cdata_tags, state, text, i, formats, user_data):
@@ -542,7 +466,6 @@ def create_formats(highlighter, add_css=True):
         'nsprefix': t['Constant'],
         'preproc': t['PreProc'],
         'nbsp': t['SpecialCharacter'],
-        'spell': t['SpellError'],
     }
     for name, msg in {
             '<': _('An unescaped < is not allowed. Replace it with &lt;'),
@@ -560,7 +483,6 @@ def create_formats(highlighter, add_css=True):
     f.setFontWeight(QFont.Bold)
     if add_css:
         formats['css_sub_formats'] = create_css_formats(highlighter)
-    formats['spell'].setProperty(SPELL_PROPERTY, True)
     formats['class_attr'] = syntax_text_char_format(t['Special'])
     formats['class_attr'].setProperty(CLASS_ATTRIBUTE_PROPERTY, True)
     formats['link'] = syntax_text_char_format(t['Link'])
@@ -578,24 +500,16 @@ class Highlighter(SyntaxHighlighter):
 
     state_map = state_map
     create_formats_func = create_formats
-    spell_attributes = ('alt', 'title')
     user_data_factory = HTMLUserData
-
-    def tag_ok_for_spell(self, name):
-        return HTMLUserData.tag_ok_for_spell(name)
 
 
 class XMLHighlighter(Highlighter):
 
     state_map = xml_state_map
-    spell_attributes = ('opf:file-as',)
     user_data_factory = XMLUserData
 
     def create_formats_func(self):
         return create_formats(self, add_css=False)
-
-    def tag_ok_for_spell(self, name):
-        return XMLUserData.tag_ok_for_spell(name)
 
 
 def profile():

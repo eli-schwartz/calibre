@@ -30,7 +30,7 @@ from calibre.ebooks.oeb.polish.report import (
     gather_data, CSSEntry, CSSFileMatch, MatchLocation, ClassEntry,
     ClassFileMatch, ClassElement, CSSRule, LinkLocation)
 from calibre.gui2 import error_dialog, question_dialog, choose_save_file, open_url, secure_web_page
-from calibre.gui2.tweak_book import current_container, tprefs, dictionaries
+from calibre.gui2.tweak_book import current_container, tprefs
 from calibre.gui2.tweak_book.widgets import Dialog
 from calibre.gui2.progress_indicator import ProgressIndicator
 from calibre.utils.icu import primary_contains, numeric_sort_key, character_name_from_code
@@ -749,14 +749,6 @@ class WordsWidget(QWidget):
         self.summary.setText(_('Words: {2} :: Unique Words: :: {0} :: Languages: {1}').format(
             self.model.rowCount(), self.model.total_size, self.model.total_words))
 
-    def double_clicked(self, index):
-        entry = index.data(Qt.UserRole)
-        if entry is not None:
-            from calibre.gui2.tweak_book.boss import get_boss
-            boss = get_boss()
-            if boss is not None:
-                boss.find_word((entry.word, entry.locale), entry.usage)
-
     def save(self):
         self.words.save_table('words-table')
 # }}}
@@ -1414,13 +1406,7 @@ class Reports(Dialog):
         t.start()
 
     def gather_data(self):
-        try:
-            ok, data = True, gather_data(current_container(), dictionaries.default_locale)
-        except Exception:
-            import traceback
-            traceback.print_exc()
-            ok, data = False, traceback.format_exc()
-        self.data_gathered.emit(ok, data)
+        pass
 
     def display_data(self, ok, data):
         self.wait_stack.setCurrentIndex(1)

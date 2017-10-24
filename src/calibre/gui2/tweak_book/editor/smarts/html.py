@@ -414,37 +414,6 @@ class Smarts(NullSmarts):
         c.setPosition(pos + 2 + len(name))
         editor.setTextCursor(c)
 
-    def verify_for_spellcheck(self, cursor, highlighter):
-        # Return True iff the cursor is in a location where spelling is
-        # checked (inside a tag or inside a checked attribute)
-        highlighter.join()
-        block = cursor.block()
-        start_pos = cursor.anchor() - block.position()
-        end_pos = cursor.position() - block.position()
-        start_tag, closing = find_tag_definition(block, start_pos)
-        if closing:
-            return False
-        end_tag, closing = find_tag_definition(block, end_pos)
-        if closing:
-            return False
-        if start_tag is None and end_tag is None:
-            # We are in normal text, check that the containing tag is
-            # allowed for spell checking.
-            tag = find_closest_containing_tag(block, start_pos)
-            if tag is not None and highlighter.tag_ok_for_spell(tag.name.split(':')[-1]):
-                return True
-        if start_tag != end_tag:
-            return False
-
-        # Now we check if we are in an allowed attribute
-        sa = find_containing_attribute(block, start_pos)
-        ea = find_containing_attribute(block, end_pos)
-
-        if sa == ea and sa in highlighter.spell_attributes:
-            return True
-
-        return False
-
     def cursor_position_with_sourceline(self, cursor, for_position_sync=True, use_matched_tag=True):
         ''' Return the tag just before the current cursor as a source line
         number and a list of tags defined on that line up to and including the

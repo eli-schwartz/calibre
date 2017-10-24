@@ -42,7 +42,6 @@ from calibre.gui2.tweak_book.editor import editor_from_syntax, syntax_from_mime
 from calibre.gui2.tweak_book.editor.insert_resource import get_resource_data, NewBook
 from calibre.gui2.tweak_book.preferences import Preferences
 from calibre.gui2.tweak_book.search import validate_search_request, run_search
-from calibre.gui2.tweak_book.spell import find_next as find_next_word, find_next_error
 from calibre.gui2.tweak_book.widgets import (
     RationalizeFolders, MultiSplit, ImportForeign, QuickOpen, InsertLink,
     InsertSemantics, BusyCursor, InsertTag, FilterCSS, AddCover)
@@ -133,11 +132,6 @@ class Boss(QObject):
         self.gui.saved_searches.run_saved_searches.connect(self.run_saved_searches)
         self.gui.central.search_panel.save_search.connect(self.save_search)
         self.gui.central.search_panel.show_saved_searches.connect(self.show_saved_searches)
-        self.gui.spell_check.find_word.connect(self.find_word)
-        self.gui.spell_check.refresh_requested.connect(self.commit_all_editors_to_container)
-        self.gui.spell_check.word_replaced.connect(self.word_replaced)
-        self.gui.spell_check.word_ignored.connect(self.word_ignored)
-        self.gui.spell_check.change_requested.connect(self.word_change_requested)
         self.gui.live_css.goto_declaration.connect(self.goto_style_declaration)
         self.gui.manage_fonts.container_changed.connect(self.apply_container_update_to_gui)
         self.gui.manage_fonts.embed_all_fonts.connect(self.manage_fonts_embed)
@@ -152,7 +146,6 @@ class Boss(QObject):
         return editor_name(self.gui.central.current_editor)
 
     def preferences(self):
-        orig_spell = tprefs['inline_spell_check']
         orig_size = tprefs['toolbar_icon_size']
         p = Preferences(self.gui)
         ret = p.exec_()
@@ -177,14 +170,6 @@ class Boss(QObject):
         if ret == p.Accepted or p.dictionaries_changed:
             for ed in editors.itervalues():
                 ed.apply_settings(dictionaries_changed=p.dictionaries_changed)
-        if orig_spell != tprefs['inline_spell_check']:
-            from calibre.gui2.tweak_book.editor.syntax.html import refresh_spell_check_status
-            refresh_spell_check_status()
-            for ed in editors.itervalues():
-                try:
-                    ed.editor.highlighter.rehighlight()
-                except AttributeError:
-                    pass
 
     def mark_requested(self, name, action):
         self.commit_dirty_opf()
@@ -974,36 +959,6 @@ class Boss(QObject):
         if getattr(ed, 'has_line_numbers', False):
             ed.editor.setFocus(Qt.OtherFocusReason)
 
-    def find_word(self, word, locations):
-        # Go to a word from the spell check dialog
-        ed = self.gui.central.current_editor
-        name = editor_name(ed)
-        find_next_word(word, locations, ed, name, self.gui, self.show_editor, self.edit_file)
-
-    def next_spell_error(self):
-        # Go to the next spelling error
-        ed = self.gui.central.current_editor
-        name = editor_name(ed)
-        find_next_error(ed, name, self.gui, self.show_editor, self.edit_file)
-
-    def word_change_requested(self, w, new_word):
-        if self.commit_all_editors_to_container():
-            self.gui.spell_check.change_word_after_update(w, new_word)
-        else:
-            self.gui.spell_check.do_change_word(w, new_word)
-
-    def word_replaced(self, changed_names):
-        self.set_modified()
-        self.update_editors_from_container(names=set(changed_names))
-
-    def word_ignored(self, word, locale):
-        if tprefs['inline_spell_check']:
-            for ed in editors.itervalues():
-                try:
-                    ed.editor.recheck_word(word, locale)
-                except AttributeError:
-                    pass
-
     def editor_link_clicked(self, url):
         ed = self.gui.central.current_editor
         name = editor_name(ed)
@@ -1241,13 +1196,6 @@ class Boss(QObject):
         c.parent().raise_()
         c.run_checks(current_container())
 
-    def spell_check_requested(self):
-        if current_container() is None:
-            return
-        self.commit_all_editors_to_container()
-        self.add_savepoint(_('Before: Spell Check'))
-        self.gui.spell_check.show()
-
     @in_thread_job
     def fix_requested(self, errors):
         self.add_savepoint(_('Before: Auto-fix errors'))
@@ -1384,8 +1332,6 @@ class Boss(QObject):
         editor.copy_available_state_changed.connect(self.editor_copy_available_state_changed)
         editor.cursor_position_changed.connect(self.sync_preview_to_editor)
         editor.cursor_position_changed.connect(self.update_cursor_position)
-        if hasattr(editor, 'word_ignored'):
-            editor.word_ignored.connect(self.word_ignored)
         if hasattr(editor, 'link_clicked'):
             editor.link_clicked.connect(self.editor_link_clicked)
         if getattr(editor, 'syntax', None) == 'html':

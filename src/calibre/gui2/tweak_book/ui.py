@@ -34,7 +34,6 @@ from calibre.gui2.tweak_book.plugin import create_plugin_actions
 from calibre.gui2.tweak_book.search import SearchPanel
 from calibre.gui2.tweak_book.check import Check
 from calibre.gui2.tweak_book.check_links import CheckExternalLinks
-from calibre.gui2.tweak_book.spell import SpellCheck
 from calibre.gui2.tweak_book.search import SavedSearches
 from calibre.gui2.tweak_book.text_search import TextSearch
 from calibre.gui2.tweak_book.toc import TOCViewer
@@ -251,7 +250,6 @@ class Main(MainWindow):
         self.central = Central(self)
         self.setCentralWidget(self.central)
         self.check_book = Check(self)
-        self.spell_check = SpellCheck(parent=self)
         self.toc_view = TOCViewer(self)
         self.text_search = TextSearch(self)
         self.saved_searches = SavedSearches(self)
@@ -468,14 +466,6 @@ class Main(MainWindow):
         # Check Book actions
         group = _('Check book')
         self.action_check_book = treg('debug.png', _('&Check book'), self.boss.check_requested, 'check-book', ('F7'), _('Check book for errors'))
-        self.action_spell_check_book = treg('spell-check.png', _('Check &spelling'), self.boss.spell_check_requested, 'spell-check-book', ('Alt+F7'), _(
-            'Check book for spelling errors'))
-        self.action_check_book_next = reg('forward.png', _('&Next error'), partial(
-            self.check_book.next_error, delta=1), 'check-book-next', ('Ctrl+F7'), _('Show next error'))
-        self.action_check_book_previous = reg('back.png', _('&Previous error'), partial(
-            self.check_book.next_error, delta=-1), 'check-book-previous', ('Ctrl+Shift+F7'), _('Show previous error'))
-        self.action_spell_check_next = reg('forward.png', _('&Next spelling mistake'),
-            self.boss.next_spell_error, 'spell-next', ('F8'), _('Go to next spelling mistake'))
 
         # Miscellaneous actions
         group = _('Miscellaneous')
@@ -566,11 +556,9 @@ class Main(MainWindow):
         e.addAction(self.action_add_cover)
         e.addAction(self.action_set_semantics)
         e.addAction(self.action_filter_css)
-        e.addAction(self.action_spell_check_book)
         er = e.addMenu(_('External &links'))
         er.addAction(self.action_check_external_links)
         er.addAction(self.action_get_ext_resources)
-        e.addAction(self.action_check_book)
         e.addAction(self.action_reports)
 
         e = b.addMenu(_('&View'))

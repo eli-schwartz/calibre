@@ -610,93 +610,6 @@ You can right click to edit the Table of Contents, refresh the view or
 expand/collapse all items. Access this view via :guilabel:`View->Table of
 Contents`.
 
-Checking the spelling of words in the book
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-You can run a spelling checker via :guilabel:`Tools->Check spelling`.
-
-.. image:: images/edit-book-spell.png
-    :alt: The Check Spelling tool
-    :align: center
-    :class: fit-img
-
-Words are shown with the number of times they occur in the book and the
-language the word belongs to. Language information is taken from the books
-metadata and from ``lang`` attributes in the HTML files. This allows the spell
-checker to work well even with books that contain text in multiple languages.
-For example, in the following HTML extract, the word color will be checked
-using American English and the word colour using British English::
-
-    <div lang="en_US">color <span lang="en_GB">colour</span></div>
-
-.. note::
-    You can double click a word to highlight the next occurrence of that word
-    in the editor. This is useful if you wish to manually edit the word, or see
-    what context it is in.
-
-To change a word, simply double click one of the suggested alternative
-spellings on the right, or type in your own corrected spelling and click the
-:guilabel:`Change selected word to` button. This will replace all occurrences
-of the word in the book. You can also right click on a word in the main word
-list to change the word conveniently from the right click menu.
-
-You can have the spelling checker ignore a word for the current session by
-clicking the :guilabel:`Ignore` button. You can also add a word to the user
-dictionary by clicking the :guilabel:`Add to dictionary` button. The spelling
-checker supports multiple user dictionaries, so you can select the dictionary
-you want the word added to.
-
-You can also have the spelling checker display all the words in your book, not
-just the incorrectly spelled ones. This is useful to see what words are most
-common in your book and to run a simple search and replace on individual words.
-
-.. note::
-    If you make any changes to the book by editing files while the spell check
-    tool is open, you should click the :guilabel:`Refresh` button in the spell
-    check tool. If you do not do this and continue to use the spell check tool,
-    you could lose the changes you have made in the editor.
-
-Adding new dictionaries
-###########################
-
-The spelling checker comes with builtin dictionaries for the English and
-Spanish languages. You can install your own dictionaries via
-:guilabel:`Preferences->Editor->Manage spelling dictionaries`. The spell
-checker can use dictionaries from the LibreOffice program (in the .oxt
-format). You can download these dictionaries from
-`The LibreOffice Extensions repository <https://extensions.libreoffice.org/extension-center?getCategories=Dictionary&getCompatibility=any&sort_on=positive_ratings>`_.
-
-
-Inserting special characters
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-You can insert characters that are difficult to type by using the
-:guilabel:`Edit->Insert special character` tool. This shows you all unicode
-characters, simply click on the character you want to type. If you hold Ctrl
-while clicking, the window will close itself after inserting the selected
-character. This tool can be used to insert special characters into the main
-text or into any other area of the user interface, such as the Search and
-replace tool.
-
-Because there are a lot of characters, you can define your own :guilabel:`Favorite`
-characters, that will be shown first. Simply right click on a character to mark
-it as favorite. You can also right click on a character in favorites to remove
-it from favorites. Finally, you can re-arrange the order of characters in
-favorites by clicking the :guilabel:`Re-arrange favorites` button and then drag
-and dropping the characters in favorites around.
-
-You can also directly type in special characters using the keyboard. To do
-this, you type the unicode code for the character (in hexadecimal) and then
-press the :guilabel:`Alt+X` key which will convert the previously typed code
-into the corresponding character. For example, to type ÿ you would type ff and
-then Alt+X. To type a non-breaking space you would use a0 and then
-:guilabel:`Alt+X`, to type the horizontal ellipsis you would use 2026 and
-:guilabel:`Alt+X` and so on.
-
-Finally, you can type in special characters by using HTML named entities. For
-example, typing &nbsp; will be replaced by a non breaking space when you type the
-semi-colon. The replacement happens only when typing the semi-colon.
-
 The code inspector view
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -714,7 +627,7 @@ Checking external links
 
 You can use this tool to check all links in your book that point to external
 websites. The tool will try to visit every externally linked website, and
-if the visit fails, it will report all broken links in a convenient format for 
+if the visit fails, it will report all broken links in a convenient format for
 you to fix.
 
 
@@ -786,9 +699,6 @@ The HTML editor has very sophisticated syntax highlighting. Features include:
       highlighted, and you can jump to the opening or closing tag with the
       keyboard shortcuts :kbd:`Ctrl+{` and :kbd:`Ctrl+}`
     * Invalid HTML is highlighted with a red underline
-    * Spelling errors in the text inside HTML tags and attributes such as title
-      are highlighted. The spell checking is language aware, based on the value
-      of the lang attribute of the current tag and the overall book language.
     * CSS embedded inside ``<style>`` tags is highlighted
     * Special characters that can be hard to distinguish such as non-breaking
       spaces, different types of hyphens, etc. are highlighted.

@@ -19,7 +19,7 @@ from calibre.gui2.tweak_book import tprefs
 from calibre.gui2.tweak_book.editor import syntax_text_char_format
 from calibre.gui2.tweak_book.widgets import Dialog
 
-underline_styles = {'single', 'dash', 'dot', 'dash_dot', 'dash_dot_dot', 'wave', 'spell'}
+underline_styles = {'single', 'dash', 'dot', 'dash_dot', 'dash_dot_dot', 'wave'}
 
 _default_theme = None
 
@@ -69,7 +69,6 @@ SOLARIZED = \
     SpecialCharacter bg={base02}
 
     Error        us=wave uc={red}
-    SpellError   us=wave uc={orange}
     Tooltip      fg=black bg=ffffed
     Link         fg={blue}
     BadLink      fg={cyan} us=wave uc={red}
@@ -112,7 +111,6 @@ THEMES = {
     Keyword      fg={keyword}
     Special      fg={special}
     Error        us=wave uc=red
-    SpellError   us=wave uc=orange
     SpecialCharacter bg={cursor_loc}
     Link         fg=cyan
     BadLink      fg={string} us=wave uc=red
@@ -162,7 +160,6 @@ THEMES = {
     Special      fg={special} italic
     SpecialCharacter bg={cursor_loc}
     Error        us=wave uc=red
-    SpellError   us=wave uc=magenta
     Link         fg=blue
     BadLink      fg={string} us=wave uc=red
 
@@ -241,7 +238,7 @@ THEMES = {k:read_theme(raw) for k, raw in THEMES.iteritems()}
 
 
 def u(x):
-    x = {'spell':'SpellCheck', 'dash_dot':'DashDot', 'dash_dot_dot':'DashDotDot'}.get(x, x.capitalize())
+    x = {'dash_dot':'DashDot', 'dash_dot_dot':'DashDotDot'}.get(x, x.capitalize())
     if 'Dot' in x:
         return x + 'Line'
     return x + 'Underline'
@@ -529,9 +526,6 @@ the color of the blinking cursor.</p>
     Syntax errors such as <this <>
 
 {}
-    Misspelled words such as <span lang="en">thisword</span>
-
-{}
     Comments like <!-- this one -->
 
 </p>
@@ -592,7 +586,7 @@ class ThemeEditor(Dialog):
                 *['<b>%s</b>' % x for x in (
                     'Normal', 'Visual', 'CursorLine', 'LineNr', 'MatchParen',
                     'Function', 'Type', 'Statement', 'Constant', 'SpecialCharacter',
-                    'Error', 'SpellError', 'Comment'
+                    'Error', 'Comment'
                 )]
             ))
         p.setMaximumWidth(p.size_hint.width() + 5)

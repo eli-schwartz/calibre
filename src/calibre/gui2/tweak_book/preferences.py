@@ -26,7 +26,6 @@ from calibre.gui2 import info_dialog
 from calibre.gui2.keyboard import ShortcutConfig
 from calibre.gui2.tweak_book import tprefs, toolbar_actions, editor_toolbar_actions, actions
 from calibre.gui2.tweak_book.editor.themes import default_theme, all_theme_names, ThemeEditor
-from calibre.gui2.tweak_book.spell import ManageDictionaries
 from calibre.gui2.font_family_chooser import FontFamilyChooser
 from calibre.gui2.tweak_book.widgets import Dialog
 
@@ -157,7 +156,7 @@ class EditorSettings(BasicSettings):
 
     def __init__(self, parent=None):
         BasicSettings.__init__(self, parent)
-        self.dictionaries_changed = self.snippets_changed = False
+        self.snippets_changed = False
         self.l = l = QFormLayout(self)
         self.setLayout(l)
 
@@ -216,13 +215,6 @@ class EditorSettings(BasicSettings):
             ' time you open a HTML/CSS/etc. file for editing.'))
         l.addRow(lw)
 
-        lw = self('inline_spell_check')
-        lw.setText(_('Show &misspelled words underlined in the code view'))
-        lw.setToolTip('<p>' + _(
-            'This will cause spelling errors to be highlighted in the code view'
-            ' for easy correction as you type.'))
-        l.addRow(lw)
-
         lw = self('editor_accepts_drops')
         lw.setText(_('Allow drag and drop &editing of text'))
         lw.setToolTip('<p>' + _(
@@ -230,20 +222,10 @@ class EditorSettings(BasicSettings):
             ' It can be useful to turn this off if you have a misbehaving touchpad.'))
         l.addRow(lw)
 
-        self.dictionaries = d = QPushButton(_('Manage &spelling dictionaries'), self)
-        d.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-        d.clicked.connect(self.manage_dictionaries)
-        l.addRow(d)
-
         self.snippets = s = QPushButton(_('Manage sni&ppets'), self)
         s.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         s.clicked.connect(self.manage_snippets)
         l.addRow(s)
-
-    def manage_dictionaries(self):
-        d = ManageDictionaries(self)
-        d.exec_()
-        self.dictionaries_changed = True
 
     def manage_snippets(self):
         from calibre.gui2.tweak_book.editor.snippets import UserSnippets
@@ -730,10 +712,6 @@ class Preferences(QDialog):
 
         cl.setMaximumWidth(cl.sizeHintForColumn(0) + 35)
         cl.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-
-    @property
-    def dictionaries_changed(self):
-        return self.editor_panel.dictionaries_changed
 
     @property
     def snippets_changed(self):
