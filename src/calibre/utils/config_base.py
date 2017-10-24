@@ -14,8 +14,10 @@ from functools import partial
 
 from calibre.constants import CONFIG_DIR_MODE, config_dir
 from calibre.utils.lock import ExclusiveFile
+from calibre.utils.resources import get_path as P
 
 
+_ = lambda s: s
 plugin_dir = os.path.join(config_dir, 'plugins')
 
 
@@ -191,20 +193,20 @@ class OptionSet(object):
         return parser
 
     def get_override_section(self, src):
-        match = self.OVERRIDE_PAT.search(src)
+        match = self.OVERRIDE_PAT.search(src.decode("utf-8"))
         if match:
             return match.group()
         return ''
 
     def parse_string(self, src):
-        options = {'cPickle':cPickle}
+        options = {'pickle':pickle}
         if src is not None:
             try:
                 if not isinstance(src, str):
                     src = src.decode('utf-8')
                 src = src.replace('PyQt%d.QtCore' % 4, 'PyQt5.QtCore')
                 exec(src, options)
-            except:
+            except Exception:
                 print('Failed to parse options string:')
                 print(repr(src))
                 traceback.print_exc()
@@ -237,8 +239,8 @@ class OptionSet(object):
         if val is val is True or val is False or val is None or \
            isinstance(val, (int, float, str)):
             return repr(val)
-        pickle = pickle.dumps(val, -1)
-        return 'cPickle.loads(%s)'%repr(pickle)
+        p = pickle.dumps(val, -1)
+        return 'pickle.loads(%r)' % (p)
 
     def serialize(self, opts):
         src = '# %s\n\n'%(self.description.replace('\n', '\n# '))

@@ -178,11 +178,9 @@ class Plugins(collections.Mapping):
         if name in self._plugins:
             return
         try:
-            p, err = importlib.import_module(name), ''
-        except Exception as err:
-            p = None
-            err = str(err)
-        self._plugins[name] = (p, err)
+            self._plugins[name] = importlib.import_module(name), ''
+        except Exception as e:
+            self._plugins[name] = (None, str(e))
 
     def __iter__(self):
         return iter(self.plugins)

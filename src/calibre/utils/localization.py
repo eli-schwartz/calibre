@@ -14,6 +14,8 @@ __docformat__ = 'restructuredtext en'
 
 _available_translations = None
 
+_ = lambda s: s
+
 
 def available_translations():
     global _available_translations
