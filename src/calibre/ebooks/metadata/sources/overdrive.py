@@ -17,6 +17,7 @@ from Queue import Queue, Empty
 from calibre.ebooks.metadata import check_isbn
 from calibre.ebooks.metadata.sources.base import Source, Option
 from calibre.ebooks.metadata.book.base import Metadata
+from polyglot.builtins import unicode_type
 
 ovrdrv_data_cache = {}
 cache_lock = RLock()
@@ -233,7 +234,7 @@ class OverDrive(Source):
             xreq.add_header('Referer', q_init_search)
             xreq.add_header('Accept', 'application/json, text/javascript, */*')
             raw = br.open_novisit(xreq).read()
-            for m in re.finditer(unicode(r'"iTotalDisplayRecords":(?P<displayrecords>\d+).*?"iTotalRecords":(?P<totalrecords>\d+)'), raw):
+            for m in re.finditer(unicode_type(r'"iTotalDisplayRecords":(?P<displayrecords>\d+).*?"iTotalRecords":(?P<totalrecords>\d+)'), raw):
                 if int(m.group('totalrecords')) == 0:
                     return ''
                 elif int(m.group('displayrecords')) >= 1:
@@ -450,7 +451,7 @@ class OverDrive(Source):
 
         if desc:
             desc = desc[0]
-            desc = html.tostring(desc, method='html', encoding=unicode).strip()
+            desc = html.tostring(desc, method='html', encoding=unicode_type).strip()
             # remove all attributes from tags
             desc = re.sub(r'<([a-zA-Z0-9]+)\s[^>]+>', r'<\1>', desc)
             # Remove comments

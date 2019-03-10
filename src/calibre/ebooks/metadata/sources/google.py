@@ -15,6 +15,7 @@ from calibre.ebooks.metadata.book.base import Metadata
 from calibre.ebooks.metadata.sources.base import Source
 from calibre.utils.cleantext import clean_ascii_chars
 from calibre.utils.localization import canonicalize_lang
+from polyglot.builtins import unicode_type
 
 NAMESPACES = {
     'openSearch': 'http://a9.com/-/spec/opensearchrss/1.0/',
@@ -214,7 +215,7 @@ class GoogleBooks(Source):
             if author_tokens:
                 q += ('+' if q else '') + build_term('author', author_tokens)
 
-        if isinstance(q, unicode):
+        if isinstance(q, unicode_type):
             q = q.encode('utf-8')
         if not q:
             return None

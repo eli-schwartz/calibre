@@ -11,6 +11,7 @@ from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.gui2.store.opensearch_store import OpenSearchOPDSStore
 from calibre.gui2.store.search_result import SearchResult
 from calibre.utils.filenames import ascii_text
+from polyglot.builtins import unicode_type
 
 
 class EbooksGratuitsStore(BasicStoreConfig, OpenSearchOPDSStore):
@@ -22,10 +23,9 @@ class EbooksGratuitsStore(BasicStoreConfig, OpenSearchOPDSStore):
         return ascii_text(s)
 
     def search(self, query, max_results=10, timeout=60):
-        query = self.strip_accents(unicode(query))
+        query = self.strip_accents(unicode_type(query))
         for s in OpenSearchOPDSStore.search(self, query, max_results, timeout):
             if s.downloads:
                 s.drm = SearchResult.DRM_UNLOCKED
                 s.price = '$0.00'
                 yield s
-

@@ -16,6 +16,7 @@ from lxml import etree
 from calibre import browser as _browser, prints, random_user_agent
 from calibre.utils.monotonic import monotonic
 from calibre.utils.random_ua import accept_header_for_ua
+from polyglot.builtins import unicode_type
 
 current_version = (1, 0, 2)
 minimum_calibre_version = (2, 80, 0)
@@ -26,7 +27,7 @@ Result = namedtuple('Result', 'url title cached_url')
 
 
 def tostring(elem):
-    return etree.tostring(elem, encoding=unicode, method='text', with_tail=False)
+    return etree.tostring(elem, encoding=unicode_type, method='text', with_tail=False)
 
 
 def browser():

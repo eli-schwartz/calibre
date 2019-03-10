@@ -22,6 +22,7 @@ from calibre.gui2.store import StorePlugin
 from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.gui2.store.search_result import SearchResult
 from calibre.gui2.store.web_store_dialog import WebStoreDialog
+from polyglot.builtins import unicode_type
 
 
 class LitResStore(BasicStoreConfig, StorePlugin):
@@ -88,7 +89,7 @@ class LitResStore(BasicStoreConfig, StorePlugin):
         authors = data.xpath('.//title-info/author/first-name/text()|'
         './/title-info/author/middle-name/text()|'
         './/title-info/author/last-name/text()')
-        sRes.author = u' '.join(map(unicode, authors))
+        sRes.author = u' '.join(map(unicode_type, authors))
         sRes.price = data.xpath(xp_template.format('price'))
         # cover vs cover_preview
         sRes.cover_url = data.xpath(xp_template.format('cover_preview'))

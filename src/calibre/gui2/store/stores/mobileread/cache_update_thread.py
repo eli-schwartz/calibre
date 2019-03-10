@@ -16,13 +16,14 @@ from PyQt5.Qt import (pyqtSignal, QObject)
 
 from calibre import browser
 from calibre.gui2.store.search_result import SearchResult
+from polyglot.builtins import unicode_type
 
 
 class CacheUpdateThread(Thread, QObject):
 
     total_changed = pyqtSignal(int)
     update_progress = pyqtSignal(int)
-    update_details = pyqtSignal(unicode)
+    update_details = pyqtSignal(unicode_type)
 
     def __init__(self, config, seralize_books_function, timeout):
         Thread.__init__(self)

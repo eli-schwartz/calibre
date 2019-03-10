@@ -16,6 +16,7 @@ from calibre.ebooks.metadata import check_isbn
 from calibre.ebooks.metadata.sources.base import Source
 from calibre.ebooks.metadata.book.base import Metadata
 from calibre import as_unicode
+from polyglot.builtins import unicode_type
 
 NAMESPACES = {
               'openSearch':'http://a9.com/-/spec/opensearchrss/1.0/',
@@ -203,7 +204,7 @@ class Douban(Source):
                     build_term('author', author_tokens))
             t = 'search'
         q = q.strip()
-        if isinstance(q, unicode):
+        if isinstance(q, unicode_type):
             q = q.encode('utf-8')
         if not q:
             return None

@@ -12,6 +12,7 @@ import re
 from calibre.gui2.store.basic_config import BasicStoreConfig
 from calibre.gui2.store.opensearch_store import OpenSearchOPDSStore
 from calibre.gui2.store.search_result import SearchResult
+from polyglot.builtins import unicode_type
 
 
 class BiblioStore(BasicStoreConfig, OpenSearchOPDSStore):
@@ -21,7 +22,7 @@ class BiblioStore(BasicStoreConfig, OpenSearchOPDSStore):
 
     def search(self, query, max_results=10, timeout=60):
         # check for cyrillic symbols before performing search
-        uquery = unicode(query.strip(), 'utf-8')
+        uquery = unicode_type(query.strip(), 'utf-8')
         reObj = re.search(u'^[а-яА-Я\\d\\s]{3,}$', uquery)
         if not reObj:
             return

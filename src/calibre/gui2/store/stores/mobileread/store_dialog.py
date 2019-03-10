@@ -12,6 +12,7 @@ from PyQt5.Qt import (Qt, QDialog, QIcon, QComboBox)
 from calibre.gui2.store.stores.mobileread.adv_search_builder import AdvSearchBuilderDialog
 from calibre.gui2.store.stores.mobileread.models import BooksModel
 from calibre.gui2.store.stores.mobileread.store_dialog_ui import Ui_Dialog
+from polyglot.builtins import unicode_type
 
 
 class MobileReadStoreDialog(QDialog, Ui_Dialog):
@@ -40,7 +41,7 @@ class MobileReadStoreDialog(QDialog, Ui_Dialog):
         self.restore_state()
 
     def do_search(self):
-        self.results_view.model().search(unicode(self.search_query.text()))
+        self.results_view.model().search(unicode_type(self.search_query.text()))
 
     def open_store(self, index):
         result = self.results_view.model().get_book(index)

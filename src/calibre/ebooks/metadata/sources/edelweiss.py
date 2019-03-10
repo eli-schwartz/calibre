@@ -14,6 +14,7 @@ from Queue import Queue, Empty
 from calibre import as_unicode, random_user_agent
 from calibre.ebooks.metadata import check_isbn
 from calibre.ebooks.metadata.sources.base import Source
+from polyglot.builtins import unicode_type
 
 
 def clean_html(raw):
@@ -31,7 +32,7 @@ def parse_html(raw):
 
 def astext(node):
     from lxml import etree
-    return etree.tostring(node, method='text', encoding=unicode,
+    return etree.tostring(node, method='text', encoding=unicode_type,
                           with_tail=False).strip()
 
 
@@ -110,7 +111,7 @@ class Worker(Thread):  # {{{
         for a in desc.xpath('descendant::a[@href]'):
             del a.attrib['href']
             a.tag = 'span'
-        desc = etree.tostring(desc, method='html', encoding=unicode).strip()
+        desc = etree.tostring(desc, method='html', encoding=unicode_type).strip()
 
         # remove all attributes from tags
         desc = re.sub(r'<([a-zA-Z0-9]+)\s[^>]+>', r'<\1>', desc)
