@@ -45,12 +45,14 @@ if not _run_once:
 
             def find_spec(self, fullname, path, target=None):
                 spec = None
+                print('debug: what module are we searching for now?', self, fullname, path, target)
                 if fullname == 'calibre.web.feeds.feedparser':
                     m = import_module('feedparser')
                     spec = m.__spec__
                 elif fullname.startswith('calibre.ebooks.markdown'):
                     m = import_module(fullname[len('calibre.ebooks.'):])
                     spec = m.__spec__
+                print('currently found spec is: ', spec)
                 return spec
 
         else:
