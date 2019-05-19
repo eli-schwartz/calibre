@@ -354,8 +354,8 @@ class Resources(Command):  # {{{
                     of = ouf if ouf == 'oeb' else 'dummy.'+ouf
                     p = create_option_parser(('ec', 'dummy1.'+inf, of, '-h'),
                             log)[0]
-                    complete[(inf, ouf)] = [x+' 'for x in
-                            get_opts_from_parser(p)]
+                    complete[(inf, ouf)] = sorted(x+' 'for x in
+                            get_opts_from_parser(p))
 
             with open(dest, 'wb') as f:
                 f.write(msgpack_dumps(only_unicode_recursive(complete)))
