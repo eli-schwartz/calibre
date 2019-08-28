@@ -1,0 +1,47 @@
+image: archlinux
+packages:
+    - qt5-x11extras
+    - rapydscript-ng
+    - sip
+    - chmlib
+    - icu
+    - jxrlib
+    - libmtp
+    - libusbx
+    - libwmf
+    - optipng
+    - podofo
+    - python2-apsw
+    - python2-beautifulsoup4
+    - python2-cssselect
+    - python2-css-parser
+    - python2-dateutil
+    - python2-dbus
+    - python2-dnspython
+    - python2-dukpy
+    - python2-feedparser
+    - python2-html2text
+    - python2-html5-parser
+    - python2-lxml
+    - python2-markdown
+    - python2-mechanize
+    - python2-msgpack
+    - python2-netifaces
+    - python2-unrardll
+    - python2-pillow
+    - python2-psutil
+    - python2-pygments
+    - python2-pyqt5
+    - python2-regex
+    - qt5-svg
+    - qt5-webkit
+    - udisks2
+sources:
+    - https://github.com/kovidgoyal/calibre
+tasks:
+    - build: |
+        cd calibre
+        python2 setup.py bootstrap --ephemeral
+    - test: |
+        cd calibre
+        python2 setup.py test

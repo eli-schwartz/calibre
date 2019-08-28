@@ -1,0 +1,50 @@
+image: archlinux
+packages:
+    - rapydscript-ng
+    - sip
+    - chmlib
+    - icu
+    - jxrlib
+    - libmtp
+    - libusbx
+    - libwmf
+    - optipng
+    - podofo
+    - python-apsw
+    - python-beautifulsoup4
+    - python-cssselect
+    - python-css-parser
+    - python-dateutil
+    - python-dbus
+    - python-dnspython
+    - python-dukpy
+    - python-feedparser
+    - python-html2text
+    - python-html5-parser
+    - python-lxml
+    - python-markdown
+    - python-mechanize
+    - python-msgpack
+    - python-netifaces
+    - python-unrardll
+    - python-pillow
+    - python-psutil
+    - python-pygments
+    - python-pyqt5
+    - python-regex
+    - python-zeroconf
+    - qt5-x11extras
+    - qt5-svg
+    - qt5-webkit
+    - udisks2
+sources:
+    - https://github.com/kovidgoyal/calibre
+environment:
+    CALIBRE_PY3_PORT: 1
+tasks:
+    - build: |
+        cd calibre
+        python setup.py bootstrap --ephemeral
+    - test: |
+        cd calibre
+        python setup.py test
