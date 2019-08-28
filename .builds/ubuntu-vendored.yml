@@ -1,0 +1,28 @@
+image: ubuntu/latest
+packages:
+    - python-minimal
+    - curl
+    - npm
+    - pkg-config
+      # both of these are needed to link to x11/GL
+    - libgl1-mesa-dev
+    - libxrender-dev
+    # translations...
+    - gettext
+    # one test fails without this
+    - libxcomposite1
+    # why do I need fonts? libwmf would usually drag in these ones
+    - gsfonts
+sources:
+    - https://github.com/kovidgoyal/calibre
+tasks:
+    - setup: |
+        cd calibre
+        # travis has literally "./node_modules/.bin"
+        export PATH="$PWD/node_modules/.bin:$PATH"
+        python2 setup/unix-ci.py install
+        sed -ri "s@(/sw/sw|/tmp/t/[a-zA-Z0-9_-]+)@$PWD/../sw@g" ../sw/lib/pkgconfig/*.pc ../sw/qt/lib/*.prl
+        python2 setup/unix-ci.py bootstrap --ephemeral
+    - test: |
+        cd calibre
+        python2 setup/unix-ci.py test
