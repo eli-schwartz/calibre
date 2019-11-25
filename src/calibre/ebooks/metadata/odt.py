@@ -158,7 +158,8 @@ class odfmetaparser(xml.sax.saxutils.XMLGenerator):
     def data(self):
         return normalize(''.join(self._data))
 
-def get_odf_meta_parsed(stream, mode = 'r', deletefields={}, yieldfields={}, addfields={}):
+
+def get_odf_meta_parsed(stream, mode='r', deletefields={}, yieldfields={}, addfields={}):
     zin = zipfile.ZipFile(stream, mode)
     odfs = odfmetaparser(deletefields, yieldfields, addfields)
     parser = xml.sax.make_parser()
@@ -168,6 +169,7 @@ def get_odf_meta_parsed(stream, mode = 'r', deletefields={}, yieldfields={}, add
     content = zin.read('meta.xml')
     parser.parse(io.BytesIO(content))
     return (zin, odfs)
+
 
 def get_metadata(stream, extract_cover=True):
     zin, odfs = get_odf_meta_parsed(stream)
@@ -225,6 +227,7 @@ def get_metadata(stream, extract_cover=True):
 
     return mi
 
+
 def get_meta_doc_props(mi):
     metaFields = {}
     metaFields[fields.get('title')] = mi.title
@@ -238,6 +241,7 @@ def get_meta_doc_props(mi):
         metaFields[fields.get('language')] = lang_as_iso639_1(l) or l
     return metaFields
 
+
 def set_metadata(stream, mi):
     from calibre.utils.zipfile import safe_replace
     metaFields = get_meta_doc_props(mi)
@@ -245,7 +249,6 @@ def set_metadata(stream, mi):
     zin, odfs = get_odf_meta_parsed(stream, addfields=metaFields, deletefields=metaFields)
     stream.seek(os.SEEK_SET)
     safe_replace(stream, "meta.xml", io.BytesIO(odfs.meta().encode('utf-8')))
-
 
 
 def read_cover(stream, zin, mi, opfmeta, extract_cover):
