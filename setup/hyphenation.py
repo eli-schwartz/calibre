@@ -8,9 +8,11 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import tarfile
 from io import BytesIO
 
+from setup import build_cache_dir
 from setup.revendor import ReVendor
 
 
@@ -89,7 +91,23 @@ class Hyphenation(ReVendor):
     DOWNLOAD_URL = 'https://github.com/LibreOffice/dictionaries/archive/%s.tar.gz' % VERSION
     CAN_USE_SYSTEM_VERSION = False
 
+    def already_present(self):
+        if not os.path.exists(self.j(self.vendored_dir, 'dictionaries.tar.xz')):
+            return False
+        hfile = self.j(build_cache_dir(), self.NAME + '.headers')
+        if os.path.exists(hfile):
+            with open(hfile, 'rb') as f:
+                headers = f.read().decode('utf-8').splitlines()
+            old_etag = next(i for i in headers if i.startswith('ETag:'))
+            headers = subprocess.check_output(['curl', '-IfsSL', self.DOWNLOAD_URL]).decode('utf-8').splitlines()
+            new_etag = next(i for i in headers if i.startswith('ETag:'))
+            return old_etag == new_etag
+        return False
+
     def run(self, opts):
+        if not opts.path_to_hyphenation and self.already_present():
+            self.info('Hyphenation dictionaries already present in the resources directory, not downloading')
+            return
         self.clean()
         os.makedirs(self.vendored_dir)
         with self.temp_dir() as dl_src, self.temp_dir() as output_dir:

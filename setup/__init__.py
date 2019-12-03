@@ -54,11 +54,14 @@ def dump_json(obj, path, indent=4):
         f.write(data)
 
 
-def download_securely(url):
+def download_securely(url, cacheheaders=None):
     # We use curl here as on some OSes (OS X) when bootstrapping calibre,
     # python will be unable to validate certificates until after cacerts is
     # installed
-    return subprocess.check_output(['curl', '-fsSL', url])
+    cmd = ['curl', '-fsSL', url]
+    if cacheheaders:
+        cmd += ['-D', os.path.join(build_cache_dir(), cacheheaders + '.headers')]
+    return subprocess.check_output(cmd)
 
 
 def build_cache_dir():

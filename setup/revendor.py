@@ -25,7 +25,7 @@ class ReVendor(Command):
 
     def download_vendor_release(self, tdir, url):
         self.info('Downloading %s:' % self.TAR_NAME, url)
-        raw = download_securely(url)
+        raw = download_securely(url, cacheheaders=self.NAME)
         with tarfile.open(fileobj=BytesIO(raw)) as tf:
             tf.extractall(tdir)
             if len(os.listdir(tdir)) == 1:
