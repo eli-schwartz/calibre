@@ -94,7 +94,7 @@ class Develop(Command):
             self.libdir = self.j(opts.prefix, 'lib')
         self.bindir = getattr(opts, 'bindir', None)
         if self.bindir is None:
-            self.bindir = self.j(opts.prefix, 'bin')
+            self.bindir = opts.bindir = self.j(opts.prefix, 'bin')
         self.sharedir = getattr(opts, 'sharedir', None)
         if self.sharedir is None:
             self.sharedir = self.j(opts.prefix, 'share')

@@ -756,9 +756,14 @@ class PostInstall:
         if not os.access(base, os.W_OK) and getattr(sys, 'frozen_path', False):
             base = sys.frozen_path
         dest = os.path.join(base, 'calibre-uninstall')
+        calibre_bindir = getattr(sys, 'frozen_path', getattr(self.opts, 'bindir', None))
+        if calibre_bindir:
+            python_interpreter = os.path.join(calibre_bindir, 'calibre-debug')
+        else:
+            python_interpreter = '/usr/bin/python'
         self.info('Creating un-installer:', dest)
         raw = UNINSTALL.format(
-            python='/usr/bin/python', euid=os.geteuid(),
+            python=python_interpreter, euid=os.geteuid(),
             manifest=self.manifest, icon_resources=self.icon_resources,
             mime_resources=self.mime_resources, menu_resources=self.menu_resources,
             appdata_resources=self.appdata_resources, frozen_path=getattr(sys, 'frozen_path', None))
