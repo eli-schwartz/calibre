@@ -20,7 +20,7 @@ from PyQt5.Qt import (
     QWidget, QTableView, QGridLayout, QPalette, QTimer, pyqtSignal,
     QAbstractTableModel, QSize, QListView, QPixmap, QModelIndex,
     QAbstractListModel, QRect, QTextBrowser, QStringListModel, QMenu,
-    QCursor, QHBoxLayout, QPushButton, QSizePolicy, QSplitter)
+    QCursor, QHBoxLayout, QPushButton, QSizePolicy, QSplitter, QAbstractItemView)
 
 from calibre.customize.ui import metadata_plugins
 from calibre.ebooks.metadata import authors_to_string, rating_to_stars
@@ -52,9 +52,9 @@ class RichTextDelegate(QStyledItemDelegate):  # {{{
 
     def to_doc(self, index, option=None):
         doc = QTextDocument()
-        if option is not None and option.state & QStyle.State_Selected:
+        if option is not None and option.state & QStyle.StateFlag.State_Selected:
             p = option.palette
-            group = (p.Active if option.state & QStyle.State_Active else
+            group = (p.Active if option.state & QStyle.StateFlag.State_Active else
                     p.Inactive)
             c = p.color(group, p.HighlightedText)
             c = 'rgb(%d, %d, %d)'%c.getRgb()[:3]
@@ -90,7 +90,7 @@ class CoverDelegate(QStyledItemDelegate):  # {{{
         QStyledItemDelegate.__init__(self, parent)
         self.animator = SpinAnimator(self)
         self.animator.updated.connect(self.needs_redraw)
-        self.color = parent.palette().color(QPalette.WindowText)
+        self.color = parent.palette().color(QPalette.ColorRole.WindowText)
         self.spinner_width = 64
 
     def start_animation(self):
@@ -102,15 +102,15 @@ class CoverDelegate(QStyledItemDelegate):  # {{{
     def paint(self, painter, option, index):
         QStyledItemDelegate.paint(self, painter, option, index)
         style = QApplication.style()
-        waiting = self.animator.is_running() and bool(index.data(Qt.UserRole))
+        waiting = self.animator.is_running() and bool(index.data(Qt.ItemDataRole.UserRole))
         if waiting:
             rect = QRect(0, 0, self.spinner_width, self.spinner_width)
             rect.moveCenter(option.rect.center())
             self.animator.draw(painter, rect, self.color)
         else:
             # Ensure the cover is rendered over any selection rect
-            style.drawItemPixmap(painter, option.rect, Qt.AlignTop|Qt.AlignHCenter,
-                QPixmap(index.data(Qt.DecorationRole)))
+            style.drawItemPixmap(painter, option.rect, Qt.AlignmentFlag.AlignTop|Qt.AlignmentFlag.AlignHCenter,
+                QPixmap(index.data(Qt.ItemDataRole.DecorationRole)))
 
 # }}}
 
@@ -135,7 +135,7 @@ class ResultsModel(QAbstractTableModel):  # {{{
         return len(self.COLUMNS)
 
     def headerData(self, section, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             try:
                 return (self.COLUMNS[section])
             except:
@@ -160,19 +160,19 @@ class ResultsModel(QAbstractTableModel):  # {{{
             book = self.results[row]
         except:
             return None
-        if role == Qt.DisplayRole and col not in self.ICON_COLS:
+        if role == Qt.ItemDataRole.DisplayRole and col not in self.ICON_COLS:
             res = self.data_as_text(book, col)
             if res:
                 return (res)
             return None
-        elif role == Qt.DecorationRole and col in self.ICON_COLS:
+        elif role == Qt.ItemDataRole.DecorationRole and col in self.ICON_COLS:
             if col == 3 and getattr(book, 'has_cached_cover_url', False):
                 return self.yes_icon
             if col == 4 and book.comments:
                 return self.yes_icon
-        elif role == Qt.UserRole:
+        elif role == Qt.ItemDataRole.UserRole:
             return book
-        elif role == Qt.ToolTipRole and col == 3:
+        elif role == Qt.ItemDataRole.ToolTipRole and col == 3:
             return (
                 _('The "has cover" indication is not fully\n'
                     'reliable. Sometimes results marked as not\n'
@@ -181,7 +181,7 @@ class ResultsModel(QAbstractTableModel):  # {{{
 
         return None
 
-    def sort(self, col, order=Qt.AscendingOrder):
+    def sort(self, col, order=Qt.SortOrder.AscendingOrder):
         key = lambda x: x
         if col == 0:
             key = attrgetter('gui_rank')
@@ -200,7 +200,7 @@ class ResultsModel(QAbstractTableModel):  # {{{
             key = lambda x: bool(x.comments)
 
         self.beginResetModel()
-        self.results.sort(key=key, reverse=order==Qt.AscendingOrder)
+        self.results.sort(key=key, reverse=order==Qt.SortOrder.AscendingOrder)
         self.endResetModel()
 
 # }}}
@@ -214,9 +214,9 @@ class ResultsView(QTableView):  # {{{
     def __init__(self, parent=None):
         QTableView.__init__(self, parent)
         self.rt_delegate = RichTextDelegate(self)
-        self.setSelectionMode(self.SingleSelection)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.setAlternatingRowColors(True)
-        self.setSelectionBehavior(self.SelectRows)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.setIconSize(QSize(24, 24))
         self.clicked.connect(self.show_details)
         self.doubleClicked.connect(self.select_index)
@@ -229,7 +229,7 @@ class ResultsView(QTableView):  # {{{
             self.setItemDelegateForColumn(i, self.rt_delegate)
         self.resizeRowsToContents()
         self.resizeColumnsToContents()
-        self.setFocus(Qt.OtherFocusReason)
+        self.setFocus(Qt.FocusReason.OtherFocusReason)
         idx = self.model().index(0, 0)
         if idx.isValid() and self.model().rowCount() > 0:
             self.show_details(idx)
@@ -252,7 +252,7 @@ class ResultsView(QTableView):  # {{{
 
     def show_details(self, index):
         f = rating_font()
-        book = self.model().data(index, Qt.UserRole)
+        book = self.model().data(index, Qt.ItemDataRole.UserRole)
         parts = [
             '<center>',
             '<h2>%s</h2>'%book.title,
@@ -283,15 +283,15 @@ class ResultsView(QTableView):  # {{{
             return
         if not index.isValid():
             index = self.model().index(0, 0)
-        book = self.model().data(index, Qt.UserRole)
+        book = self.model().data(index, Qt.ItemDataRole.UserRole)
         self.book_selected.emit(book)
 
     def get_result(self):
         self.select_index(self.currentIndex())
 
     def keyPressEvent(self, ev):
-        if ev.key() in (Qt.Key_Left, Qt.Key_Right):
-            ac = self.MoveDown if ev.key() == Qt.Key_Right else self.MoveUp
+        if ev.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right):
+            ac = self.MoveDown if ev.key() == Qt.Key.Key_Right else self.MoveUp
             index = self.moveCursor(ac, ev.modifiers())
             if index.isValid() and index != self.currentIndex():
                 m = self.selectionModel()
@@ -344,8 +344,8 @@ class Comments(HTMLDisplay):  # {{{
                     ans = unicode_type(col.name())
             return ans
 
-        c = color_to_string(QApplication.palette().color(QPalette.Normal,
-                        QPalette.WindowText))
+        c = color_to_string(QApplication.palette().color(QPalette.ColorGroup.Normal,
+                        QPalette.ColorRole.WindowText))
         templ = '''\
         <html>
             <head>
@@ -645,7 +645,7 @@ class CoversModel(QAbstractListModel):  # {{{
         text = (src + '\n' + sz)
         scaled = pmap.scaled(
             int(CoverDelegate.ICON_SIZE[0] * pmap.devicePixelRatio()), int(CoverDelegate.ICON_SIZE[1] * pmap.devicePixelRatio()),
-            Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         scaled.setDevicePixelRatio(pmap.devicePixelRatio())
         return (text, (scaled), pmap, waiting)
 
@@ -657,11 +657,11 @@ class CoversModel(QAbstractListModel):  # {{{
             text, pmap, cover, waiting = self.covers[index.row()]
         except:
             return None
-        if role == Qt.DecorationRole:
+        if role == Qt.ItemDataRole.DecorationRole:
             return pmap
-        if role == Qt.DisplayRole or role == Qt.ToolTipRole:
+        if role == Qt.ItemDataRole.DisplayRole or role == Qt.ItemDataRole.ToolTipRole:
             return text
-        if role == Qt.UserRole:
+        if role == Qt.ItemDataRole.UserRole:
             return waiting
         return None
 
@@ -774,23 +774,23 @@ class CoversView(QListView):  # {{{
         self.setResizeMode(self.Adjust)
         self.setGridSize(QSize(190, 260))
         self.setIconSize(QSize(*CoverDelegate.ICON_SIZE))
-        self.setSelectionMode(self.SingleSelection)
+        self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.setViewMode(self.IconMode)
 
         self.delegate = CoverDelegate(self)
         self.setItemDelegate(self.delegate)
         self.delegate.needs_redraw.connect(self.redraw_spinners,
-                type=Qt.QueuedConnection)
+                type=Qt.ConnectionType.QueuedConnection)
 
-        self.doubleClicked.connect(self.chosen, type=Qt.QueuedConnection)
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.doubleClicked.connect(self.chosen, type=Qt.ConnectionType.QueuedConnection)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
 
     def redraw_spinners(self):
         m = self.model()
         for r in range(m.rowCount()):
             idx = m.index(r)
-            if bool(m.data(idx, Qt.UserRole)):
+            if bool(m.data(idx, Qt.ItemDataRole.UserRole)):
                 m.dataChanged.emit(idx, idx)
 
     def select(self, num):
@@ -818,7 +818,7 @@ class CoversView(QListView):  # {{{
 
     def show_context_menu(self, point):
         idx = self.currentIndex()
-        if idx and idx.isValid() and not idx.data(Qt.UserRole):
+        if idx and idx.isValid() and not idx.data(Qt.ItemDataRole.UserRole):
             m = QMenu(self)
             m.addAction(QIcon(I('view.png')), _('View this cover at full size'), self.show_cover)
             m.addAction(QIcon(I('edit-copy.png')), _('Copy this cover to clipboard'), self.copy_cover)
@@ -831,7 +831,7 @@ class CoversView(QListView):  # {{{
             pmap = self.model().cc
         if pmap is not None:
             from calibre.gui2.image_popup import ImageView
-            d = ImageView(self, pmap, unicode_type(idx.data(Qt.DisplayRole) or ''), geom_name='metadata_download_cover_popup_geom')
+            d = ImageView(self, pmap, unicode_type(idx.data(Qt.ItemDataRole.DisplayRole) or ''), geom_name='metadata_download_cover_popup_geom')
             d(use_exec=True)
 
     def copy_cover(self):
@@ -843,7 +843,7 @@ class CoversView(QListView):  # {{{
             QApplication.clipboard().setPixmap(pmap)
 
     def keyPressEvent(self, ev):
-        if ev.key() in (Qt.Key_Enter, Qt.Key_Return):
+        if ev.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return):
             self.chosen.emit()
             ev.accept()
             return
@@ -892,7 +892,7 @@ class CoversWidget(QWidget):  # {{{
                 self.authors, book.identifiers, caches)
         self.worker.start()
         QTimer.singleShot(50, self.check)
-        self.covers_view.setFocus(Qt.OtherFocusReason)
+        self.covers_view.setFocus(Qt.FocusReason.OtherFocusReason)
 
     def check(self):
         if self.worker.is_alive() and not self.abort.is_set():
@@ -975,7 +975,7 @@ class LogViewer(QDialog):  # {{{
         self.tb = QTextBrowser(self)
         l.addWidget(self.tb)
 
-        self.bb = QDialogButtonBox(QDialogButtonBox.Close)
+        self.bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         l.addWidget(self.bb)
         self.copy_button = self.bb.addButton(_('Copy to clipboard'),
                 self.bb.ActionRole)
@@ -1029,7 +1029,7 @@ class FullFetch(QDialog):  # {{{
         self.setLayout(l)
         l.addWidget(self.stack)
 
-        self.bb = QDialogButtonBox(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
+        self.bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel|QDialogButtonBox.StandardButton.Ok)
         self.h = h = QHBoxLayout()
         l.addLayout(h)
         self.bb.rejected.connect(self.reject)
@@ -1039,7 +1039,7 @@ class FullFetch(QDialog):  # {{{
         self.ok_button.clicked.connect(self.ok_clicked)
         self.prev_button = pb = QPushButton(QIcon(I('back.png')), _('&Back'), self)
         pb.clicked.connect(self.back_clicked)
-        pb.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        pb.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.log_button = self.bb.addButton(_('&View log'), self.bb.ActionRole)
         self.log_button.clicked.connect(self.view_log)
         self.log_button.setIcon(QIcon(I('debug.png')))
@@ -1152,7 +1152,7 @@ class CoverFetch(QDialog):  # {{{
 
         self.finished.connect(self.cleanup)
 
-        self.bb = QDialogButtonBox(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
+        self.bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel|QDialogButtonBox.StandardButton.Ok)
         l.addWidget(self.bb)
         self.log_button = self.bb.addButton(_('&View log'), self.bb.ActionRole)
         self.log_button.clicked.connect(self.view_log)
