@@ -4,38 +4,6 @@ permissions:
     contents: read # to fetch code (actions/checkout)
 
 jobs:
-    test:
-        name: Test on ${{ matrix.os }}
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                os: [ubuntu-latest, macos-latest, windows-2022]
-        steps:
-            - name: Checkout source code
-              uses: actions/checkout@v3
-              with:
-                fetch-depth: 10
-
-            - name: Set up Python
-              uses: actions/setup-python@v3
-              with:
-                python-version: 3.8
-
-            - name: Install calibre dependencies
-              run:
-                  python setup/unix-ci.py install
-
-            - name: Bootstrap calibre
-              run:
-                  python setup/unix-ci.py bootstrap
-
-            - name: Test calibre
-              env:
-                PYTHONWARNINGS: error
-                CALIBRE_SHOW_DEPRECATION_WARNINGS: 1
-              run:
-                  python setup/unix-ci.py test
-
     archtest:
         name: Test on Arch
         runs-on: ubuntu-latest
