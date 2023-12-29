@@ -272,8 +272,9 @@ def init_env(debug=False, sanitize=False, compiling_for='native'):
         ldflags += base_ldflags
         cflags += ['-fvisibility=hidden']
         if sanitize:
-            cflags.append('-fsanitize-address')
-            ldflags.append('-shared-libasan')
+            cflags.append('-fsanitize=address,undefined')
+            if 'clang' in cxx:
+                ldflags.append('-shared-libasan')
 
     if islinux:
         cflags.append('-pthread')
@@ -432,8 +433,8 @@ class Build(Command):
             self.compiling_for = 'windows'
             if not os.path.exists('.build-cache/xwin/root'):
                 subprocess.check_call([sys.executable, 'setup.py', 'xwin'])
-        self.env = init_env(debug=opts.debug)
-        self.windows_cross_env = init_env(debug=opts.debug, compiling_for='windows')
+        self.env = init_env(debug=opts.debug, sanitize=opts.sanitize)
+        self.windows_cross_env = init_env(debug=opts.debug, sanitize=opts.sanitize, compiling_for='windows')
         all_extensions = tuple(map(partial(parse_extension, compiling_for=self.compiling_for), read_extensions()))
         self.build_dir = os.path.abspath(opts.build_dir or self.DEFAULT_BUILDDIR)
         self.output_dir = os.path.abspath(opts.output_dir or self.DEFAULT_OUTPUTDIR)
