@@ -58,14 +58,22 @@ jobs:
               run: setup/arch-ci.sh
 
             - name: Bootstrap calibre
-              run: runuser -u ci -- python setup.py bootstrap --ephemeral --debug --sanitize
+              env:
+                ASAN_OPTIONS: detect_leaks=0:halt_on_error=1:abort_on_error=1:print_summary=1
+                UBSAN_OPTIONS: halt_on_error=1:abort_on_error=1:print_summary=1:print_stacktrace=1
+              run: |
+                export LD_PRELOAD=$(gcc --print-file-name=libasan.so)
+                runuser -u ci -- python setup.py bootstrap --ephemeral --debug --sanitize
 
             - name: Test calibre
               env:
+                ASAN_OPTIONS: detect_leaks=0:halt_on_error=1:abort_on_error=1:print_summary=1
+                UBSAN_OPTIONS: halt_on_error=1:abort_on_error=1:print_summary=1:print_stacktrace=1
                 PYTHONWARNINGS: error
                 CALIBRE_SHOW_DEPRECATION_WARNINGS: 1
               run: |
                   set -xe
+                  export LD_PRELOAD=$(gcc --print-file-name=libasan.so)
                   runuser -u ci -- python setup.py test --under-sanitize
                   echo "Running test_rs"
                   runuser -u ci -- python setup.py test_rs
