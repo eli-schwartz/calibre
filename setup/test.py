@@ -13,12 +13,14 @@ TEST_MODULES = frozenset('srv db polish opf css docx cfi matcher icu smartypants
 class BaseTest(Command):
 
     def run(self, opts):
+        os.environ['ASAN_OPTIONS'] = 'detect_leaks=0:halt_on_error=1:abort_on_error=1:print_summary=1'
+        os.environ['UBSAN_OPTIONS'] = 'halt_on_error=1:abort_on_error=1:print_summary=1:print_stacktrace=1'
+
         if opts.under_sanitize and 'CALIBRE_EXECED_UNDER_SANITIZE' not in os.environ:
-            if 'libasan' not in os.environ.get('LD_PRELOAD', ''):
+            if 'asan' not in os.environ.get('LD_PRELOAD', ''):
                 os.environ['LD_PRELOAD'] = (os.path.abspath(subprocess.check_output('gcc -print-file-name=libasan.so'.split()).decode('utf-8').strip()) + ' ' +
                                             os.path.abspath(subprocess.check_output('gcc -print-file-name=libasan.so'.split()).decode('utf-8').strip()))
             os.environ['CALIBRE_EXECED_UNDER_SANITIZE'] = '1'
-            os.environ['ASAN_OPTIONS'] = 'detect_leaks=0'
             os.environ['PYCRYPTODOME_DISABLE_DEEPBIND'] = '1'  # https://github.com/Legrandin/pycryptodome/issues/558
             self.info(f'Re-execing with LD_PRELOAD={os.environ["LD_PRELOAD"]}')
             sys.stdout.flush()
